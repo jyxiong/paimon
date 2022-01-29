@@ -1,0 +1,8 @@
+.idea
+.vscode
+
+3rdparty
+build
+log
+
+**/.DS_Store
