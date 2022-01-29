@@ -1,0 +1,2 @@
+add_subdirectory(hello_opengl)
+add_subdirectory(hello_glog)
