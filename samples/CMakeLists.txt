@@ -1,0 +1,3 @@
+add_subdirectory(hello_opengl)
+add_subdirectory(hello_glog)
+add_subdirectory(hello_paimon)

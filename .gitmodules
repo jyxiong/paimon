@@ -13,3 +13,6 @@
 [submodule "3rdparty/glad"]
 	path = 3rdparty/glad
 	url = git@github.com:jyxiong/glad.git
+[submodule "3rdparty/imgui"]
+	path = 3rdparty/imgui
+	url = git@github.com:ocornut/imgui.git

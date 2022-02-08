@@ -1,9 +1,9 @@
-# Locate the glog library
+# Locate the log library
 #
 # This module defines the following variables:
 #
 # GLOG_LIBRARY the name of the library;
-# GLOG_INCLUDE_DIR where to find glog include files.
+# GLOG_INCLUDE_DIR where to find log include files.
 # GLOG_FOUND true if both the GLOG_LIBRARY and GLOG_INCLUDE_DIR have been found.
 
 # search for include
@@ -38,7 +38,7 @@ else()
     message("GLOG not found")
 endif()
 
-# set glog package
+# set log package
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(GLOG DEFAULT_MSG
         GLOG_LIBRARY GLOG_INCLUDE_DIR

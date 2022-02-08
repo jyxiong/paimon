@@ -14,7 +14,7 @@ int main(int argc, char** argv)
     std::string log_dir = PaimonRoot + "/example/hello_glog/log";
     InitLog(argv[0], log_dir.c_str());
 
-    LOG(INFO) << "Hello world glog";
+    LOG(INFO) << "Hello world log";
     std::cout << "hello world" << std::endl;
     return 0;
 }
