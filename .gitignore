@@ -1,7 +1,7 @@
 .idea
 .vscode
 
+bin
 build
-log
-
-**/.DS_Store
+*build*
+lib
