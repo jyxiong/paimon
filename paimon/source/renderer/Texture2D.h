@@ -5,6 +5,16 @@
 
 namespace Paimon
 {
+struct CPTFileHead
+{
+    char extension[3];
+    int mipmapLevel;
+    int width;
+    int height;
+    int format;
+    int size;
+}; // struct CPTFileHead
+
 class Texture2D
 {
 public:
@@ -26,16 +36,6 @@ private:
     int m_mipmapLevel{};
     unsigned int m_id{};
     int m_format{};
-
-    struct CPTFileHead
-    {
-        char extension[3];
-        int mipmapLevel;
-        int width;
-        int height;
-        int format;
-        int size;
-    }; // struct CPTFileHead
 
 }; // class Texture2D
 } // namespace Paimon

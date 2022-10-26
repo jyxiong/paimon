@@ -1,4 +1,6 @@
 add_library(paimon STATIC
+    renderer/MeshFilter.cpp
+    renderer/MeshFilter.h
     renderer/Texture2D.cpp
     renderer/Texture2D.h
 

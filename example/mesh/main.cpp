@@ -5,9 +5,9 @@
 #include "glm/gtx/transform2.hpp"
 #include "glm/gtx/euler_angles.hpp"
 
+#include "renderer/MeshFilter.h"
 #include "renderer/Texture2D.h"
 
-#include "VertexData.h"
 #include "ShaderSource.h"
 
 using namespace Paimon;
@@ -20,19 +20,25 @@ static void errorCallback(int error, const char *description)
 GLFWwindow *window;
 GLuint vertexShader, fragmentShader, program;
 GLint mvpLocation, positionLocation, colorLocation, uvLocation, textureLocation;
-std::shared_ptr<Texture2D> texture = nullptr;
 GLuint kVBO, kEBO;
 GLuint kVAO;
 
-void initOpengl()
+std::shared_ptr<Texture2D> texture = nullptr;
+std::shared_ptr<MeshFilter> meshFilter = nullptr;
+
+void InitOpengl()
 {
     glfwSetErrorCallback(errorCallback);
 
     if (!glfwInit())
         exit(EXIT_FAILURE);
 
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+#ifdef __APPLE__
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#endif
 
     window = glfwCreateWindow(960, 640, "Simple example", nullptr, nullptr);
     if (!window)
@@ -46,7 +52,7 @@ void initOpengl()
     glfwSwapInterval(1);
 }
 
-void compileShader()
+void CompileShader()
 {
     vertexShader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertexShader, 1, &vertexShaderText, nullptr);
@@ -81,8 +87,8 @@ void GeneratorBufferObject()
     glBindBuffer(GL_ARRAY_BUFFER, kVBO);
     //上传顶点数据到缓冲区对象
     glBufferData(GL_ARRAY_BUFFER,
-                 vertices.size() * sizeof(Vertex),
-                 &vertices[0],
+                 meshFilter->GetMesh()->vertices.size() * sizeof(Vertex),
+                 meshFilter->GetMesh()->vertices.data(),
                  GL_STATIC_DRAW);
 
     //在GPU上创建缓冲区对象
@@ -91,8 +97,8 @@ void GeneratorBufferObject()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, kEBO);
     //上传顶点索引数据到缓冲区对象
     glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-                 indices.size() * sizeof(unsigned short),
-                 &indices[0],
+                 meshFilter->GetMesh()->indices.size() * sizeof(unsigned short),
+                 meshFilter->GetMesh()->indices.data(),
                  GL_STATIC_DRAW);
     //设置VAO
     glBindVertexArray(kVAO);
@@ -117,17 +123,14 @@ void GeneratorBufferObject()
 
 int main()
 {
-    VertexRemoveDuplicate();
+    InitOpengl();
 
-    initOpengl();
-
-    std::string filePath("../asset/texture/urban.jpg");
-    std::string savePath("../asset/texture/urban.cpt");
-    Texture2D::CompressImageFile(filePath, savePath);
+    meshFilter = std::make_shared<MeshFilter>();
+    meshFilter->LoadMesh("../asset/model/cube.mesh");
 
     createTexture("../asset/texture/urban.cpt");
 
-    compileShader();
+    CompileShader();
 
     mvpLocation = glGetUniformLocation(program, "u_mvp");
     positionLocation = glGetAttribLocation(program, "a_pos");
@@ -185,7 +188,7 @@ int main()
 
             glBindVertexArray(kVAO);
             {
-                glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, 0);//使用顶点索引进行绘制，最后的0表示数据偏移量。
+                glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, nullptr);//使用顶点索引进行绘制，最后的0表示数据偏移量。
             }
 
             glDrawArrays(GL_TRIANGLES, 0, 6 * 6);

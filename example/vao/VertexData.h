@@ -74,9 +74,9 @@ static const Vertex kVertexs[36] = {
 };
 
 //去重的顶点Vector
-static vector<Vertex> kVertexRemoveDuplicateVector;
+static vector<Vertex> vertices;
 //顶点索引Vector
-static vector<unsigned short> kVertexIndexVector;
+static vector<unsigned short> indices;
 
 //顶点去重
 static void VertexRemoveDuplicate()
@@ -86,11 +86,11 @@ static void VertexRemoveDuplicate()
         const Vertex &vertex = kVertexs[i];
         //判断顶点是否存在
         int index = -1;
-        for (int j = 0; j < kVertexRemoveDuplicateVector.size(); ++j)
+        for (int j = 0; j < vertices.size(); ++j)
         {
-            if (vertex.position == kVertexRemoveDuplicateVector[j].position
-                && vertex.color == kVertexRemoveDuplicateVector[j].color
-                && vertex.uv == kVertexRemoveDuplicateVector[j].uv)
+            if (vertex.position == vertices[j].position
+                && vertex.color == vertices[j].color
+                && vertex.uv == vertices[j].uv)
             {
                 index = j;
                 break;
@@ -98,13 +98,13 @@ static void VertexRemoveDuplicate()
         }
         if (index < 0)
         {
-            //没找到就将目标顶点加入kVertexRemoveDuplicateVector，并记录索引为kVertexRemoveDuplicateVector.size()。
-            kVertexRemoveDuplicateVector.push_back(vertex);
-            kVertexIndexVector.push_back(kVertexRemoveDuplicateVector.size() - 1);
+            //没找到就将目标顶点加入vertices，并记录索引为vertices.size()。
+            vertices.push_back(vertex);
+            indices.push_back(vertices.size() - 1);
         } else
         {
-            //找到了目标顶点，记录索引为kVertexRemoveDuplicateVector的位置。
-            kVertexIndexVector.push_back(index);
+            //找到了目标顶点，记录索引为vertices的位置。
+            indices.push_back(index);
         }
     }
 }

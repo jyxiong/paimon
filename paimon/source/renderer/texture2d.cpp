@@ -30,14 +30,14 @@ std::shared_ptr<Texture2D> Texture2D::LoadFromFile(const std::string &path)
     {
         stopWatch.Start();
 
-        std::ifstream fs(path, std::ios::in | std::ios::binary);
+        std::ifstream inputFileStream(path, std::ios::in | std::ios::binary);
 
         CPTFileHead cptFileHead{};
-        fs.read((char *)&cptFileHead, sizeof(CPTFileHead));
+        inputFileStream.read((char *)&cptFileHead, sizeof(CPTFileHead));
 
         data = (unsigned char *)malloc(cptFileHead.size);
-        fs.read((char *)data, cptFileHead.size);
-        fs.close();
+        inputFileStream.read((char *)data, cptFileHead.size);
+        inputFileStream.close();
 
         texture->m_format = cptFileHead.format;
         texture->m_width = cptFileHead.width;
@@ -138,8 +138,8 @@ void Texture2D::CompressImageFile(const std::string &path, const std::string &sa
     cptFileHead.format = compressFormat;
     cptFileHead.size = compressSize;
 
-    std::ofstream fileStream(savePath, std::ios::out | std::ios::binary);
-    fileStream.write((char *)&cptFileHead, sizeof(CPTFileHead));
-    fileStream.write((char *)image, compressSize);
-    fileStream.close();
+    std::ofstream outputFileStream(savePath, std::ios::out | std::ios::binary);
+    outputFileStream.write((char *)&cptFileHead, sizeof(CPTFileHead));
+    outputFileStream.write((char *)image, compressSize);
+    outputFileStream.close();
 }
