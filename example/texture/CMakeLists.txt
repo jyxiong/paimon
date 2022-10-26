@@ -1,6 +1,6 @@
-add_executable(test_texture
+add_executable(texture
     main.cpp
-    shaderSource.h
-    vertexData.h
+    ShaderSource.h
+    VertexData.h
     )
-target_link_libraries(test_texture PUBLIC paimon)
+target_link_libraries(texture PUBLIC paimon)

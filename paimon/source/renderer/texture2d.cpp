@@ -1,10 +1,22 @@
-#include "texture2d.h"
+#include "Texture2D.h"
+
+#include <filesystem>
+#include <fstream>
+#include <memory>
 
 #include "glad/gl.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
+#include "utility/StopWatch.h"
+
 using namespace Paimon;
+
+Texture2D::Texture2D(int mipmapLevel)
+    : m_mipmapLevel(mipmapLevel)
+{
+
+}
 
 std::shared_ptr<Texture2D> Texture2D::LoadFromFile(const std::string &path)
 {
@@ -12,38 +24,122 @@ std::shared_ptr<Texture2D> Texture2D::LoadFromFile(const std::string &path)
 
     stbi_set_flip_vertically_on_load(true);
 
-    int numChannels;
-    unsigned char *data = stbi_load(path.c_str(), &texture->m_width, &texture->m_height, &numChannels, 0);
-    if (data != nullptr)
+    StopWatch stopWatch;
+    unsigned char *data;
+    if (std::filesystem::path(path).extension() == ".cpt")
     {
-        switch (numChannels)
-        {
-            case 1:texture->m_format = GL_ALPHA;
-                break;
-            case 3:texture->m_format = GL_RGB;
-                break;
-            case 4:texture->m_format = GL_RGBA;
-                break;
-            default:break;
-        }
-    }
+        stopWatch.Start();
 
-    glGenTextures(1, &texture->m_id);
-    glBindTexture(GL_TEXTURE_2D, texture->m_id);
-    glTexImage2D(GL_TEXTURE_2D,
-                 0,
-                 GL_COMPRESSED_RGB,
-                 texture->m_width,
-                 texture->m_height,
-                 0,
-                 texture->m_format,
-                 GL_UNSIGNED_BYTE,
-                 data);
+        std::ifstream fs(path, std::ios::in | std::ios::binary);
+
+        CPTFileHead cptFileHead{};
+        fs.read((char *)&cptFileHead, sizeof(CPTFileHead));
+
+        data = (unsigned char *)malloc(cptFileHead.size);
+        fs.read((char *)data, cptFileHead.size);
+        fs.close();
+
+        texture->m_format = cptFileHead.format;
+        texture->m_width = cptFileHead.width;
+        texture->m_height = cptFileHead.height;
+
+        stopWatch.Stop();
+        auto loadFromDiskCost = stopWatch.GetMilliseconds();
+
+        glGenTextures(1, &texture->m_id);
+        glBindTexture(GL_TEXTURE_2D, texture->m_id);
+
+        stopWatch.Start();
+        glCompressedTexImage2D(GL_TEXTURE_2D,
+                               0,
+                               texture->m_format,
+                               texture->m_width,
+                               texture->m_height,
+                               0,
+                               cptFileHead.size,
+                               data);
+        stopWatch.Stop();
+        auto loadFromMemoryCost = stopWatch.GetMilliseconds();
+    } else
+    {
+        stopWatch.Start();
+
+        int numChannels;
+        data = stbi_load(path.c_str(), &texture->m_width, &texture->m_height, &numChannels, 0);
+
+        auto pixelFormat = GL_RGB;
+        if (data != nullptr)
+        {
+            switch (numChannels)
+            {
+                case 1:
+                    pixelFormat = GL_ALPHA;
+                    break;
+                case 3:
+                    pixelFormat = GL_RGB;
+                    texture->m_format = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+                    break;
+                case 4:
+                    pixelFormat = GL_RGBA;
+                    texture->m_format = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        stopWatch.Stop();
+        auto loadFromDiskCost = stopWatch.GetMilliseconds();
+
+        glGenTextures(1, &texture->m_id);
+        glBindTexture(GL_TEXTURE_2D, texture->m_id);
+
+        stopWatch.Start();
+        glTexImage2D(GL_TEXTURE_2D,
+                     texture->m_mipmapLevel,
+                     texture->m_format,
+                     texture->m_width,
+                     texture->m_height,
+                     0,
+                     pixelFormat,
+                     GL_UNSIGNED_BYTE,
+                     data);
+        stopWatch.Stop();
+        auto loadFromMemoryCost = stopWatch.GetMilliseconds();
+
+        stbi_image_free(data);
+    }
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
-    stbi_image_free(data);
-
     return texture;
+}
+
+void Texture2D::CompressImageFile(const std::string &path, const std::string &savePath)
+{
+    auto texture = LoadFromFile(path);
+
+    int compressSuccess, compressSize, compressFormat;
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_COMPRESSED, &compressSuccess);
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_COMPRESSED_IMAGE_SIZE, &compressSize);
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, &compressFormat);
+
+    void *image = malloc(compressSize);
+    glGetCompressedTexImage(GL_TEXTURE_2D, 0, image);
+
+    CPTFileHead cptFileHead{};
+    cptFileHead.extension[0] = 'c';
+    cptFileHead.extension[1] = 'p';
+    cptFileHead.extension[2] = 't';
+    cptFileHead.mipmapLevel = texture->m_mipmapLevel;
+    cptFileHead.width = texture->m_width;
+    cptFileHead.height = texture->m_height;
+    cptFileHead.format = compressFormat;
+    cptFileHead.size = compressSize;
+
+    std::ofstream fileStream(savePath, std::ios::out | std::ios::binary);
+    fileStream.write((char *)&cptFileHead, sizeof(CPTFileHead));
+    fileStream.write((char *)image, compressSize);
+    fileStream.close();
 }

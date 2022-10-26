@@ -1,6 +1,8 @@
 add_library(paimon STATIC
-    renderer/texture2d.cpp
-    renderer/texture2d.h
+    renderer/Texture2D.cpp
+    renderer/Texture2D.h
+
+    utility/StopWatch.h
     )
 
 target_precompile_headers(paimon PUBLIC

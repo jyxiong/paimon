@@ -5,10 +5,12 @@
 #include "glm/gtx/transform2.hpp"
 #include "glm/gtx/euler_angles.hpp"
 
-#include "renderer/texture2d.h"
+#include "renderer/Texture2D.h"
 
-#include "vertexData.h"
-#include "shaderSource.h"
+#include "VertexData.h"
+#include "ShaderSource.h"
+
+using namespace Paimon;
 
 static void errorCallback(int error, const char *description)
 {
@@ -59,21 +61,25 @@ void compileShader()
 
 void createTexture(const std::string &path)
 {
-    auto texture = Paimon::Texture2D::LoadFromFile(path);
+    auto texture = Texture2D::LoadFromFile(path);
 }
 
 int main()
 {
     initOpengl();
 
-    createTexture("../asset/texture/urban.jpg");
+    std::string filePath("../asset/texture/urban.jpg");
+    std::string savePath("../asset/texture/urban.cpt");
+    Texture2D::CompressImageFile(filePath, savePath);
+
+    createTexture("../asset/texture/urban.cpt");
 
     compileShader();
 
     mvpLocation = glGetUniformLocation(program, "u_mvp");
     positionLocation = glGetAttribLocation(program, "a_pos");
     uvLocation = glGetAttribLocation(program, "a_uv");
-    textureLocation= glGetUniformLocation(program, "u_diffuse_texture");
+    textureLocation = glGetUniformLocation(program, "u_diffuse_texture");
 
     while (!glfwWindowShouldClose(window))
     {
