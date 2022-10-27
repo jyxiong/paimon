@@ -6,9 +6,8 @@
 #include "glm/gtx/euler_angles.hpp"
 
 #include "renderer/MeshFilter.h"
+#include "renderer/Shader.h"
 #include "renderer/Texture2D.h"
-
-#include "ShaderSource.h"
 
 using namespace Paimon;
 
@@ -18,7 +17,7 @@ static void errorCallback(int error, const char *description)
 }
 
 GLFWwindow *window;
-GLuint vertexShader, fragmentShader, program;
+GLuint vertexShader, fragmentShader;
 GLint mvpLocation, positionLocation, colorLocation, uvLocation, textureLocation;
 GLuint kVBO, kEBO;
 GLuint kVAO;
@@ -50,22 +49,6 @@ void InitOpengl()
     glfwMakeContextCurrent(window);
     gladLoadGL(glfwGetProcAddress);
     glfwSwapInterval(1);
-}
-
-void CompileShader()
-{
-    vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderText, nullptr);
-    glCompileShader(vertexShader);
-
-    fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderText, nullptr);
-    glCompileShader(fragmentShader);
-
-    program = glCreateProgram();
-    glAttachShader(program, vertexShader);
-    glAttachShader(program, fragmentShader);
-    glLinkProgram(program);
 }
 
 void createTexture(const std::filesystem::path &path)
@@ -130,13 +113,13 @@ int main()
 
     createTexture("../asset/texture/urban.cpt");
 
-    CompileShader();
+    auto shader = Shader::Find("../asset/shader/unlit");
 
-    mvpLocation = glGetUniformLocation(program, "u_mvp");
-    positionLocation = glGetAttribLocation(program, "a_pos");
-    colorLocation = glGetAttribLocation(program, "a_color");
-    uvLocation = glGetAttribLocation(program, "a_uv");
-    textureLocation = glGetUniformLocation(program, "u_diffuse_texture");
+    mvpLocation = glGetUniformLocation(shader->GetID(), "u_mvp");
+    positionLocation = glGetAttribLocation(shader->GetID(), "a_pos");
+    colorLocation = glGetAttribLocation(shader->GetID(), "a_color");
+    uvLocation = glGetAttribLocation(shader->GetID(), "a_uv");
+    textureLocation = glGetUniformLocation(shader->GetID(), "u_diffuse_texture");
 
     GeneratorVertexArrayObject();
     GeneratorBufferObject();
@@ -171,7 +154,7 @@ int main()
 
         mvp = projection * view * model;
 
-        glUseProgram(program);
+        glUseProgram(shader->GetID());
         {
             glEnable(GL_DEPTH_TEST);
             glEnable(GL_CULL_FACE);

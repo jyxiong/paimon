@@ -1,7 +1,7 @@
 #pragma once
 
+#include <filesystem>
 #include <memory>
-#include <string>
 
 namespace Paimon
 {
@@ -26,8 +26,8 @@ public:
     [[nodiscard]] unsigned int GetID() const { return m_id; }
     [[nodiscard]] unsigned int GetFormat() const { return m_format; }
 
-    static std::shared_ptr<Texture2D> LoadFromFile(const std::string &path);
-    static void CompressImageFile(const std::string &path, const std::string &savePath);
+    static std::shared_ptr<Texture2D> LoadFromFile(const std::filesystem::path &path);
+    static void CompressImageFile(const std::filesystem::path &path, const std::filesystem::path &savePath);
 
 private:
     int m_width{};

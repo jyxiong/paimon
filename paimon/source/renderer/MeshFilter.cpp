@@ -10,7 +10,7 @@ MeshFilter::MeshFilter()
 
 }
 
-void MeshFilter::LoadMesh(const std::string &path)
+void MeshFilter::LoadMesh(const std::filesystem::path &path)
 {
     std::ifstream inputFileStream(path, std::ios::in | std::ios::binary);
 

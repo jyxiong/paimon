@@ -59,7 +59,7 @@ void compileShader()
     glLinkProgram(program);
 }
 
-void createTexture(const std::string &path)
+void createTexture(const std::filesystem::path &path)
 {
     auto texture = Texture2D::LoadFromFile(path);
 }
@@ -68,8 +68,8 @@ int main()
 {
     initOpengl();
 
-    std::string filePath("../asset/texture/urban.jpg");
-    std::string savePath("../asset/texture/urban.cpt");
+    std::filesystem::path filePath("../asset/texture/urban.jpg");
+    std::filesystem::path savePath("../asset/texture/urban.cpt");
     Texture2D::CompressImageFile(filePath, savePath);
 
     createTexture("../asset/texture/urban.cpt");

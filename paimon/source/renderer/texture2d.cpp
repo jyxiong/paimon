@@ -1,6 +1,5 @@
 #include "Texture2D.h"
 
-#include <filesystem>
 #include <fstream>
 #include <memory>
 
@@ -18,7 +17,7 @@ Texture2D::Texture2D(int mipmapLevel)
 
 }
 
-std::shared_ptr<Texture2D> Texture2D::LoadFromFile(const std::string &path)
+std::shared_ptr<Texture2D> Texture2D::LoadFromFile(const std::filesystem::path &path)
 {
     auto texture = std::make_shared<Texture2D>();
 
@@ -26,7 +25,7 @@ std::shared_ptr<Texture2D> Texture2D::LoadFromFile(const std::string &path)
 
     StopWatch stopWatch;
     unsigned char *data;
-    if (std::filesystem::path(path).extension() == ".cpt")
+    if (path.extension() == ".cpt")
     {
         stopWatch.Start();
 
@@ -65,7 +64,7 @@ std::shared_ptr<Texture2D> Texture2D::LoadFromFile(const std::string &path)
         stopWatch.Start();
 
         int numChannels;
-        data = stbi_load(path.c_str(), &texture->m_width, &texture->m_height, &numChannels, 0);
+        data = stbi_load(path.string().c_str(), &texture->m_width, &texture->m_height, &numChannels, 0);
 
         auto pixelFormat = GL_RGB;
         if (data != nullptr)
@@ -116,7 +115,7 @@ std::shared_ptr<Texture2D> Texture2D::LoadFromFile(const std::string &path)
     return texture;
 }
 
-void Texture2D::CompressImageFile(const std::string &path, const std::string &savePath)
+void Texture2D::CompressImageFile(const std::filesystem::path &path, const std::filesystem::path &savePath)
 {
     auto texture = LoadFromFile(path);
 

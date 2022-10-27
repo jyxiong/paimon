@@ -1,7 +1,7 @@
 #pragma once
 
+#include <filesystem>
 #include <memory>
-#include <string>
 #include <vector>
 
 #include "glm/glm.hpp"
@@ -36,7 +36,7 @@ public:
 
     std::shared_ptr<Mesh> GetMesh() { return m_mesh; };
 
-    void LoadMesh(const std::string &path);
+    void LoadMesh(const std::filesystem::path &path);
 
 private:
     std::shared_ptr<Mesh> m_mesh;
