@@ -3,6 +3,8 @@
 #include <fstream>
 #include "glad/gl.h"
 
+#include "utils/Application.h"
+
 using namespace Paimon;
 
 std::unordered_map<std::string, std::shared_ptr<Shader>> Shader::s_shaders;
@@ -11,13 +13,10 @@ void Shader::Parse(const std::filesystem::path &path)
 {
     m_name = path.filename().string();
 
-    auto vsPath = path.string() + ".vs";
-    auto fsPath = path.string() + ".fs";
-
-    std::ifstream vsStream(vsPath);
+    std::ifstream vsStream((Application::GetDataPath() / path).string() + ".vs");
     std::string vs((std::istreambuf_iterator<char>(vsStream)), std::istreambuf_iterator<char>());
 
-    std::ifstream fsStream(fsPath);
+    std::ifstream fsStream((Application::GetDataPath() / path).string() + ".fs");
     std::string fs((std::istreambuf_iterator<char>(fsStream)), std::istreambuf_iterator<char>());
 
     CreateProgram(vs, fs);

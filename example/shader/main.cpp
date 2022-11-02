@@ -8,6 +8,7 @@
 #include "renderer/MeshFilter.h"
 #include "renderer/Shader.h"
 #include "renderer/Texture2D.h"
+#include "utils/application.h"
 
 using namespace Paimon;
 
@@ -106,14 +107,15 @@ void GeneratorBufferObject()
 
 int main()
 {
+    Application::SetDataPath("../asset");
     InitOpengl();
 
     meshFilter = std::make_shared<MeshFilter>();
-    meshFilter->LoadMesh("../asset/model/cube.mesh");
+    meshFilter->LoadMesh("model/cube.mesh");
 
-    createTexture("../asset/texture/urban.cpt");
+    createTexture("texture/urban.cpt");
 
-    auto shader = Shader::Find("../asset/shader/unlit");
+    auto shader = Shader::Find("shader/unlit");
 
     mvpLocation = glGetUniformLocation(shader->GetID(), "u_mvp");
     positionLocation = glGetAttribLocation(shader->GetID(), "a_pos");

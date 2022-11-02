@@ -6,6 +6,7 @@
 #include "glm/gtx/euler_angles.hpp"
 
 #include "renderer/Texture2D.h"
+#include "utils/application.h"
 
 #include "VertexData.h"
 #include "ShaderSource.h"
@@ -66,13 +67,14 @@ void createTexture(const std::filesystem::path &path)
 
 int main()
 {
+    Application::SetDataPath("../asset");
     initOpengl();
 
-    std::filesystem::path filePath("../asset/texture/urban.jpg");
-    std::filesystem::path savePath("../asset/texture/urban.cpt");
+    std::filesystem::path filePath("texture/urban.jpg");
+    std::filesystem::path savePath("texture/urban.cpt");
     Texture2D::CompressImageFile(filePath, savePath);
 
-    createTexture("../asset/texture/urban.cpt");
+    createTexture("texture/urban.cpt");
 
     compileShader();
 

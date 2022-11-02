@@ -2,6 +2,8 @@
 
 #include <fstream>
 
+#include "utils/Application.h"
+
 using namespace Paimon;
 
 MeshFilter::MeshFilter()
@@ -12,9 +14,9 @@ MeshFilter::MeshFilter()
 
 void MeshFilter::LoadMesh(const std::filesystem::path &path)
 {
-    std::ifstream inputFileStream(path, std::ios::in | std::ios::binary);
+    std::ifstream inputFileStream(Application::GetDataPath() / path, std::ios::in | std::ios::binary);
 
-    MeshFileHead meshFIleHead;
+    MeshFileHead meshFIleHead{};
     inputFileStream.read((char *)&meshFIleHead, sizeof(MeshFileHead));
 
     m_mesh->vertices.resize(meshFIleHead.numVertex);

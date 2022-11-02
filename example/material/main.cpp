@@ -5,11 +5,11 @@
 #include "glm/gtx/transform2.hpp"
 #include "glm/gtx/euler_angles.hpp"
 
+#include "renderer/Material.h"
 #include "renderer/MeshFilter.h"
+#include "renderer/Shader.h"
 #include "renderer/Texture2D.h"
 #include "utils/application.h"
-
-#include "ShaderSource.h"
 
 using namespace Paimon;
 
@@ -19,12 +19,10 @@ static void errorCallback(int error, const char *description)
 }
 
 GLFWwindow *window;
-GLuint vertexShader, fragmentShader, program;
-GLint mvpLocation, positionLocation, colorLocation, uvLocation, textureLocation;
+GLint mvpLocation, positionLocation, colorLocation, uvLocation;
 GLuint kVBO, kEBO;
 GLuint kVAO;
 
-std::shared_ptr<Texture2D> texture = nullptr;
 std::shared_ptr<MeshFilter> meshFilter = nullptr;
 
 void InitOpengl()
@@ -51,27 +49,6 @@ void InitOpengl()
     glfwMakeContextCurrent(window);
     gladLoadGL(glfwGetProcAddress);
     glfwSwapInterval(1);
-}
-
-void CompileShader()
-{
-    vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderText, nullptr);
-    glCompileShader(vertexShader);
-
-    fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderText, nullptr);
-    glCompileShader(fragmentShader);
-
-    program = glCreateProgram();
-    glAttachShader(program, vertexShader);
-    glAttachShader(program, fragmentShader);
-    glLinkProgram(program);
-}
-
-void createTexture(const std::filesystem::path &path)
-{
-    texture = Texture2D::LoadFromFile(path);
 }
 
 /// 创建VAO
@@ -130,15 +107,14 @@ int main()
     meshFilter = std::make_shared<MeshFilter>();
     meshFilter->LoadMesh("model/cube.mesh");
 
-    createTexture("texture/urban.cpt");
+    auto material = std::make_shared<Material>();
+    material->Parse("material/cube.mat");
 
-    CompileShader();
-
-    mvpLocation = glGetUniformLocation(program, "u_mvp");
-    positionLocation = glGetAttribLocation(program, "a_pos");
-    colorLocation = glGetAttribLocation(program, "a_color");
-    uvLocation = glGetAttribLocation(program, "a_uv");
-    textureLocation = glGetUniformLocation(program, "u_diffuse_texture");
+    auto programID = material->GetShader()->GetID();
+    mvpLocation = glGetUniformLocation(programID, "u_mvp");
+    positionLocation = glGetAttribLocation(programID, "a_pos");
+    colorLocation = glGetAttribLocation(programID, "a_color");
+    uvLocation = glGetAttribLocation(programID, "a_uv");
 
     GeneratorVertexArrayObject();
     GeneratorBufferObject();
@@ -173,20 +149,28 @@ int main()
 
         mvp = projection * view * model;
 
-        glUseProgram(program);
+        glUseProgram(programID);
         {
             glEnable(GL_DEPTH_TEST);
             glEnable(GL_CULL_FACE);
 
             glUniformMatrix4fv(mvpLocation, 1, GL_FALSE, &mvp[0][0]);
 
-            //贴图设置
-            //激活纹理单元0
-            glActiveTexture(GL_TEXTURE0);
-            //将加载的图片纹理句柄，绑定到纹理单元0的Texture2D上。
-            glBindTexture(GL_TEXTURE_2D, texture->GetID());
-            //设置Shader程序从纹理单元0读取颜色数据
-            glUniform1i(textureLocation, 0);
+            //拿到保存的Texture
+            auto textures = material->GetTextures();
+            int textureIndex = 0;
+            for (auto &texture : textures)
+            {
+                auto textureLocation = glGetUniformLocation(programID, texture.first.c_str());
+                //激活纹理单元0
+                glActiveTexture(GL_TEXTURE0 + textureIndex);
+                //将加载的图片纹理句柄，绑定到纹理单元0的Texture2D上。
+                glBindTexture(GL_TEXTURE_2D, texture.second->GetID());
+                //设置Shader程序从纹理单元0读取颜色数据
+                glUniform1i(textureLocation, textureIndex);
+
+                textureIndex++;
+            }
 
             glBindVertexArray(kVAO);
             {

@@ -7,7 +7,8 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-#include "utility/StopWatch.h"
+#include "utils/Application.h"
+#include "utils/StopWatch.h"
 
 using namespace Paimon;
 
@@ -29,7 +30,7 @@ std::shared_ptr<Texture2D> Texture2D::LoadFromFile(const std::filesystem::path &
     {
         stopWatch.Start();
 
-        std::ifstream inputFileStream(path, std::ios::in | std::ios::binary);
+        std::ifstream inputFileStream(Application::GetDataPath() / path, std::ios::in | std::ios::binary);
 
         CPTFileHead cptFileHead{};
         inputFileStream.read((char *)&cptFileHead, sizeof(CPTFileHead));
@@ -64,7 +65,7 @@ std::shared_ptr<Texture2D> Texture2D::LoadFromFile(const std::filesystem::path &
         stopWatch.Start();
 
         int numChannels;
-        data = stbi_load(path.string().c_str(), &texture->m_width, &texture->m_height, &numChannels, 0);
+        data = stbi_load((Application::GetDataPath() / path).string().c_str(), &texture->m_width, &texture->m_height, &numChannels, 0);
 
         auto pixelFormat = GL_RGB;
         if (data != nullptr)
@@ -137,7 +138,7 @@ void Texture2D::CompressImageFile(const std::filesystem::path &path, const std::
     cptFileHead.format = compressFormat;
     cptFileHead.size = compressSize;
 
-    std::ofstream outputFileStream(savePath, std::ios::out | std::ios::binary);
+    std::ofstream outputFileStream(Application::GetDataPath() / savePath, std::ios::out | std::ios::binary);
     outputFileStream.write((char *)&cptFileHead, sizeof(CPTFileHead));
     outputFileStream.write((char *)image, compressSize);
     outputFileStream.close();
