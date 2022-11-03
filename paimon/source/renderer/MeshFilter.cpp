@@ -6,14 +6,22 @@
 
 using namespace Paimon;
 
-MeshFilter::MeshFilter()
-    : m_mesh(std::make_shared<Mesh>())
+RTTR_REGISTRATION
+{
+    rttr::registration::class_<MeshFilter>("MeshFilter")
+        .constructor<GameObject>()(rttr::policy::ctor::as_raw_ptr);
+}
+
+MeshFilter::MeshFilter(GameObject &gameObject)
+    : Component(gameObject)
 {
 
 }
 
 void MeshFilter::LoadMesh(const std::filesystem::path &path)
 {
+    m_mesh = std::make_shared<Mesh>();
+
     std::ifstream inputFileStream(Application::GetDataPath() / path, std::ios::in | std::ios::binary);
 
     MeshFileHead meshFIleHead{};

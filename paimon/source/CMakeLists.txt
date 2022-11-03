@@ -1,4 +1,9 @@
 add_library(paimon STATIC
+    component/Component.cpp
+    component/Component.h
+    component/GameObject.cpp
+    component/GameObject.h
+
     renderer/Material.cpp
     renderer/Material.h
     renderer/MeshFilter.cpp
@@ -11,7 +16,7 @@ add_library(paimon STATIC
     renderer/Texture2D.h
 
     utils/Application.cpp
-    utils/Application.h)
+    utils/Application.h component/Transform.cpp component/Transform.h)
 
 target_precompile_headers(paimon PUBLIC
     pch.h
@@ -24,6 +29,7 @@ target_link_libraries(paimon PUBLIC
     glad
     glfw
     glm
-    stb
     rapidxml
+    rttr_core_lib
+    stb
     )

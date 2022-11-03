@@ -2,16 +2,42 @@
 
 #include "glad/gl.h"
 #include "glm/gtc/type_ptr.hpp"
+#include <glm/gtx/transform2.hpp>
+#include <glm/gtx/euler_angles.hpp>
 
-#include "renderer/Material.h"
-#include "renderer/MeshFilter.h"
-#include "renderer/Shader.h"
-#include "renderer/Texture2D.h"
+#include "component/Transform.h"
+#include "Material.h"
+#include "MeshFilter.h"
+#include "Shader.h"
+#include "Texture2D.h"
 
 using namespace Paimon;
 
+RTTR_REGISTRATION
+{
+    rttr::registration::class_<MeshRenderer>("MeshRenderer")
+        .constructor<GameObject>()(rttr::policy::ctor::as_raw_ptr);
+}
+
+MeshRenderer::MeshRenderer(GameObject &gameObject)
+    : Component(gameObject)
+{
+
+}
+
 void MeshRenderer::Render()
 {
+    auto transform = std::dynamic_pointer_cast<Transform>(GetGameObject().GetComponent("Transform"));
+    auto translation = glm::translate(transform->GetPosition());
+    auto rotation = transform->GetRotation();
+    auto eulerAngleYXZ =
+        glm::eulerAngleYXZ(glm::radians(rotation.y), glm::radians(rotation.x), glm::radians(rotation.z));
+    auto scale = glm::scale(transform->GetScale());
+    auto model = translation * scale * eulerAngleYXZ;
+    auto mvp = m_projection * m_view * model;
+
+    auto meshFilter = std::dynamic_pointer_cast<MeshFilter>(GetGameObject().GetComponent("MeshFilter"));
+
     auto programID = m_material->GetShader()->GetID();
 
     if (m_vao == 0)
@@ -23,15 +49,15 @@ void MeshRenderer::Render()
         glGenBuffers(1, &m_vbo);
         glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
         glBufferData(GL_ARRAY_BUFFER,
-                     m_meshFilter->GetMesh()->vertices.size() * sizeof(Vertex),
-                     m_meshFilter->GetMesh()->vertices.data(),
+                     meshFilter->GetMesh()->vertices.size() * sizeof(Vertex),
+                     meshFilter->GetMesh()->vertices.data(),
                      GL_STATIC_DRAW);
 
         glGenBuffers(1, &m_ebo);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ebo);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-                     m_meshFilter->GetMesh()->indices.size() * sizeof(unsigned short),
-                     m_meshFilter->GetMesh()->indices.data(),
+                     meshFilter->GetMesh()->indices.size() * sizeof(unsigned short),
+                     meshFilter->GetMesh()->indices.data(),
                      GL_STATIC_DRAW);
 
         glGenVertexArrays(1, &m_vao);
@@ -58,7 +84,7 @@ void MeshRenderer::Render()
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
 
-        glUniformMatrix4fv(glGetUniformLocation(programID, "u_mvp"), 1, GL_FALSE, glm::value_ptr<>(m_mvp));
+        glUniformMatrix4fv(glGetUniformLocation(programID, "u_mvp"), 1, GL_FALSE, glm::value_ptr<>(mvp));
 
         int textureIndex = 0;
         for (auto &texture : m_material->GetTextures())
@@ -73,7 +99,7 @@ void MeshRenderer::Render()
 
         glBindVertexArray(m_vao);
         {
-            glDrawElements(GL_TRIANGLES, m_meshFilter->GetMesh()->indices.size(), GL_UNSIGNED_SHORT, 0);
+            glDrawElements(GL_TRIANGLES, meshFilter->GetMesh()->indices.size(), GL_UNSIGNED_SHORT, 0);
         }
         glBindVertexArray(0);
     }

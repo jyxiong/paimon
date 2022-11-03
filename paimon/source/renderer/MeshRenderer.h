@@ -3,35 +3,38 @@
 #include <memory>
 #include "glm/glm.hpp"
 
+#include "component/Component.h"
+#include "component/GameObject.h"
+
 namespace Paimon
 {
 
 class Material;
 class MeshFilter;
 
-class MeshRenderer
+class MeshRenderer : public Component
 {
 public:
-    MeshRenderer() = default;
-    ~MeshRenderer() = default;
+    explicit MeshRenderer(GameObject &gameObject);
+    ~MeshRenderer() override = default;
 
     void SetMaterial(const std::shared_ptr<Material> &material) { m_material = material; }
-    void SetMeshFilter(const std::shared_ptr<MeshFilter> &meshFilter) { m_meshFilter = meshFilter; }
-    void SetMVP(const glm::mat4 &mvp) { m_mvp = mvp; }
-
     std::shared_ptr<Material> GetMaterial() { return m_material; }
-    std::shared_ptr<MeshFilter> GetMeshFilter() { return m_meshFilter; }
+
+    void SetView(const glm::mat4 &view) { m_view = view; };
+    void SetProjection(const glm::mat4 &projection) { m_projection = projection; };
 
     void Render();
 
 private:
     std::shared_ptr<Material> m_material;
-    std::shared_ptr<MeshFilter> m_meshFilter;
-    glm::mat4 m_mvp;
 
-    unsigned int m_vbo;
-    unsigned int m_ebo;
-    unsigned int m_vao;
+    glm::mat4 m_view{};
+    glm::mat4 m_projection{};
+
+    unsigned int m_vbo{};
+    unsigned int m_ebo{};
+    unsigned int m_vao{};
 
 }; // class MeshRenderer
 

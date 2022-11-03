@@ -6,6 +6,9 @@
 
 #include "glm/glm.hpp"
 
+#include "component/Component.h"
+#include "component/GameObject.h"
+
 namespace Paimon
 {
 struct Vertex
@@ -28,11 +31,11 @@ struct Mesh
     std::vector<unsigned short> indices;
 }; // struct Mesh
 
-class MeshFilter
+class MeshFilter : public Component
 {
 public:
-    MeshFilter();
-    ~MeshFilter() = default;
+    explicit MeshFilter(GameObject &gameObject);
+    ~MeshFilter() override = default;
 
     std::shared_ptr<Mesh> GetMesh() { return m_mesh; };
 
