@@ -6,6 +6,7 @@
 #include <glm/gtx/euler_angles.hpp>
 
 #include "component/Transform.h"
+#include "Camera.h"
 #include "Material.h"
 #include "MeshFilter.h"
 #include "Shader.h"
@@ -27,6 +28,20 @@ MeshRenderer::MeshRenderer(GameObject &gameObject)
 
 void MeshRenderer::Render()
 {
+    auto currentCamera = CameraManager::GetCurrentCamera();
+    if (currentCamera == nullptr)
+    {
+        return;
+    }
+
+    if ((currentCamera->GetCullingMask() & GetGameObject().GetLayer()) == 0){
+        return;
+    }
+
+
+    auto view = currentCamera->GetView();
+    auto projection = currentCamera->GetProjection();
+
     auto transform = std::dynamic_pointer_cast<Transform>(GetGameObject().GetComponent("Transform"));
     auto translation = glm::translate(transform->GetPosition());
     auto rotation = transform->GetRotation();
@@ -34,7 +49,7 @@ void MeshRenderer::Render()
         glm::eulerAngleYXZ(glm::radians(rotation.y), glm::radians(rotation.x), glm::radians(rotation.z));
     auto scale = glm::scale(transform->GetScale());
     auto model = translation * scale * eulerAngleYXZ;
-    auto mvp = m_projection * m_view * model;
+    auto mvp = projection * view * model;
 
     auto meshFilter = std::dynamic_pointer_cast<MeshFilter>(GetGameObject().GetComponent("MeshFilter"));
 

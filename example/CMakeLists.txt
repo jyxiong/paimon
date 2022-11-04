@@ -1,7 +1,4 @@
-add_subdirectory(component)
-add_subdirectory(material)
-add_subdirectory(mesh)
-add_subdirectory(renderer)
-add_subdirectory(shader)
-add_subdirectory(texture)
-add_subdirectory(vao)
+add_executable(example
+    main.cpp
+    )
+target_link_libraries(example PUBLIC paimon)

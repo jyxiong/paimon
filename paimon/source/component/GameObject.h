@@ -20,6 +20,9 @@ public:
     void SetName(const std::string &name) { m_name = name; }
     std::string &GetName() { return m_name; }
 
+    void SetLayer(unsigned char layer) { m_layer = layer; }
+    unsigned char GetLayer() const { return m_layer; }
+
     std::shared_ptr<Component> AddComponent(const std::string &typeName);
 
     template<typename T>
@@ -44,6 +47,8 @@ public:
 
 private:
     std::string m_name;
+
+    unsigned char m_layer{};
 
     std::unordered_map<std::string, std::vector<std::shared_ptr<Component>>> m_components;
 

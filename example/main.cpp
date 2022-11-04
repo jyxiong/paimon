@@ -1,15 +1,13 @@
-#include <stdlib.h>
-#include <stdio.h>
+#include <cstdlib>
+#include <cstdio>
 
 #include "glad/gl.h"
 #include "GLFW/glfw3.h"
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/transform2.hpp>
-#include <glm/gtx/euler_angles.hpp>
 
 #include "component/GameObject.h"
 #include "component/Transform.h"
+#include "renderer/Camera.h"
 #include "renderer/Material.h"
 #include "renderer/MeshFilter.h"
 #include "renderer/MeshRenderer.h"
@@ -21,14 +19,19 @@ GLFWwindow *window;
 
 using namespace Paimon;
 
-static void errorCallback(int error, const char *description)
+static void ErrorCallback(int error, const char *description)
 {
     fprintf(stderr, "Error: %s\n", description);
 }
 
+static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
+{
+
+}
+
 void InitOpengl()
 {
-    glfwSetErrorCallback(errorCallback);
+    glfwSetErrorCallback(ErrorCallback);
 
     if (!glfwInit())
         exit(EXIT_FAILURE);
@@ -57,8 +60,8 @@ int main()
     Application::SetDataPath("../asset");
     InitOpengl();
 
-    //创建GameObject
-    auto go = std::make_shared<GameObject>("something");
+    // fish soup
+    auto go = std::make_shared<GameObject>("fish soup");
 
     auto transform = go->AddComponent<Transform>();
 
@@ -69,6 +72,29 @@ int main()
     auto material = std::make_shared<Material>();
     material->Parse("material/fishsoup_pot.mat");
     meshRenderer->SetMaterial(material);
+
+    // camera
+    auto cameraObject = std::make_shared<GameObject>("camera");
+
+    auto cameraTransformComponent = cameraObject->AddComponent<Transform>();
+    cameraTransformComponent->SetPosition(glm::vec3(0, 0, 10));
+
+    auto cameraComponent = cameraObject->AddComponent<Camera>();
+    cameraComponent->SetDepth(0);
+
+    // camera2
+    auto cameraObject2 = std::make_shared<GameObject>("camera2");
+
+    auto cameraTransformComponent2 = cameraObject2->AddComponent<Transform>();
+    cameraTransformComponent2->SetPosition(glm::vec3(1, 0, 10));
+
+    auto cameraComponent2 = cameraObject2->AddComponent<Camera>();
+    cameraComponent2->SetDepth(1);
+    cameraComponent2->SetCullingMask(0x02);
+    cameraComponent2->SetClearFlag(GL_DEPTH_BUFFER_BIT);
+
+    CameraManager::SetCamera(cameraComponent);
+    CameraManager::SetCamera(cameraComponent2);
 
     while (!glfwWindowShouldClose(window))
     {
@@ -88,12 +114,15 @@ int main()
         rotation.y = rotateEulerAngle;
         transform->SetRotation(rotation);
 
-        auto view = glm::lookAt(glm::vec3(0, 0, 10), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
-        auto projection = glm::perspective(glm::radians(60.f), ratio, 1.f, 1000.f);
+        cameraComponent->SetView(glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+        cameraComponent->SetProjection(glm::radians(60.f), ratio, 1.f, 1000.f);
 
-        meshRenderer->SetView(view);
-        meshRenderer->SetProjection(projection);
-        meshRenderer->Render();
+        cameraComponent2->SetView(glm::vec3(cameraTransformComponent2->GetPosition().x, 0, 0), glm::vec3(0, 1, 0));
+        cameraComponent2->SetProjection(glm::radians(60.f), ratio, 1.f, 1000.f);
+
+        CameraManager::Foreach([&]() -> void {
+            meshRenderer->Render();
+        });
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -102,5 +131,6 @@ int main()
     glfwDestroyWindow(window);
 
     glfwTerminate();
-    exit(EXIT_SUCCESS);
+
+    return 0;
 }
