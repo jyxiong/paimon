@@ -2,6 +2,7 @@
 
 #include <functional>
 
+#include "glad/gl.h"
 #include "glm/glm.hpp"
 
 #include "component/Component.h"
@@ -37,11 +38,11 @@ private:
     glm::mat4 m_view{};
     glm::mat4 m_projection{};
 
-    glm::vec4 m_clearColor{};
-    unsigned int m_clearFlag{};
+    glm::vec4 m_clearColor{ 49.f / 255, 77.f / 255, 121.f / 255, 1.f };
+    unsigned int m_clearFlag{ GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT };
 
     unsigned char m_depth{};
-    unsigned char m_cullingMask{};
+    unsigned char m_cullingMask{ 0x01 };
 
 }; // class Camera
 

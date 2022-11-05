@@ -48,7 +48,7 @@ public:
 private:
     std::string m_name;
 
-    unsigned char m_layer{};
+    unsigned char m_layer{ 0x01 };
 
     std::unordered_map<std::string, std::vector<std::shared_ptr<Component>>> m_components;
 

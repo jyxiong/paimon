@@ -3,7 +3,8 @@
 
 #include "glad/gl.h"
 #include "GLFW/glfw3.h"
-#include <glm/glm.hpp>
+#include "glm/glm.hpp"
+#include "glm/gtx/transform.hpp"
 
 #include "component/GameObject.h"
 #include "component/Transform.h"
@@ -29,6 +30,21 @@ static void ErrorCallback(int error, const char *description)
 static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
     Input::RecordKey(static_cast<KeyCode>(key), static_cast<KeyAction>(action));
+}
+
+static void MouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
+{
+    Input::RecordMouseButton(static_cast<MouseButton>(button), static_cast<MouseButtonAction>(action));
+}
+
+static void MouseMoveCallback(GLFWwindow *window, double x, double y)
+{
+    Input::RecordMousePosition(x, y);
+}
+
+static void MouseScrollCallback(GLFWwindow *window, double x, double y)
+{
+    Input::RecordMouseScroll(y);
 }
 
 void InitOpengl()
@@ -57,6 +73,9 @@ void InitOpengl()
     glfwSwapInterval(1);
 
     glfwSetKeyCallback(window, KeyCallback);
+    glfwSetMouseButtonCallback(window, MouseButtonCallback);
+    glfwSetScrollCallback(window, MouseScrollCallback);
+    glfwSetCursorPosCallback(window, MouseMoveCallback);
 }
 
 int main()
@@ -100,18 +119,25 @@ int main()
     CameraManager::SetCamera(cameraComponent);
     CameraManager::SetCamera(cameraComponent2);
 
+    //上一帧的鼠标位置
+    auto mousePosition = Input::GetMousePosition();
+
     while (!glfwWindowShouldClose(window))
     {
         float ratio;
         int width, height;
 
         glfwGetFramebufferSize(window, &width, &height);
+        glViewport(0, 0, width, height);
         ratio = (float)width / (float)height;
 
-        glViewport(0, 0, width, height);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glClearColor(49.f / 255, 77.f / 255, 121.f / 255, 1.f);
+        cameraComponent->SetView(glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+        cameraComponent->SetProjection(glm::radians(60.f), ratio, 1.f, 1000.f);
 
+        cameraComponent2->SetView(glm::vec3(cameraTransformComponent2->GetPosition().x, 0, 0), glm::vec3(0, 1, 0));
+        cameraComponent2->SetProjection(glm::radians(60.f), ratio, 1.f, 1000.f);
+
+        // transform model
         if (Input::IsKeyDown(KeyCode::R))
         {
             static float rotateEulerAngle = 0.f;
@@ -121,11 +147,22 @@ int main()
             transform->SetRotation(rotation);
         }
 
-        cameraComponent->SetView(glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
-        cameraComponent->SetProjection(glm::radians(60.f), ratio, 1.f, 1000.f);
+        // transform camera
+        if (Input::IsKeyDown(KeyCode::LeftAlt) && Input::IsMouseButtonDown(MouseButton::MouseButtonLeft))
+        {
+            auto degree = Input::GetMousePosition().x - mousePosition.x;
 
-        cameraComponent2->SetView(glm::vec3(cameraTransformComponent2->GetPosition().x, 0, 0), glm::vec3(0, 1, 0));
-        cameraComponent2->SetProjection(glm::radians(60.f), ratio, 1.f, 1000.f);
+            auto rotateMat = glm::rotate(glm::mat4(1.0), glm::radians(degree), glm::vec3(0, 1, 0));
+            auto position = rotateMat * glm::vec4(cameraTransformComponent->GetPosition(), 1);
+            cameraTransformComponent->SetPosition(position);
+        }
+        mousePosition = Input::GetMousePosition();
+
+        // camera
+        cameraTransformComponent->SetPosition(
+            cameraTransformComponent->GetPosition() * (10.f - Input::GetMouseScroll()) / 10.f);
+
+        Input::Update();
 
         CameraManager::Foreach([&]() -> void {
             meshRenderer->Render();

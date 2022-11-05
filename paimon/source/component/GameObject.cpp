@@ -5,7 +5,7 @@
 using namespace Paimon;
 
 GameObject::GameObject(const std::string &name)
-    : m_name(name), m_layer(0x01)
+    : m_name(name)
 {
 
 }

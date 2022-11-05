@@ -7,7 +7,14 @@ enum class KeyAction : unsigned char
     Up = 0,
     Down = 1,
     Repeat = 2
-};
+}; // enum class KeyAction
+
+enum class MouseButtonAction : unsigned char
+{
+    Up = 0,
+    Down = 1,
+    Repeat = 2
+}; // enum class KeyAction
 
 enum class KeyCode : unsigned short
 {
@@ -143,6 +150,21 @@ enum class KeyCode : unsigned short
     RightSuper = 347,
     Menu = 348
 
-}; // class KeyCode
+}; // enum class KeyCode
+
+enum class MouseButton : unsigned short
+{
+    MouseButton1 = 0,
+    MouseButton2 = 1,
+    MouseButton3 = 2,
+    MouseButton4 = 3,
+    MouseButton5 = 4,
+    MouseButton6 = 5,
+    MouseButton7 = 6,
+    MouseButton8 = 7,
+    MouseButtonLeft = MouseButton1,
+    MouseButtonRight = MouseButton2,
+    MouseButtonMiddle = MouseButton3,
+};
 
 } // namespace Paimon

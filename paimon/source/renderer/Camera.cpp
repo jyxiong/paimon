@@ -18,7 +18,7 @@ RTTR_REGISTRATION
 }
 
 Camera::Camera(GameObject &gameObject)
-    : Component(gameObject), m_cullingMask(0x01)
+    : Component(gameObject)
 {
 
 }
