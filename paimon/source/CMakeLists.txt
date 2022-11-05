@@ -6,6 +6,10 @@ add_library(paimon STATIC
     component/Transform.cpp
     component/Transform.h
 
+    control/Input.cpp
+    control/Input.h
+    control/KeyCode.h
+
     renderer/Camera.cpp
     renderer/Camera.h
     renderer/Material.cpp

@@ -7,6 +7,8 @@
 
 #include "component/GameObject.h"
 #include "component/Transform.h"
+#include "control/Input.h"
+#include "control/KeyCode.h"
 #include "renderer/Camera.h"
 #include "renderer/Material.h"
 #include "renderer/MeshFilter.h"
@@ -26,7 +28,7 @@ static void ErrorCallback(int error, const char *description)
 
 static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
-
+    Input::RecordKey(static_cast<KeyCode>(key), static_cast<KeyAction>(action));
 }
 
 void InitOpengl()
@@ -53,6 +55,8 @@ void InitOpengl()
     glfwMakeContextCurrent(window);
     gladLoadGL(glfwGetProcAddress);
     glfwSwapInterval(1);
+
+    glfwSetKeyCallback(window, KeyCallback);
 }
 
 int main()
@@ -108,11 +112,14 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glClearColor(49.f / 255, 77.f / 255, 121.f / 255, 1.f);
 
-        static float rotateEulerAngle = 0.f;
-        rotateEulerAngle += 0.1f;
-        auto rotation = transform->GetRotation();
-        rotation.y = rotateEulerAngle;
-        transform->SetRotation(rotation);
+        if (Input::IsKeyDown(KeyCode::R))
+        {
+            static float rotateEulerAngle = 0.f;
+            rotateEulerAngle += 0.1f;
+            auto rotation = transform->GetRotation();
+            rotation.y = rotateEulerAngle;
+            transform->SetRotation(rotation);
+        }
 
         cameraComponent->SetView(glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
         cameraComponent->SetProjection(glm::radians(60.f), ratio, 1.f, 1000.f);
