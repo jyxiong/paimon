@@ -14,19 +14,18 @@ using namespace Paimon;
 RTTR_REGISTRATION
 {
     rttr::registration::class_<Camera>("Camera")
-        .constructor<GameObject>()(rttr::policy::ctor::as_raw_ptr);
+        .constructor<Entity>()(rttr::policy::ctor::as_raw_ptr);
 }
 
-Camera::Camera(GameObject &gameObject)
-    : Component(gameObject)
+Camera::Camera(Entity &entity)
+    : Component(entity)
 {
 
 }
-
 
 void Camera::SetView(const glm::vec3 &cameraForward, const glm::vec3 &cameraUp)
 {
-    auto transform = std::dynamic_pointer_cast<Transform>(GetGameObject().GetComponent("Transform"));
+    auto transform = std::dynamic_pointer_cast<Transform>(GetEntity().GetComponent("Transform"));
     m_view = glm::lookAt(transform->GetPosition(), cameraForward, cameraUp);
 }
 

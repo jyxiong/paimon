@@ -83,4 +83,6 @@ void Input::Update()
             ++iter;
         }
     }
+
+    m_mouseScroll = 0;
 }

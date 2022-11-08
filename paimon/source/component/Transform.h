@@ -3,7 +3,7 @@
 #include "glm/glm.hpp"
 
 #include "Component.h"
-#include "GameObject.h"
+#include "Entity.h"
 
 namespace Paimon
 {
@@ -11,7 +11,7 @@ namespace Paimon
 class Transform : public Component
 {
 public:
-    explicit Transform(GameObject &gameObject);
+    explicit Transform(Entity &entity);
     ~Transform() override = default;
 
     [[nodiscard]] const glm::vec3 &GetPosition() const { return m_position; }

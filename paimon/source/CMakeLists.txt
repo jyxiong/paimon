@@ -1,8 +1,10 @@
 add_library(paimon STATIC
     component/Component.cpp
     component/Component.h
-    component/GameObject.cpp
-    component/GameObject.h
+    component/Entity.cpp
+    component/Entity.h
+#    component/Scene.cpp
+#    component/Scene.h
     component/Transform.cpp
     component/Transform.h
 
@@ -24,7 +26,9 @@ add_library(paimon STATIC
     renderer/Texture2D.h
 
     utils/Application.cpp
-    utils/Application.h)
+    utils/Application.h
+    utils/Screen.cpp
+    utils/Screen.h)
 
 target_precompile_headers(paimon PUBLIC
     pch.h

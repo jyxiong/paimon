@@ -1,16 +1,26 @@
 #include "Component.h"
 
-#include "GameObject.h"
+#include "Entity.h"
 
 using namespace Paimon;
 
-Component::Component(GameObject &gameObject)
-    : m_gameObject(gameObject)
+Component::Component(Entity &entity)
+    : m_entity(entity)
 {
 
 }
 
-void Component::SetGameObject(GameObject &gameObject)
+void Component::SetEntity(Entity &entity)
 {
-    m_gameObject = gameObject;
+    m_entity = entity;
+}
+
+void Component::Awake()
+{
+
+}
+
+void Component::Update()
+{
+
 }

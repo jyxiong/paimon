@@ -17,11 +17,11 @@ using namespace Paimon;
 RTTR_REGISTRATION
 {
     rttr::registration::class_<MeshRenderer>("MeshRenderer")
-        .constructor<GameObject>()(rttr::policy::ctor::as_raw_ptr);
+        .constructor<Entity>()(rttr::policy::ctor::as_raw_ptr);
 }
 
-MeshRenderer::MeshRenderer(GameObject &gameObject)
-    : Component(gameObject)
+MeshRenderer::MeshRenderer(Entity &entity)
+    : Component(entity)
 {
 
 }
@@ -34,7 +34,7 @@ void MeshRenderer::Render()
         return;
     }
 
-    if ((currentCamera->GetCullingMask() & GetGameObject().GetLayer()) == 0){
+    if ((currentCamera->GetCullingMask() & GetEntity().GetLayer()) == 0){
         return;
     }
 
@@ -42,7 +42,7 @@ void MeshRenderer::Render()
     auto view = currentCamera->GetView();
     auto projection = currentCamera->GetProjection();
 
-    auto transform = std::dynamic_pointer_cast<Transform>(GetGameObject().GetComponent("Transform"));
+    auto transform = std::dynamic_pointer_cast<Transform>(GetEntity().GetComponent("Transform"));
     auto translation = glm::translate(transform->GetPosition());
     auto rotation = transform->GetRotation();
     auto eulerAngleYXZ =
@@ -51,7 +51,7 @@ void MeshRenderer::Render()
     auto model = translation * scale * eulerAngleYXZ;
     auto mvp = projection * view * model;
 
-    auto meshFilter = std::dynamic_pointer_cast<MeshFilter>(GetGameObject().GetComponent("MeshFilter"));
+    auto meshFilter = std::dynamic_pointer_cast<MeshFilter>(GetEntity().GetComponent("MeshFilter"));
 
     auto programID = m_material->GetShader()->GetID();
 

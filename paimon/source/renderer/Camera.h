@@ -6,7 +6,7 @@
 #include "glm/glm.hpp"
 
 #include "component/Component.h"
-#include "component/GameObject.h"
+#include "component/Entity.h"
 
 namespace Paimon
 {
@@ -14,7 +14,7 @@ namespace Paimon
 class Camera : public Component
 {
 public:
-    explicit Camera(GameObject &gameObject);
+    explicit Camera(Entity &entity);
     ~Camera() override = default;
 
     void SetView(const glm::vec3 &cameraForward, const glm::vec3 &cameraUp);

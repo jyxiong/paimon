@@ -5,19 +5,22 @@
 namespace Paimon
 {
 
-class GameObject;
+class Entity;
 
-class Component : public std::enable_shared_from_this<Component>
+class Component
 {
 public:
-    explicit Component(GameObject &gameObject);
+    explicit Component(Entity &entity);
     virtual ~Component() = default;
 
-    void SetGameObject(GameObject &gameObject);
-    GameObject &GetGameObject() { return m_gameObject; }
+    void SetEntity(Entity &entity);
+    Entity &GetEntity() { return m_entity; }
+
+    virtual void Awake();
+    virtual void Update();
 
 private:
-    GameObject &m_gameObject;
+    Entity &m_entity;
 
 }; // class Component
 

@@ -7,7 +7,7 @@
 #include "glm/glm.hpp"
 
 #include "component/Component.h"
-#include "component/GameObject.h"
+#include "component/Entity.h"
 
 namespace Paimon
 {
@@ -34,7 +34,7 @@ struct Mesh
 class MeshFilter : public Component
 {
 public:
-    explicit MeshFilter(GameObject &gameObject);
+    explicit MeshFilter(Entity &entity);
     ~MeshFilter() override = default;
 
     std::shared_ptr<Mesh> GetMesh() { return m_mesh; };

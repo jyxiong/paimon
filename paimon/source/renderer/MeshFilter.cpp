@@ -9,11 +9,11 @@ using namespace Paimon;
 RTTR_REGISTRATION
 {
     rttr::registration::class_<MeshFilter>("MeshFilter")
-        .constructor<GameObject>()(rttr::policy::ctor::as_raw_ptr);
+        .constructor<Entity>()(rttr::policy::ctor::as_raw_ptr);
 }
 
-MeshFilter::MeshFilter(GameObject &gameObject)
-    : Component(gameObject)
+MeshFilter::MeshFilter(Entity &entity)
+    : Component(entity)
 {
 
 }

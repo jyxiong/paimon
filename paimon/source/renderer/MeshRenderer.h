@@ -4,7 +4,7 @@
 #include "glm/glm.hpp"
 
 #include "component/Component.h"
-#include "component/GameObject.h"
+#include "component/Entity.h"
 
 namespace Paimon
 {
@@ -15,7 +15,7 @@ class MeshFilter;
 class MeshRenderer : public Component
 {
 public:
-    explicit MeshRenderer(GameObject &gameObject);
+    explicit MeshRenderer(Entity &entity);
     ~MeshRenderer() override = default;
 
     void SetMaterial(const std::shared_ptr<Material> &material) { m_material = material; }
