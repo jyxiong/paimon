@@ -6,20 +6,27 @@
 
 namespace Paimon
 {
+class Material;
 
-class Renderer : public Component
+class Scene : public Component
 {
 public:
-    explicit Renderer(Entity &entity);
-    ~Renderer() override = default;
+    explicit Scene(Entity &entity);
+    ~Scene() override = default;
 
     void Awake() override;
     void Update() override;
 
 private:
+    void CreateFishSoupPot();
+
+    void CreateQuad();
+
+private:
     std::shared_ptr<Entity> m_fishSoup;
-    std::shared_ptr<Entity> m_sceneCamera;
     std::shared_ptr<Entity> m_editorCamera;
+
+    std::shared_ptr<Material> m_fontMaterial;
 
     glm::vec2 m_mousePosition{};
 

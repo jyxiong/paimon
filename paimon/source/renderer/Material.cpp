@@ -61,4 +61,3 @@ void Material::SetUniform1i(const std::string &shaderPropertyName, int value)
 {
     m_uniform_int.emplace(shaderPropertyName, value);
 }
-

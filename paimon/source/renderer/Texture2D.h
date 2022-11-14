@@ -27,6 +27,9 @@ public:
     [[nodiscard]] unsigned int GetFormat() const { return m_format; }
 
     static std::shared_ptr<Texture2D> LoadFromFile(const std::filesystem::path &path);
+
+    static std::shared_ptr<Texture2D> CreateFromTTF(const std::filesystem::path &path, const std::string &word);
+
     static void CompressImageFile(const std::filesystem::path &path, const std::filesystem::path &savePath);
 
 private:

@@ -1,7 +1,7 @@
 #include "component/Transform.h"
 #include "utils/application.h"
 
-#include "Renderer.h"
+#include "Scene.h"
 
 using namespace Paimon;
 
@@ -11,7 +11,7 @@ int main()
     Application::InitOpengl();
 
     auto renderer = EntityManager::CreateEntity("Renderer");
-    renderer->AddComponent<Renderer>();
+    renderer->AddComponent<Scene>();
     renderer->AddComponent<Transform>();
 
     Application::Run();

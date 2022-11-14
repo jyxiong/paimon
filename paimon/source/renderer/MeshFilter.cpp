@@ -33,3 +33,11 @@ void MeshFilter::LoadMesh(const std::filesystem::path &path)
     inputFileStream.read((char *)m_mesh->vertices.data(), meshFIleHead.numVertex * sizeof(Vertex));
     inputFileStream.read((char *)m_mesh->indices.data(), meshFIleHead.numIndex * sizeof(unsigned short));
 }
+
+void MeshFilter::CreateMesh(std::vector<Vertex> &vertices, std::vector<unsigned short> &indices)
+{
+    m_mesh = std::make_shared<Mesh>();
+
+    m_mesh->vertices = std::move(vertices);
+    m_mesh->indices = std::move(indices);
+}

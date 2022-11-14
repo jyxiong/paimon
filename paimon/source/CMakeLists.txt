@@ -3,8 +3,6 @@ add_library(paimon STATIC
     component/Component.h
     component/Entity.cpp
     component/Entity.h
-#    component/Scene.cpp
-#    component/Scene.h
     component/Transform.cpp
     component/Transform.h
 

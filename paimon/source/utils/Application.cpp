@@ -2,7 +2,6 @@
 
 #include "control/Input.h"
 #include "component/Component.h"
-#include "component/Scene.h"
 #include "renderer/Camera.h"
 #include "renderer/MeshRenderer.h"
 

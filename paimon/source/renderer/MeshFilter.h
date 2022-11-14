@@ -41,6 +41,8 @@ public:
 
     void LoadMesh(const std::filesystem::path &path);
 
+    void CreateMesh(std::vector<Vertex> &vertices, std::vector<unsigned short> &indices);
+
 private:
     std::shared_ptr<Mesh> m_mesh;
 

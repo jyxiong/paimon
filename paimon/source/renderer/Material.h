@@ -23,6 +23,9 @@ public:
     void SetUniform1i(const std::string &shaderPropertyName, int value);
 
     std::shared_ptr<Shader> GetShader() { return m_shader; }
+
+    void SetTexture(const std::string &name, const std::shared_ptr<Texture2D> &texture) { m_textures[name] = texture; }
+
     std::unordered_map<std::string, std::shared_ptr<Texture2D>> &GetTextures() { return m_textures; }
 
 private:
