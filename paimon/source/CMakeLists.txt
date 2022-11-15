@@ -12,6 +12,8 @@ add_library(paimon STATIC
 
     renderer/Camera.cpp
     renderer/Camera.h
+    renderer/Font.cpp
+    renderer/Font.h
     renderer/Material.cpp
     renderer/Material.h
     renderer/MeshFilter.cpp
@@ -36,6 +38,7 @@ target_include_directories(paimon PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_link_libraries(paimon PUBLIC
     assimp
+    freetype
     glad
     glfw
     glm

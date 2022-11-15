@@ -19,6 +19,24 @@ Texture2D::Texture2D(int mipmapLevel)
 
 }
 
+void Texture2D::UpdateSubImage(int x,
+                               int y,
+                               int width,
+                               int height,
+                               unsigned int pixelFormat,
+                               unsigned int pixelType,
+                               unsigned char *data)
+{
+    if (width <= 0 || height <= 0)
+    {
+        return;
+    }
+
+    glBindTexture(GL_TEXTURE_2D, m_id);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, x, y, width, height, pixelFormat, pixelType, data);
+}
+
 std::shared_ptr<Texture2D> Texture2D::LoadFromFile(const std::filesystem::path &path)
 {
     auto texture = std::make_shared<Texture2D>();
@@ -234,6 +252,37 @@ std::shared_ptr<Texture2D> Texture2D::CreateFromTTF(const std::filesystem::path 
                  bitmap.data());
 
     //4. 指定放大，缩小滤波方式，线性滤波，即放大缩小的插值方式;
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+    return texture;
+}
+
+std::shared_ptr<Texture2D> Texture2D::Create(unsigned short width,
+                                             unsigned short height,
+                                             int internalFormat,
+                                             unsigned int pixelFormat,
+                                             unsigned int pixelType,
+                                             unsigned char *data)
+{
+    auto texture = std::make_shared<Texture2D>();
+
+    texture->m_width = width;
+    texture->m_height = height;
+    texture->m_format = internalFormat;
+
+    glGenTextures(1, &texture->m_id);
+    glBindTexture(GL_TEXTURE_2D, texture->m_id);
+    glTexImage2D(GL_TEXTURE_2D,
+                 0,
+                 texture->m_format,
+                 texture->m_width,
+                 texture->m_height,
+                 0,
+                 pixelFormat,
+                 pixelType,
+                 data);
+
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 

@@ -8,6 +8,7 @@
 #include "component/Transform.h"
 #include "control/Input.h"
 #include "renderer/Camera.h"
+#include "renderer/Font.h"
 #include "renderer/Material.h"
 #include "renderer/MeshFilter.h"
 #include "renderer/MeshRenderer.h"
@@ -31,7 +32,7 @@ Scene::Scene(Entity &entity)
 void Scene::Awake()
 {
     CreateFishSoupPot();
-    CreateQuad();
+    CreateFont();
 
     // camera
     m_editorCamera = EntityManager::CreateEntity("Scene Camera");
@@ -54,12 +55,6 @@ void Scene::Update()
     auto cameraComponent = m_editorCamera->GetComponent<Camera>();
     cameraComponent->SetView(glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
     cameraComponent->SetProjection(glm::radians(60.f), Screen::GetAspect(), 1.f, 1000.f);
-
-    if (Input::IsKeyUp(KeyCode::C))
-    {
-        auto texture2D = Texture2D::CreateFromTTF("font/hkyuan.ttf", "Hello Paimon!");
-        m_fontMaterial->SetTexture("u_diffuse_texture", texture2D);
-    }
 
     // rotate model
     if (Input::IsKeyDown(KeyCode::R))
@@ -110,31 +105,43 @@ void Scene::CreateFishSoupPot()
     meshRenderer->SetMaterial(material);
 }
 
-void Scene::CreateQuad()
+void Scene::CreateFont()
 {
-    std::vector<Vertex> vertices = {
-        {{ -1.0f, -1.0f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f }},
-        {{ 1.0f, -1.0f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 1.0f, 0.0f }},
-        {{ 1.0f, 1.0f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 1.0f, 1.0f }},
-        {{ -1.0f, 1.0f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.0f, 1.0f }}
-    };
+    auto font = Font::LoadFromFile("font/hkyuan.ttf", 100);
+    auto characters = font->LoadString("Paimon!");
 
-    std::vector<unsigned short> indices = {
-        0, 1, 2,
-        0, 2, 3
-    };
+    int offsetX = 0;
+    for (const auto& character : characters)
+    {
+        offsetX += 2;
 
-    auto entity = EntityManager::CreateEntity("Quad Entity");
-    entity->SetLayer(1);
+        // 因为FreeType生成的bitmap是上下颠倒的，所以这里UV坐标也要做对应翻转，将左上角作为零点
+        std::vector<Vertex> vertices = {
+            {{ -1.0f + offsetX, 2.0f, 1.0f }, { 1.0f,0.0f,0.0f,1.0f }, { character->leftTopX, character->rightBottomY }},
+            {{ 1.0f + offsetX, 2.0f, 1.0f }, { 1.0f,0.0f,0.0f,1.0f }, { character->rightBottomX, character->rightBottomY }},
+            {{ 1.0f + offsetX, 4.0f, 1.0f }, { 0.0f,1.0f,0.0f,1.0f }, { character->rightBottomX, character->leftTopY }},
+            {{ -1.0f + offsetX, 4.0f, 1.0f }, { 0.0f,1.0f,0.0f,1.0f }, { character->leftTopX, character->leftTopY }}
+        };
 
-    auto transform = entity->AddComponent<Transform>();
-    transform->SetPosition({ 2, 0, 0 });
+        std::vector<unsigned short> indices = {
+            0, 1, 2,
+            0, 2, 3
+        };
 
-    auto meshFilter = entity->AddComponent<MeshFilter>();
-    meshFilter->CreateMesh(vertices, indices);
+        auto entity = EntityManager::CreateEntity("Quad Entity");
+        entity->SetLayer(1);
 
-    auto meshRenderer = entity->AddComponent<MeshRenderer>();
-    m_fontMaterial = std::make_shared<Material>();
-    m_fontMaterial->Parse("material/quad_draw_font.mat");
-    meshRenderer->SetMaterial(m_fontMaterial);
+        auto transform = entity->AddComponent<Transform>();
+        transform->SetPosition({ -8, 0, 0 });
+
+        auto meshFilter = entity->AddComponent<MeshFilter>();
+        meshFilter->CreateMesh(vertices, indices);
+
+        auto meshRenderer = entity->AddComponent<MeshRenderer>();
+        m_fontMaterial = std::make_shared<Material>();
+        m_fontMaterial->Parse("material/quad_draw_font_color.mat");
+        meshRenderer->SetMaterial(m_fontMaterial);
+
+        m_fontMaterial->SetTexture("u_diffuse_texture", font->GetTexture());
+    }
 }

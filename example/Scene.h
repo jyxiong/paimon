@@ -20,7 +20,7 @@ public:
 private:
     void CreateFishSoupPot();
 
-    void CreateQuad();
+    void CreateFont();
 
 private:
     std::shared_ptr<Entity> m_fishSoup;

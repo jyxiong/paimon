@@ -26,9 +26,24 @@ public:
     [[nodiscard]] unsigned int GetID() const { return m_id; }
     [[nodiscard]] unsigned int GetFormat() const { return m_format; }
 
+    void UpdateSubImage(int x,
+                        int y,
+                        int width,
+                        int height,
+                        unsigned int pixelFormat,
+                        unsigned int pixelType,
+                        unsigned char *data);
+
     static std::shared_ptr<Texture2D> LoadFromFile(const std::filesystem::path &path);
 
     static std::shared_ptr<Texture2D> CreateFromTTF(const std::filesystem::path &path, const std::string &word);
+
+    static std::shared_ptr<Texture2D> Create(unsigned short width,
+                                             unsigned short height,
+                                             int internalFormat,
+                                             unsigned int pixelFormat,
+                                             unsigned int pixelType,
+                                             unsigned char *data);
 
     static void CompressImageFile(const std::filesystem::path &path, const std::filesystem::path &savePath);
 

@@ -98,6 +98,8 @@ void MeshRenderer::Render()
     {
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         glUniformMatrix4fv(glGetUniformLocation(programID, "u_mvp"), 1, GL_FALSE, glm::value_ptr<>(mvp));
 
