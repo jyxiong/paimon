@@ -30,7 +30,7 @@ public:
 
     void LoadCharacter(const char &ch);
 
-    std::vector<std::shared_ptr<Character>> LoadString(const std::string &str);
+    std::vector<std::shared_ptr<Character>> LoadStr(const std::string &str);
 
     std::shared_ptr<Texture2D> GetTexture() { return m_texture; }
 

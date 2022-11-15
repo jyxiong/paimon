@@ -4,6 +4,7 @@
 #include "component/Component.h"
 #include "renderer/Camera.h"
 #include "renderer/MeshRenderer.h"
+#include "Log.h"
 
 #include "Screen.h"
 
@@ -37,7 +38,7 @@ static void MouseScrollCallback(GLFWwindow *window, double x, double y)
 std::filesystem::path Application::s_dataPath;
 GLFWwindow *Application::s_window;
 
-void Application::InitOpengl()
+void Application::InitOpenGL()
 {
     glfwSetErrorCallback(ErrorCallback);
 
@@ -70,7 +71,8 @@ void Application::InitOpengl()
 
 void Application::Awake()
 {
-
+    Log::Init();
+    InitOpenGL();
 }
 
 void Application::Run()
@@ -123,4 +125,3 @@ void Application::Render()
         });
     });
 }
-

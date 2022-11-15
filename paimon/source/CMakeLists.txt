@@ -27,6 +27,9 @@ add_library(paimon STATIC
 
     utils/Application.cpp
     utils/Application.h
+    utils/Macros.h
+    utils/Log.cpp
+    utils/Log.h
     utils/Screen.cpp
     utils/Screen.h)
 
@@ -44,5 +47,6 @@ target_link_libraries(paimon PUBLIC
     glm
     rapidxml
     rttr_core_lib
+    spdlog
     stb
     )

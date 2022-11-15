@@ -8,7 +8,7 @@ using namespace Paimon;
 int main()
 {
     Application::SetDataPath("../asset");
-    Application::InitOpengl();
+    Application::Awake();
 
     auto renderer = EntityManager::CreateEntity("Renderer");
     renderer->AddComponent<Scene>();

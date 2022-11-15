@@ -108,7 +108,7 @@ void Scene::CreateFishSoupPot()
 void Scene::CreateFont()
 {
     auto font = Font::LoadFromFile("font/hkyuan.ttf", 100);
-    auto characters = font->LoadString("Paimon!");
+    auto characters = font->LoadStr("Paimon!");
 
     int offsetX = 0;
     for (const auto& character : characters)

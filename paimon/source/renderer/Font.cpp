@@ -5,6 +5,7 @@
 #include "freetype/ftbitmap.h"
 
 #include "utils/Application.h"
+#include "utils/Macros.h"
 #include "Texture2D.h"
 
 using namespace Paimon;
@@ -61,7 +62,7 @@ void Font::LoadCharacter(const char &ch)
     m_textureOffsetX += ftBitmap.width;
 }
 
-std::vector<std::shared_ptr<Character>> Font::LoadString(const std::string &str)
+std::vector<std::shared_ptr<Character>> Font::LoadStr(const std::string &str)
 {
     // 生成所有的字符bitmap
     for (auto ch : str)
@@ -76,7 +77,7 @@ std::vector<std::shared_ptr<Character>> Font::LoadString(const std::string &str)
         auto character = m_characters[ch];
         if (character == nullptr)
         {
-            // spdlog::error("LoadStr error,no bitmap,ch:{}",ch);
+            CORE_LOG_ERROR("LoadStr error, no bitmap, ch:{0}", ch)
             continue;
         }
         characters.push_back(character);
@@ -117,7 +118,7 @@ std::shared_ptr<Font> Font::LoadFromFile(const std::filesystem::path &path, unsi
 
     if (ftFace == nullptr)
     {
-        // DEBUG_LOG_ERROR("FT_Set_Char_Size error!");
+        CORE_LOG_ERROR("FT_Set_Char_Size error!")
         return nullptr;
     }
 

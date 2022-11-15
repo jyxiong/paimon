@@ -15,8 +15,6 @@ public:
     static const std::filesystem::path &GetDataPath() { return s_dataPath; }
     static void SetDataPath(const std::filesystem::path &path) { s_dataPath = path; };
 
-    static void InitOpengl();
-
     static void Awake();
     static void Run();
 
@@ -24,6 +22,9 @@ public:
     static void UpdateScreenSize();
 
     static void Render();
+
+private:
+    static void InitOpenGL();
 
 public:
     static std::filesystem::path s_dataPath;
