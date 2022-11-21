@@ -2,6 +2,7 @@
 
 #include <fstream>
 #include <memory>
+#include <vector>
 
 #include "glad/gl.h"
 #define STB_IMAGE_IMPLEMENTATION
