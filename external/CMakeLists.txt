@@ -1,0 +1,23 @@
+set(EXTERNAL_DIR "External")
+
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+
+if(NOT TARGET glad)
+    add_subdirectory(glad/cmake)
+    glad_add_library(glad STATIC REPRODUCIBLE API gl:core=4.6)
+    set_target_properties(glad PROPERTIES FOLDER ${EXTERNAL_DIR}/glad)
+endif()
+
+if(NOT TARGET glm)
+    option(GLM_ENABLE_CXX_20 "" ON)
+    add_subdirectory(glm)
+    set_target_properties(glm PROPERTIES FOLDER ${EXTERNAL_DIR}/glm)
+endif()
+
+if(NOT TARGET spdlog)
+    option(SPDLOG_BUILD_EXAMPLE "" OFF)
+    option(SPDLOG_INSTALL "" OFF)
+    option(SPDLOG_USE_STD_FORMAT "" ON)
+    add_subdirectory(spdlog)
+    set_target_properties(spdlog PROPERTIES FOLDER ${EXTERNAL_DIR}/spdlog)
+endif()
