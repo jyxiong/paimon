@@ -8,6 +8,13 @@ if(NOT TARGET glad)
     set_target_properties(glad PROPERTIES FOLDER ${EXTERNAL_DIR}/glad)
 endif()
 
+if(NOT TARGET glfw)
+    option(GLFW_BUILD_DOCS "" OFF)
+    option(GLFW_INSTALL "" OFF)
+    add_subdirectory(glfw)
+    set_target_properties(glfw PROPERTIES FOLDER ${EXTERNAL_DIR}/glfw)
+endif()
+
 if(NOT TARGET glm)
     option(GLM_ENABLE_CXX_20 "" ON)
     add_subdirectory(glm)
