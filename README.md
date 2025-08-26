@@ -1,2 +1,2 @@
 # Paimon
-A Render Engine
+An OpenGL Render Engine

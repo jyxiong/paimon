@@ -1,3 +1,0 @@
-[submodule "paimon/3rdparty"]
-	path = paimon/3rdparty
-	url = git@github.com:jyxiong/3rdparty.git
