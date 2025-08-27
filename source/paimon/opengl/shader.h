@@ -1,0 +1,33 @@
+#pragma once
+
+#include "paimon/opengl/base/object.h"
+
+namespace paimon {
+class Shader : public NamedObject {
+public:
+  Shader(GLenum type);
+
+  virtual ~Shader();
+
+  Shader(const Shader &other) = delete;
+  Shader &operator=(const Shader &other) = delete;
+
+  bool is_valid() const override;
+
+  void get(GLenum pname, GLint *params) const;
+  GLint get(GLenum pname) const;
+
+  std::string get_info_log() const;
+
+  std::string get_source() const;
+
+
+  GLenum get_type() const;
+
+  bool compile(const std::string &source);
+
+private:
+  GLenum m_type;
+};
+
+} // namespace paimon
