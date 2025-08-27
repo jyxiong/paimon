@@ -9,7 +9,7 @@ class Object {
 public:
   Object() = default;
 
-  virtual ~Object() = default;
+  virtual ~Object() = 0;
 
   Object(const Object &other) = delete;
   Object &operator=(const Object &other) = delete;
@@ -27,7 +27,7 @@ class NamedObject : public Object {
 public:
   NamedObject(GLenum identifier);
 
-  virtual ~NamedObject() = default;
+  virtual ~NamedObject() = 0;
 
   NamedObject(const NamedObject &other) = delete;
   NamedObject &operator=(const NamedObject &other) = delete;

@@ -7,7 +7,7 @@ class Shader : public NamedObject {
 public:
   Shader(GLenum type);
 
-  virtual ~Shader();
+  ~Shader() override;
 
   Shader(const Shader &other) = delete;
   Shader &operator=(const Shader &other) = delete;
