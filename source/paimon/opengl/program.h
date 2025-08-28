@@ -8,7 +8,7 @@ class Program : public NamedObject {
 public:
   Program();
 
-  virtual ~Program();
+  ~Program() override;
 
   Program(const Program &other) = delete;
   Program &operator=(const Program &other) = delete;
