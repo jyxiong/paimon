@@ -13,8 +13,8 @@ GLuint VertexArray::Binding::get_index() const {
   return m_index;
 }
 
-void VertexArray::Binding::bind_buffer(GLenum target, GLuint buffer, GLintptr offset, GLsizei stride) const {
-  glVertexArrayVertexBuffer(m_vao.m_name, m_index, buffer, offset, stride);
+void VertexArray::Binding::bind_buffer(const Buffer& buffer, GLintptr offset, GLsizei stride) const {
+  glVertexArrayVertexBuffer(m_vao.m_name, m_index, buffer.get_name(), offset, stride);
 }
 
 void VertexArray::Binding::set_divisor(GLuint divisor) const {

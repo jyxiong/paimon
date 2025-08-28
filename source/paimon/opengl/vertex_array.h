@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "paimon/opengl/base/object.h"
+#include "paimon/opengl/buffer.h"
 
 namespace paimon {
 
@@ -14,7 +15,7 @@ public:
 
     GLuint get_index() const;
 
-    void bind_buffer(GLenum target, GLuint buffer, GLintptr offset, GLsizei stride) const;
+    void bind_buffer(const Buffer& buffer, GLintptr offset, GLsizei stride) const;
 
     void set_divisor(GLuint divisor) const;
   private:
