@@ -5,6 +5,7 @@
 #include "glm/glm.hpp"
 
 #include "paimon/opengl/program.h"
+#include "paimon/opengl/vertex_array.h"
 
 using namespace paimon;
 
@@ -110,9 +111,8 @@ int main() {
     LOG_ERROR("Shader program linking failed: {}", program.get_info_log());
   }
 
-  unsigned int vao;
-  glGenVertexArrays(1, &vao);
-  glBindVertexArray(vao);
+  // VAO setup
+  VertexArray vao;
 
   while (!glfwWindowShouldClose(window)) {
     // Check if any events have been activated (key pressed, mouse moved etc.)
@@ -124,10 +124,12 @@ int main() {
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
+    // vao bind
+    vao.bind();
+
     // Draw a triangle
     program.use();
     glDrawArrays(GL_TRIANGLES, 0, 3);
-
 
     // Swap the screen buffers
     glfwSwapBuffers(window);
