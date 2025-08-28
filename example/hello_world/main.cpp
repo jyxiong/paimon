@@ -6,6 +6,8 @@
 
 #include "paimon/opengl/program.h"
 #include "paimon/opengl/vertex_array.h"
+#include "paimon/opengl/shader.h"
+#include "paimon/opengl/buffer.h"
 
 using namespace paimon;
 
@@ -13,14 +15,12 @@ namespace {
 // hard code triangle vertices in shader for simplicity
 std::string vertex_spurce = R"(
   #version 460 core
+
+  layout(location = 0) in vec3 a_position;
+
   void main()
   {
-    vec3 positions[3] = vec3[](
-      vec3(0.0, 0.5, 0.0),
-      vec3(-0.5, -0.5, 0.0),
-      vec3(0.5, -0.5, 0.0)
-    );
-    gl_Position = vec4(positions[gl_VertexID], 1.0);
+    gl_Position = vec4(a_position, 1.0f);
   }
   )";
 
@@ -112,7 +112,28 @@ int main() {
   }
 
   // VAO setup
+  // Define the vertices of a triangle
+  float vertices[] = {
+      // positions
+      -0.5f, -0.5f, 0.0f, // bottom left
+      0.5f, -0.5f, 0.0f,  // bottom right
+      0.0f, 0.5f, 0.0f    // top
+  };
+  // Create a Vertex Buffer Object (VBO) and copy the vertices to it
+  Buffer vbo;
+  vbo.set_storage(sizeof(vertices), vertices, GL_DYNAMIC_STORAGE_BIT);
+  vbo.bind(GL_ARRAY_BUFFER);
+
   VertexArray vao;
+  vao.bind();
+  
+  auto &binding = vao.get_binding(0);
+  binding.bind_buffer(vbo, 0, 3 * sizeof(float));
+
+  auto &attribute = vao.get_attribute(0);
+  attribute.set_format(3, GL_FLOAT, GL_FALSE, 0);
+  attribute.bind(binding);
+  attribute.enable();
 
   while (!glfwWindowShouldClose(window)) {
     // Check if any events have been activated (key pressed, mouse moved etc.)
