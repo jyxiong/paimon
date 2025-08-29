@@ -5,3 +5,4 @@ function(add_example FOLDER_NAME)
 endfunction()
 
 add_example(hello_world)
+add_example(texture)
