@@ -9,6 +9,8 @@ jobs:
   build-windows:
     runs-on: windows-latest
     steps:
+      - name: Show MSVC version
+        run: cl
       - name: Checkout code
         uses: actions/checkout@v4
         with:
