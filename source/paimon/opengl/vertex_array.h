@@ -53,6 +53,8 @@ public:
 
   bool is_valid() const override;
 
+  void set_element_buffer(const Buffer &buffer) const;
+
   Binding &get_binding(GLuint index);
 
   Attribute &get_attribute(GLuint index);

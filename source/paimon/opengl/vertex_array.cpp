@@ -72,6 +72,10 @@ bool VertexArray::is_valid() const {
   return glIsVertexArray(m_name) == GL_TRUE;
 }
 
+void VertexArray::set_element_buffer(const Buffer &buffer) const {
+  glVertexArrayElementBuffer(m_name, buffer.get_name());
+}
+
 VertexArray::Binding &VertexArray::get_binding(GLuint index) {
   // TODO: assert index in range
   return m_bindings[index];
