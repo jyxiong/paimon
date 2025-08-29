@@ -1,0 +1,37 @@
+name: Build Release
+
+on:
+  pull_request:
+    branches: [master]
+    types: [opened, synchronize, reopened]
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Set up CMake
+        uses: jwlawson/actions-setup-cmake@v2
+      - name: Install Ninja
+        run: choco install ninja
+      - name: Configure CMake (Ninja)
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+      - name: Build (Ninja)
+        run: cmake --build build --config Release
+
+  build-ubuntu:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y cmake build-essential ninja-build
+      - name: Configure CMake (Ninja)
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+      - name: Build (Ninja)
+        run: cmake --build build --config Release
