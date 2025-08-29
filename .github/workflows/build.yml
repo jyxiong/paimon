@@ -16,7 +16,7 @@ jobs:
       - name: Set up CMake
         uses: jwlawson/actions-setup-cmake@v2
       - name: Install Ninja
-        run: choco install ninja
+        run: pip install ninja
       - name: Configure CMake (Ninja)
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
       - name: Build (Ninja)
@@ -30,7 +30,7 @@ jobs:
         with:
           submodules: recursive
       - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y cmake build-essential ninja-build
+        run: sudo apt-get update && sudo apt-get install -y libwayland-dev libxkbcommon-dev xorg-dev
       - name: Configure CMake (Ninja)
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
       - name: Build (Ninja)
