@@ -1,8 +1,11 @@
 #include "paimon/opengl/sampler.h"
+#include "glad/gl.h"
 
 using namespace paimon;
 
-Sampler::Sampler() : NamedObject(GL_SAMPLER) {}
+Sampler::Sampler() : NamedObject(GL_SAMPLER) {
+  glCreateSamplers(1, &m_name);
+}
 
 Sampler::~Sampler() {
   if (m_name != 0) {
