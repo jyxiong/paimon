@@ -1,8 +1,10 @@
 function(add_example FOLDER_NAME)
     set(EXAMPLE_NAME ${FOLDER_NAME})
-    add_executable(${EXAMPLE_NAME} ${FOLDER_NAME}/main.cpp)
+    file(GLOB_RECURSE SOURCE_FILES ${FOLDER_NAME}/*.cpp ${FOLDER_NAME}/*.h)
+    add_executable(${EXAMPLE_NAME} ${SOURCE_FILES})
     target_link_libraries(${EXAMPLE_NAME} PRIVATE paimon)
 endfunction()
 
 add_example(hello_world)
 add_example(texture)
+add_example(framebuffer)

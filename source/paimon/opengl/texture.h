@@ -15,7 +15,7 @@ public:
 
   bool is_valid() const override final;
 
-  void bind(GLuint unit);
+  void bind(GLuint unit) const;
 
   void set_buffer_data(GLenum internalformat, GLuint buffer);
 

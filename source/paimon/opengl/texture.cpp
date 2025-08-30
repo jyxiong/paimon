@@ -16,7 +16,7 @@ Texture::~Texture() {
 
 bool Texture::is_valid() const { return glIsTexture(m_name) == GL_TRUE; }
 
-void Texture::bind(GLuint unit) { glBindTextureUnit(unit, m_name); }
+void Texture::bind(GLuint unit) const { glBindTextureUnit(unit, m_name); }
 
 void Texture::set_buffer_data(GLenum internalformat, GLuint buffer) {
   glTextureBuffer(m_name, internalformat, buffer);
