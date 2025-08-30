@@ -18,10 +18,8 @@ public:
 public:
   void bind() const;
   static void unbind();
-  static void bindDefault();
 
-  void setTexture(GLenum attachment, GLenum textarget, GLuint texture,
-                  GLint level) const;
+  void setTexture(GLenum attachment, GLuint texture, GLint level) const;
 
   void setRenderbuffer(GLenum attachment, GLuint renderbuffer) const;
 
@@ -34,12 +32,12 @@ public:
   void invalidateSub(GLsizei n, const GLenum *attachments, GLint x, GLint y,
                      GLsizei width, GLsizei height) const;
 
-  bool isComplete() const;
+  bool isComplete(GLenum target) const;
 
   void set(GLenum param, GLint value) const;
 
-  template<typename T>
-  void clear(GLenum buffer, GLint draw_buffer, const T* value);
+  template <typename T>
+  void clear(GLenum buffer, GLint draw_buffer, const T *value);
 
   void clear(GLenum buffer, GLint draw_buffer, GLfloat depth, GLint stencil);
 };

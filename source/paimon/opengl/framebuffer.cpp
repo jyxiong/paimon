@@ -1,8 +1,11 @@
 #include "paimon/opengl/framebuffer.h"
+#include "glad/gl.h"
 
 using namespace paimon;
 
-Framebuffer::Framebuffer() : NamedObject(GL_FRAMEBUFFER) {}
+Framebuffer::Framebuffer() : NamedObject(GL_FRAMEBUFFER) {
+  glCreateFramebuffers(1, &m_name);
+}
 
 Framebuffer::~Framebuffer() {
   if (m_name != 0) {
@@ -16,58 +19,57 @@ void Framebuffer::bind() const { glBindFramebuffer(GL_FRAMEBUFFER, m_name); }
 
 void Framebuffer::unbind() { glBindFramebuffer(GL_FRAMEBUFFER, 0); }
 
-void Framebuffer::bindDefault() { glBindFramebuffer(GL_FRAMEBUFFER, 0); }
-
-void Framebuffer::setTexture(GLenum attachment, GLenum textarget, GLuint texture,
+void Framebuffer::setTexture(GLenum attachment, GLuint texture,
                              GLint level) const {
-  glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, textarget, texture, level);
+  glNamedFramebufferTexture(m_name, attachment, texture, level);
 }
 
 void Framebuffer::setRenderbuffer(GLenum attachment,
                                   GLuint renderbuffer) const {
-  glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment, GL_RENDERBUFFER,
-                            renderbuffer);
+  glNamedFramebufferRenderbuffer(m_name, attachment, GL_RENDERBUFFER,
+                                 renderbuffer);
 }
 
 void Framebuffer::setDrawBuffers(GLsizei n, const GLenum *bufs) const {
-  glDrawBuffers(n, bufs);
+  glNamedFramebufferDrawBuffers(m_name, n, bufs);
 }
 
 void Framebuffer::setReadBuffer(GLenum src) const {
-  glReadBuffer(src);
+  glNamedFramebufferDrawBuffer(m_name, src);
 }
 
 void Framebuffer::invalidate(GLsizei n, const GLenum *attachments) const {
-  glInvalidateFramebuffer(GL_FRAMEBUFFER, n, attachments);
+  glInvalidateNamedFramebufferData(m_name, n, attachments);
 }
 
 void Framebuffer::invalidateSub(GLsizei n, const GLenum *attachments, GLint x,
-                                 GLint y, GLsizei width,
-                                 GLsizei height) const {
-  glInvalidateSubFramebuffer(GL_FRAMEBUFFER, n, attachments, x, y, width,
-                             height);
+                                GLint y, GLsizei width, GLsizei height) const {
+  glInvalidateNamedFramebufferSubData(m_name, n, attachments, x, y, width,
+                                      height);
 }
 
-bool Framebuffer::isComplete() const {
-  return glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
+bool Framebuffer::isComplete(GLenum target) const {
+  return glCheckNamedFramebufferStatus(m_name, target) ==
+         GL_FRAMEBUFFER_COMPLETE;
 }
 
 void Framebuffer::set(GLenum param, GLint value) const {
-  glFramebufferParameteri(GL_FRAMEBUFFER, param, value);
+  glNamedFramebufferParameteri(m_name, param, value);
 }
 
-template<>
-void Framebuffer::clear(GLenum buffer, GLint draw_buffer, const GLfloat* value) {
+template <>
+void Framebuffer::clear(GLenum buffer, GLint draw_buffer,
+                        const GLfloat *value) {
   glClearNamedFramebufferfv(m_name, buffer, draw_buffer, value);
 }
 
-template<>
-void Framebuffer::clear(GLenum buffer, GLint draw_buffer, const GLint* value) {
+template <>
+void Framebuffer::clear(GLenum buffer, GLint draw_buffer, const GLint *value) {
   glClearNamedFramebufferiv(m_name, buffer, draw_buffer, value);
 }
 
-template<>
-void Framebuffer::clear(GLenum buffer, GLint draw_buffer, const GLuint* value) {
+template <>
+void Framebuffer::clear(GLenum buffer, GLint draw_buffer, const GLuint *value) {
   glClearNamedFramebufferuiv(m_name, buffer, draw_buffer, value);
 }
 
