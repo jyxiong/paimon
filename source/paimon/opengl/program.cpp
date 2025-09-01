@@ -25,6 +25,9 @@ GLint Program::get(GLenum pname) const {
 }
 
 void Program::set(GLenum pname, GLint param) const {
+  // TODO: check pname
+  // if pname is GL_PROGRAM_SEPARABLE, must be set to GL_TRUE before glLinkProgram is called
+  // if pname is GL_PROGRAM_BINARY_RETRIEVABLE_HINT, recommended to be set to GL_TRUE before glLinkProgram is called
   glProgramParameteri(m_name, pname, param);
 }
 

@@ -13,7 +13,7 @@ public:
 
   Framebuffer(Framebuffer &&other) = default;
 
-  bool is_valid() const;
+  bool is_valid() const override;
 
 public:
   void bind() const;
