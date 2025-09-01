@@ -15,7 +15,7 @@ using namespace paimon;
 
 namespace {
 // hard code triangle vertices in shader for simplicity
-std::string vertex_spurce = R"(
+std::string vertex_source = R"(
   #version 460 core
 
   out vec2 TexCoord;
@@ -108,7 +108,7 @@ int main() {
   Shader fragment_shader(GL_FRAGMENT_SHADER);
   Program program;
 
-  if (!vertex_shader.compile(vertex_spurce)) {
+  if (!vertex_shader.compile(vertex_source)) {
     LOG_ERROR("Vertex shader compilation failed: {}",
               vertex_shader.get_info_log());
   }

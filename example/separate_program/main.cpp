@@ -8,6 +8,8 @@
 #include "paimon/opengl/vertex_array.h"
 #include "paimon/opengl/shader.h"
 #include "paimon/opengl/buffer.h"
+#include "paimon/opengl/shader_program.h"
+#include "paimon/opengl/program_pipeline.h"
 
 using namespace paimon;
 
@@ -91,24 +93,15 @@ int main() {
     return -1;
   }
 
-  Shader vertex_shader(GL_VERTEX_SHADER);
-  Shader fragment_shader(GL_FRAGMENT_SHADER);
-  Program program;
+  ShaderProgram vertex_shader(GL_VERTEX_SHADER, vertex_source);
+  ShaderProgram fragment_shader(GL_FRAGMENT_SHADER, fragment_source);
 
-  if (!vertex_shader.compile(vertex_source)) {
-    LOG_ERROR("Vertex shader compilation failed: {}",
-              vertex_shader.get_info_log());
-  }
-
-  if (!fragment_shader.compile(fragment_source)) {
-    LOG_ERROR("Fragment shader compilation failed: {}",
-              fragment_shader.get_info_log());
-  }
-
-  program.attach(vertex_shader);
-  program.attach(fragment_shader);
-  if (!program.link()) {
-    LOG_ERROR("Shader program linking failed: {}", program.get_info_log());
+  ProgramPipeline pipeline;
+  pipeline.use_program_stages(GL_VERTEX_SHADER_BIT, vertex_shader.get_name());
+  pipeline.use_program_stages(GL_FRAGMENT_SHADER_BIT,
+                              fragment_shader.get_name());
+  if (!pipeline.validate()) {
+    LOG_ERROR("Program pipeline validation failed");
   }
 
   // VAO setup
@@ -149,7 +142,7 @@ int main() {
     vao.bind();
 
     // Draw a triangle
-    program.use();
+    pipeline.bind();
     glDrawArrays(GL_TRIANGLES, 0, 3);
 
     // Swap the screen buffers
