@@ -10,7 +10,7 @@ struct DepthStencil {
     GLenum passOp = GL_KEEP;
     GLenum depthFailOp = GL_KEEP;
     GLenum compareOp = GL_ALWAYS;
-    GLint compareMask = 0;
+    GLuint compareMask = 0;
     GLuint writeMask = 0;
     GLint reference = 0;
 

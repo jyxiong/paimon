@@ -11,7 +11,6 @@ struct Rasterization
   GLenum frontFace = GL_CCW;
   bool depthBiasEnable = false;
   float depthBiasConstantFactor = 0.0f;
-  float depthBiasClamp = 0.0f;
   float depthBiasSlopeFactor = 0.0f;
   float lineWidth = 1.0f;
   float pointSize = 1.0f;

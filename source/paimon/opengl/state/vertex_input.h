@@ -6,14 +6,26 @@
 
 namespace paimon {
 struct VertexInput {
-  struct BindingDescription {
-    unsigned int
-        location; // glEnableVertexArrayAttrib + glVertexArrayAttribFormat
-    unsigned int binding; // glVertexArrayAttribBinding
-    GLenum format;        // glVertexArrayAttribFormat
-    unsigned int offset;  // glVertexArrayAttribFormat
+  class Attribute {
+  public:
+    unsigned int layout_location{0};
+    std::size_t binding;
+    std::size_t stride;
+    GLint format;
+    std::size_t offset;
+    // std::string name;
   };
 
-  std::vector<BindingDescription> attributes;
+  class Binding {
+  public:
+    std::size_t binding;
+    std::size_t stride;
+    unsigned int divisor;
+  };
+
+  std::vector<Attribute> attributes;
+  std::vector<Binding> bindings;
+
+  bool operator==(const VertexInput &other) const noexcept = default;
 };
 } // namespace paimon
