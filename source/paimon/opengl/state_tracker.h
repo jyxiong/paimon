@@ -6,6 +6,7 @@
 #include "paimon/opengl/state/multisample.h"
 #include "paimon/opengl/state/rasterization.h"
 #include "paimon/opengl/state/scissor.h"
+#include "paimon/opengl/state/stencil.h"
 #include "paimon/opengl/state/tessellation.h"
 #include "paimon/opengl/state/viewport.h"
 
@@ -82,6 +83,16 @@ public:
 private:
   ScissorState m_cache;
 };  
+
+class StencilTracker {
+public:
+  StencilTracker() = default;
+  ~StencilTracker() = default;
+
+  void apply(const StencilState &state);
+private:
+  StencilState m_cache;
+};
 
 class TessellationTracker {
 public:

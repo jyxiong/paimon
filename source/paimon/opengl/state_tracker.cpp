@@ -220,6 +220,31 @@ void ScissorTracker::apply(const ScissorState &state) {
   }
 }
 
+void StencilTracker::apply(const StencilState &state) {
+  if (m_cache.enable != state.enable) {
+    m_cache.enable = state.enable;
+    if (state.enable) {
+      glEnable(GL_STENCIL_TEST);
+    } else {
+      glDisable(GL_STENCIL_TEST);
+    }
+  }
+
+  if (m_cache.front != state.front) {
+    m_cache.front = state.front;
+    glStencilFuncSeparate(GL_FRONT, state.front.compareOp, state.front.reference, state.front.compareMask);
+    glStencilOpSeparate(GL_FRONT, state.front.failOp, state.front.depthFailOp, state.front.passOp);
+    glStencilMaskSeparate(GL_FRONT, state.front.writeMask);
+  }
+
+  if (m_cache.back != state.back) {
+    m_cache.back = state.back;
+    glStencilFuncSeparate(GL_BACK, state.back.compareOp, state.back.reference, state.back.compareMask);
+    glStencilOpSeparate(GL_BACK, state.back.failOp, state.back.depthFailOp, state.back.passOp);
+    glStencilMaskSeparate(GL_BACK, state.back.writeMask);
+  }
+}
+
 void TessellationTracker::apply(const TessellationState &state) {
   if (m_cache.patchControlPoints != state.patchControlPoints) {
     m_cache.patchControlPoints = state.patchControlPoints;
