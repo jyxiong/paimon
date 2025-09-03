@@ -3,6 +3,7 @@
 #include "glad/gl.h"
 
 namespace paimon {
+// TODO: support multiple samples
 struct MultisampleState {
   bool sampleShadingEnable = false;
   float minSampleShading = 0.0f;

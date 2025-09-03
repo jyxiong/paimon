@@ -43,10 +43,10 @@ public:
 private:
 };
 
-class InputAssembllyTracker {
+class InputAssemblyTracker {
 public:
-  InputAssembllyTracker() = default;
-  ~InputAssembllyTracker() = default;
+  InputAssemblyTracker() = default;
+  ~InputAssemblyTracker() = default;
 
   void apply(const InputAssemblyState &state);
 private:

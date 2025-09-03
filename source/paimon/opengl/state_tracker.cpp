@@ -81,7 +81,7 @@ void DepthTracker::apply(const DepthState &state) {
   }
 }
 
-void InputAssembllyTracker::apply(const InputAssemblyState &state) {
+void InputAssemblyTracker::apply(const InputAssemblyState &state) {
   if (m_cache.primitiveRestartEnable != state.primitiveRestartEnable) {
     m_cache.primitiveRestartEnable = state.primitiveRestartEnable;
     if (state.primitiveRestartEnable) {
@@ -201,22 +201,25 @@ void RasterizationTracker::apply(const RasterizationState &state) {
 }
 
 void ScissorTracker::apply(const ScissorState &state) {
-  if (m_cache.scissorTestEnable != state.scissorTestEnable) {
-    m_cache.scissorTestEnable = state.scissorTestEnable;
-    if (state.scissorTestEnable) {
-      glEnable(GL_SCISSOR_TEST);
-    } else {
-      glDisable(GL_SCISSOR_TEST);
-    }
+  // 多路剪裁支持
+  if (m_cache.scissors.size() != state.scissors.size()) {
+    m_cache.scissors.resize(state.scissors.size());
   }
 
-  // if (m_cache.scissors != state.scissors) {
-  //   m_cache.scissors = state.scissors;
-  //   for (size_t i = 0; i < state.scissors.size(); ++i) {
-  //     const auto &rect = state.scissors[i];
-  //     glScissor(rect.x, rect.y, rect.width, rect.height);
-  //   }
-  // }
+  for (size_t i = 0; i < state.scissors.size(); ++i) {
+    const auto &src = state.scissors[i];
+    auto &dst = m_cache.scissors[i];
+    if (dst != src) {
+      dst = src;
+      glScissorIndexed(static_cast<GLuint>(i), src.x, src.y, src.width, src.height);
+    }
+    // 控制每一路的 scissor test enable
+    if (state.scissorTestEnable) {
+      glEnablei(GL_SCISSOR_TEST, static_cast<GLuint>(i));
+    } else {
+      glDisablei(GL_SCISSOR_TEST, static_cast<GLuint>(i));
+    }
+  }
 }
 
 void TessellationTracker::apply(const TessellationState &state) {
@@ -242,4 +245,24 @@ void VertexInputTracker::apply(const VertexInputState &state) {
   //     glVertexAttribBinding(attr.location, attr.binding);
   //   }
   // }
+}
+
+void ViewportTracker::apply(const ViewportState &state) {
+  // 多视口惰性更新
+  if (m_cache.viewports.size() != state.viewports.size()) {
+    m_cache.viewports.resize(state.viewports.size());
+  }
+
+  for (size_t i = 0; i < state.viewports.size(); ++i) {
+    const auto &src = state.viewports[i];
+    auto &dst = m_cache.viewports[i];
+    if (dst != src) {
+      dst = src;
+      glViewportIndexedf(static_cast<GLuint>(i), src.x, src.y, src.width, src.height);
+      glDepthRangeIndexed(static_cast<GLuint>(i), src.minDepth, src.maxDepth);
+    }
+  }
+
+  // 禁用多余的视口（OpenGL 没有 disable viewport 的 API，resize 缓存即可）
+  m_cache.viewports.resize(state.viewports.size());
 }
