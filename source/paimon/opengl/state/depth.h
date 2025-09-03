@@ -5,8 +5,8 @@
 namespace paimon {
 struct DepthState {
 
-  bool depthTestEnable = false;
-  bool depthWriteEnable = true;
+  bool depthTest = false;
+  bool depthWrite = true;
   GLenum depthFunc = GL_LESS;
 
   bool operator==(const DepthState &other) const noexcept = default;

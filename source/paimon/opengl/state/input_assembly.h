@@ -5,7 +5,6 @@
 namespace paimon {
 struct InputAssemblyState
 {
-  GLenum primitiveTopology = GL_TRIANGLES;
   bool primitiveRestartEnable = false;
   GLuint primitiveRestartIndex = 0;
 

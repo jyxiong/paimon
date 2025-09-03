@@ -23,8 +23,8 @@ void ColorBlendTracker::apply(const ColorBlendState &state) {
     glLogicOp(state.logicOp);
   }
 
-  if (memcmp(m_cache.blendConstants, state.blendConstants, sizeof(state.blendConstants)) != 0) {
-    memcpy(m_cache.blendConstants, state.blendConstants, sizeof(state.blendConstants));
+  if (m_cache.blendConstants != state.blendConstants) {
+    m_cache.blendConstants = state.blendConstants;
     glBlendColor(state.blendConstants[0], state.blendConstants[1], state.blendConstants[2], state.blendConstants[3]);
   }
 
@@ -41,40 +41,35 @@ void ColorBlendTracker::apply(const ColorBlendState &state) {
       }
     }
 
-    if (!src.enabled) {
-      continue;
+    if (dst.blendFactors != src.blendFactors) {
+      dst.blendFactors = src.blendFactors;
+      glBlendFuncSeparatei(
+          static_cast<GLuint>(i), src.blendFactors.srcRGBFactor,
+          src.blendFactors.dstRGBFactor, src.blendFactors.srcAlphaFactor,
+          src.blendFactors.dstAlphaFactor);
     }
 
-    if (dst.srcRGBFactor != src.srcRGBFactor || dst.dstRGBFactor != src.dstRGBFactor ||
-        dst.rgbBlendOp != src.rgbBlendOp || dst.srcAlphaFactor != src.srcAlphaFactor ||
-        dst.dstAlphaFactor != src.dstAlphaFactor || dst.alphaBlendOp != src.alphaBlendOp) {
-      dst.srcRGBFactor = src.srcRGBFactor;
-      dst.dstRGBFactor = src.dstRGBFactor;
-      dst.rgbBlendOp = src.rgbBlendOp;
-      dst.srcAlphaFactor = src.srcAlphaFactor;
-      dst.dstAlphaFactor = src.dstAlphaFactor;
-      dst.alphaBlendOp = src.alphaBlendOp;
-
-      glBlendFuncSeparatei(static_cast<GLuint>(i), src.srcRGBFactor, src.dstRGBFactor,
-                           src.srcAlphaFactor, src.dstAlphaFactor);
-      glBlendEquationSeparatei(static_cast<GLuint>(i), src.rgbBlendOp, src.alphaBlendOp);
+    if (dst.blendOp != src.blendOp) {
+      dst.blendOp = src.blendOp;
+      glBlendEquationSeparatei(static_cast<GLuint>(i), src.blendOp.rgbBlendOp,
+                               src.blendOp.alphaBlendOp);
     }
   }
 }
 
 void DepthTracker::apply(const DepthState &state) {
-  if (m_cache.depthTestEnable != state.depthTestEnable) {
-    m_cache.depthTestEnable = state.depthTestEnable;
-    if (state.depthTestEnable) {
+  if (m_cache.depthTest != state.depthTest) {
+    m_cache.depthTest = state.depthTest;
+    if (state.depthTest) {
       glEnable(GL_DEPTH_TEST);
     } else {
       glDisable(GL_DEPTH_TEST);
     }
   }
 
-  if (m_cache.depthWriteEnable != state.depthWriteEnable) {
-    m_cache.depthWriteEnable = state.depthWriteEnable;
-    glDepthMask(state.depthWriteEnable ? GL_TRUE : GL_FALSE);
+  if (m_cache.depthWrite != state.depthWrite) {
+    m_cache.depthWrite = state.depthWrite;
+    glDepthMask(state.depthWrite ? GL_TRUE : GL_FALSE);
   }
 
   if (m_cache.depthFunc != state.depthFunc) {
@@ -97,13 +92,6 @@ void InputAssemblyTracker::apply(const InputAssemblyState &state) {
     m_cache.primitiveRestartIndex = state.primitiveRestartIndex;
     glPrimitiveRestartIndex(state.primitiveRestartIndex);
   }
-
-  if (m_cache.primitiveTopology != state.primitiveTopology) {
-    m_cache.primitiveTopology = state.primitiveTopology;
-    // Note: OpenGL does not have a direct equivalent to Vulkan's primitive topology setting.
-    // The primitive topology is specified when drawing (e.g., glDrawArrays or glDrawElements).
-    // Therefore, we do not set it here.
-  }
 }
 
 MultisampleTracker::MultisampleTracker() {
@@ -113,9 +101,9 @@ MultisampleTracker::MultisampleTracker() {
 }
 
 void MultisampleTracker::apply(const MultisampleState &state) {
-  if (m_cache.sampleShadingEnable != state.sampleShadingEnable) {
-    m_cache.sampleShadingEnable = state.sampleShadingEnable;
-    if (state.sampleShadingEnable) {
+  if (m_cache.enable != state.enable) {
+    m_cache.enable = state.enable;
+    if (state.enable) {
       glEnable(GL_SAMPLE_SHADING);
     } else {
       glDisable(GL_SAMPLE_SHADING);
@@ -218,17 +206,16 @@ ScissorTracker::ScissorTracker() {
 
 void ScissorTracker::apply(const ScissorState &state) {
   for (size_t i = 0; i < state.scissors.size(); ++i) {
-    if (state.scissorTestEnable) {
-      glEnablei(GL_SCISSOR_TEST, static_cast<GLuint>(i));
-    } else {
-      glDisablei(GL_SCISSOR_TEST, static_cast<GLuint>(i));
-    }
-    
     const auto &src = state.scissors[i];
     auto &dst = m_cache.scissors[i];
     if (dst != src) {
       dst = src;
-      glScissorIndexed(static_cast<GLuint>(i), src.x, src.y, src.width, src.height);
+      if (src.enable) {
+        glEnablei(GL_SCISSOR_TEST, static_cast<GLuint>(i));
+        glScissorIndexed(static_cast<GLuint>(i), src.x, src.y, src.width, src.height);
+      } else {
+        glDisablei(GL_SCISSOR_TEST, static_cast<GLuint>(i));
+      }
     }
   }
 }
@@ -237,44 +224,6 @@ void TessellationTracker::apply(const TessellationState &state) {
   if (m_cache.patchControlPoints != state.patchControlPoints) {
     m_cache.patchControlPoints = state.patchControlPoints;
     glPatchParameteri(GL_PATCH_VERTICES, state.patchControlPoints);
-  }
-}
-
-VertexInputTracker::VertexInputTracker() {
-  int maxVertexAttribs = 0;
-  glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &maxVertexAttribs);
-  m_cache.attributes.resize(static_cast<size_t>(maxVertexAttribs));
-
-  int maxVertexBindings = 0;
-  glGetIntegerv(GL_MAX_VERTEX_ATTRIB_BINDINGS, &maxVertexBindings);
-  m_cache.bindings.resize(static_cast<size_t>(maxVertexBindings));
-}
-
-void VertexInputTracker::apply(const VertexInputState &state) {
-  for (const auto &attr : state.attributes) {
-    if (attr.layout_location >= m_cache.attributes.size()) {
-      continue;
-    }
-    const auto &cachedAttr = m_cache.attributes[attr.layout_location];
-    if (cachedAttr.binding != attr.binding || cachedAttr.stride != attr.stride ||
-        cachedAttr.format != attr.format || cachedAttr.offset != attr.offset) {
-      m_cache.attributes[attr.layout_location] = attr;
-      glEnableVertexAttribArray(attr.layout_location);
-      glVertexAttribBinding(attr.layout_location, static_cast<GLuint>(attr.binding));
-      glVertexAttribFormat(attr.layout_location, attr.stride, attr.format, GL_FALSE, static_cast<GLuint>(attr.offset));
-    }
-  }
-
-  for (const auto &binding : state.bindings) {
-    if (binding.binding >= m_cache.bindings.size()) {
-      continue;
-    }
-    const auto &cachedBinding = m_cache.bindings[binding.binding];
-    if (cachedBinding.stride != binding.stride || cachedBinding.divisor != binding.divisor) {
-      m_cache.bindings[binding.binding] = binding;
-      glVertexBindingDivisor(static_cast<GLuint>(binding.binding), binding.divisor);
-      glBindVertexBuffer(static_cast<GLuint>(binding.binding), 0, 0, binding.stride);
-    }
   }
 }
 

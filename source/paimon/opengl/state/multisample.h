@@ -1,12 +1,12 @@
 #pragma once
 
 #include <vector>
+
 #include "glad/gl.h"
 
 namespace paimon {
-// TODO: support multiple samples
 struct MultisampleState {
-  bool sampleShadingEnable = false;
+  bool enable = false;
   float minSampleShading = 0.0f;
   std::vector<GLenum> sampleMasks;
 

@@ -7,7 +7,6 @@
 #include "paimon/opengl/state/rasterization.h"
 #include "paimon/opengl/state/scissor.h"
 #include "paimon/opengl/state/tessellation.h"
-#include "paimon/opengl/state/vertex_input.h"
 #include "paimon/opengl/state/viewport.h"
 
 namespace paimon {
@@ -95,16 +94,6 @@ private:
   TessellationState m_cache;
 };
 
-class VertexInputTracker {
-public:
-  VertexInputTracker();
-  ~VertexInputTracker() = default;
-
-  void apply(const VertexInputState &state);
-private:
-  VertexInputState m_cache;
-};
-
 class ViewportTracker {
 public:
   ViewportTracker();
@@ -121,7 +110,6 @@ public:
   ~PipelineTracker() = default;
 
   // TODO: track program pipeline
-
   ColorBlendTracker colorBlend;
   DepthTracker depth;
   InputAssemblyTracker inputAssembly;
@@ -129,8 +117,6 @@ public:
   RasterizationTracker rasterization;
   ScissorTracker scissor;
   TessellationTracker tessellation;
-  // TODO: track VAO instead of vertex input
-  VertexInputTracker vertexInput;
   ViewportTracker viewport;
 };
 } // namespace paimon 

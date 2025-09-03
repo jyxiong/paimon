@@ -3,28 +3,38 @@
 #include <vector>
 
 #include "glad/gl.h"
+#include "glm/vec4.hpp"
 
 namespace paimon {
 
 struct ColorBlendState {
   struct Attachment
   {
-    bool enabled = false;
-    GLenum srcRGBFactor = GL_ONE;
-    GLenum dstRGBFactor = GL_ZERO; 
-    GLenum rgbBlendOp = GL_FUNC_ADD;
-    GLenum srcAlphaFactor = GL_ONE;
-    GLenum dstAlphaFactor = GL_ZERO; 
-    GLenum alphaBlendOp = GL_FUNC_ADD;
-    
+    struct BlendFunction {
+      GLenum srcRGBFactor = GL_ONE;
+      GLenum dstRGBFactor = GL_ZERO; 
+      GLenum srcAlphaFactor = GL_ONE;
+      GLenum dstAlphaFactor = GL_ZERO;
 
-    bool operator==(const Attachment &other) const = default;
+      bool operator==(const BlendFunction& other) const;
+    };
+
+    struct BlendEquation {
+      GLenum rgbBlendOp = GL_FUNC_ADD;
+      GLenum alphaBlendOp = GL_FUNC_ADD;
+
+      bool operator==(const BlendEquation& other) const;
+    };
+
+    bool enabled = false;
+    BlendFunction blendFactors;
+    BlendEquation blendOp;
   };
 
   bool logicOpEnable = false;
   GLenum logicOp = GL_COPY;
 
-  float blendConstants[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+  glm::vec4 blendConstants = {0.0f, 0.0f, 0.0f, 0.0f};
   std::vector<Attachment> attachments;
 };
 }
