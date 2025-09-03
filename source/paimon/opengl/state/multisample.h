@@ -1,5 +1,6 @@
 #pragma once
 
+#include <vector>
 #include "glad/gl.h"
 
 namespace paimon {
@@ -7,7 +8,7 @@ namespace paimon {
 struct MultisampleState {
   bool sampleShadingEnable = false;
   float minSampleShading = 0.0f;
-  GLenum sampleMask = GL_NONE;
+  std::vector<GLenum> sampleMasks;
 
   bool alphaToCoverageEnable = false;
   bool alphaToOneEnable = false;

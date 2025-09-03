@@ -2,6 +2,12 @@
 
 using namespace paimon;
 
+ColorBlendTracker::ColorBlendTracker() {
+  int maxColorAttachments = 0;
+  glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS, &maxColorAttachments);
+  m_cache.attachments.resize(static_cast<size_t>(maxColorAttachments));
+}
+
 void ColorBlendTracker::apply(const ColorBlendState &state) {
   if (m_cache.logicOpEnable != state.logicOpEnable) {
     m_cache.logicOpEnable = state.logicOpEnable;
@@ -20,10 +26,6 @@ void ColorBlendTracker::apply(const ColorBlendState &state) {
   if (memcmp(m_cache.blendConstants, state.blendConstants, sizeof(state.blendConstants)) != 0) {
     memcpy(m_cache.blendConstants, state.blendConstants, sizeof(state.blendConstants));
     glBlendColor(state.blendConstants[0], state.blendConstants[1], state.blendConstants[2], state.blendConstants[3]);
-  }
-
-  if (m_cache.attachments.size() != state.attachments.size()) {
-    m_cache.attachments.resize(state.attachments.size());
   }
 
   for (size_t i = 0; i < state.attachments.size(); ++i) {
@@ -104,6 +106,12 @@ void InputAssemblyTracker::apply(const InputAssemblyState &state) {
   }
 }
 
+MultisampleTracker::MultisampleTracker() {
+  int maxSampleMaskWords = 0;
+  glGetIntegerv(GL_MAX_SAMPLE_MASK_WORDS, &maxSampleMaskWords);
+  m_cache.sampleMasks.resize(static_cast<size_t>(maxSampleMaskWords));
+}
+
 void MultisampleTracker::apply(const MultisampleState &state) {
   if (m_cache.sampleShadingEnable != state.sampleShadingEnable) {
     m_cache.sampleShadingEnable = state.sampleShadingEnable;
@@ -119,9 +127,11 @@ void MultisampleTracker::apply(const MultisampleState &state) {
     glMinSampleShading(state.minSampleShading);
   }
 
-  if (m_cache.sampleMask != state.sampleMask) {
-    m_cache.sampleMask = state.sampleMask;
-    glSampleMaski(0, state.sampleMask); // OpenGL supports multiple sample masks, we use the first one here.
+  for (size_t i = 0; i < state.sampleMasks.size(); ++i) {
+    if (m_cache.sampleMasks[i] != state.sampleMasks[i]) {
+      m_cache.sampleMasks[i] = state.sampleMasks[i];
+      glSampleMaski(static_cast<GLuint>(i), state.sampleMasks[i]);
+    }
   }
 
   if (m_cache.alphaToCoverageEnable != state.alphaToCoverageEnable) {
@@ -200,24 +210,25 @@ void RasterizationTracker::apply(const RasterizationState &state) {
   }
 }
 
-void ScissorTracker::apply(const ScissorState &state) {
-  // 多路剪裁支持
-  if (m_cache.scissors.size() != state.scissors.size()) {
-    m_cache.scissors.resize(state.scissors.size());
-  }
+ScissorTracker::ScissorTracker() {
+  int maxScissors = 0;
+  glGetIntegerv(GL_MAX_VIEWPORTS, &maxScissors);
+  m_cache.scissors.resize(static_cast<size_t>(maxScissors));
+}
 
+void ScissorTracker::apply(const ScissorState &state) {
   for (size_t i = 0; i < state.scissors.size(); ++i) {
+    if (state.scissorTestEnable) {
+      glEnablei(GL_SCISSOR_TEST, static_cast<GLuint>(i));
+    } else {
+      glDisablei(GL_SCISSOR_TEST, static_cast<GLuint>(i));
+    }
+    
     const auto &src = state.scissors[i];
     auto &dst = m_cache.scissors[i];
     if (dst != src) {
       dst = src;
       glScissorIndexed(static_cast<GLuint>(i), src.x, src.y, src.width, src.height);
-    }
-    // 控制每一路的 scissor test enable
-    if (state.scissorTestEnable) {
-      glEnablei(GL_SCISSOR_TEST, static_cast<GLuint>(i));
-    } else {
-      glDisablei(GL_SCISSOR_TEST, static_cast<GLuint>(i));
     }
   }
 }
@@ -229,29 +240,51 @@ void TessellationTracker::apply(const TessellationState &state) {
   }
 }
 
-void VertexInputTracker::apply(const VertexInputState &state) {
-  // if (m_cache.bindings != state.bindings) {
-  //   m_cache.bindings = state.bindings;
-  //   for (const auto &binding : state.bindings) {
-  //     glBindVertexBuffer(binding.binding, binding.buffer, binding.offset, binding.stride);
-  //   }
-  // }
+VertexInputTracker::VertexInputTracker() {
+  int maxVertexAttribs = 0;
+  glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &maxVertexAttribs);
+  m_cache.attributes.resize(static_cast<size_t>(maxVertexAttribs));
 
-  // if (m_cache.attributes != state.attributes) {
-  //   m_cache.attributes = state.attributes;
-  //   for (const auto &attr : state.attributes) {
-  //     glEnableVertexAttribArray(attr.location);
-  //     glVertexAttribFormat(attr.location, attr.size, attr.type, attr.normalized ? GL_TRUE : GL_FALSE, attr.offset);
-  //     glVertexAttribBinding(attr.location, attr.binding);
-  //   }
-  // }
+  int maxVertexBindings = 0;
+  glGetIntegerv(GL_MAX_VERTEX_ATTRIB_BINDINGS, &maxVertexBindings);
+  m_cache.bindings.resize(static_cast<size_t>(maxVertexBindings));
+}
+
+void VertexInputTracker::apply(const VertexInputState &state) {
+  for (const auto &attr : state.attributes) {
+    if (attr.layout_location >= m_cache.attributes.size()) {
+      continue;
+    }
+    const auto &cachedAttr = m_cache.attributes[attr.layout_location];
+    if (cachedAttr.binding != attr.binding || cachedAttr.stride != attr.stride ||
+        cachedAttr.format != attr.format || cachedAttr.offset != attr.offset) {
+      m_cache.attributes[attr.layout_location] = attr;
+      glEnableVertexAttribArray(attr.layout_location);
+      glVertexAttribBinding(attr.layout_location, static_cast<GLuint>(attr.binding));
+      glVertexAttribFormat(attr.layout_location, attr.stride, attr.format, GL_FALSE, static_cast<GLuint>(attr.offset));
+    }
+  }
+
+  for (const auto &binding : state.bindings) {
+    if (binding.binding >= m_cache.bindings.size()) {
+      continue;
+    }
+    const auto &cachedBinding = m_cache.bindings[binding.binding];
+    if (cachedBinding.stride != binding.stride || cachedBinding.divisor != binding.divisor) {
+      m_cache.bindings[binding.binding] = binding;
+      glVertexBindingDivisor(static_cast<GLuint>(binding.binding), binding.divisor);
+      glBindVertexBuffer(static_cast<GLuint>(binding.binding), 0, 0, binding.stride);
+    }
+  }
+}
+
+ViewportTracker::ViewportTracker() {
+  int maxViewports = 0;
+  glGetIntegerv(GL_MAX_VIEWPORTS, &maxViewports);
+  m_cache.viewports.resize(static_cast<size_t>(maxViewports));
 }
 
 void ViewportTracker::apply(const ViewportState &state) {
-  // 多视口惰性更新
-  if (m_cache.viewports.size() != state.viewports.size()) {
-    m_cache.viewports.resize(state.viewports.size());
-  }
 
   for (size_t i = 0; i < state.viewports.size(); ++i) {
     const auto &src = state.viewports[i];
@@ -262,7 +295,4 @@ void ViewportTracker::apply(const ViewportState &state) {
       glDepthRangeIndexed(static_cast<GLuint>(i), src.minDepth, src.maxDepth);
     }
   }
-
-  // 禁用多余的视口（OpenGL 没有 disable viewport 的 API，resize 缓存即可）
-  m_cache.viewports.resize(state.viewports.size());
 }

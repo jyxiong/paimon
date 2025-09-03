@@ -15,7 +15,7 @@ namespace paimon {
 class ColorBlendTracker
 {
 public:
-  ColorBlendTracker() = default;
+  ColorBlendTracker();
   ~ColorBlendTracker() = default;
 
   void apply(const ColorBlendState &state);
@@ -55,7 +55,7 @@ private:
 
 class MultisampleTracker {
 public:
-  MultisampleTracker() = default;
+  MultisampleTracker();
   ~MultisampleTracker() = default;
 
   void apply(const MultisampleState &state);
@@ -76,7 +76,7 @@ private:
 
 class ScissorTracker {
 public:
-  ScissorTracker() = default;
+  ScissorTracker();
   ~ScissorTracker() = default;
 
   void apply(const ScissorState &state);
@@ -97,7 +97,7 @@ private:
 
 class VertexInputTracker {
 public:
-  VertexInputTracker() = default;
+  VertexInputTracker();
   ~VertexInputTracker() = default;
 
   void apply(const VertexInputState &state);
@@ -107,11 +107,30 @@ private:
 
 class ViewportTracker {
 public:
-  ViewportTracker() = default;
+  ViewportTracker();
   ~ViewportTracker() = default;
 
   void apply(const ViewportState &state);
 private:
   ViewportState m_cache;
+};
+
+class PipelineTracker {
+public:
+  PipelineTracker() = default;
+  ~PipelineTracker() = default;
+
+  // TODO: track program pipeline
+
+  ColorBlendTracker colorBlend;
+  DepthTracker depth;
+  InputAssemblyTracker inputAssembly;
+  MultisampleTracker multisample;
+  RasterizationTracker rasterization;
+  ScissorTracker scissor;
+  TessellationTracker tessellation;
+  // TODO: track VAO instead of vertex input
+  VertexInputTracker vertexInput;
+  ViewportTracker viewport;
 };
 } // namespace paimon 
