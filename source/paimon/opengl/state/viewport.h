@@ -1,9 +1,11 @@
 #pragma once
 
+#include <vector>
+
 #include "glad/gl.h"
 
 namespace paimon {
-struct Viewport {
+struct ViewportState {
   int x = 0;
   int y = 0;
   int width = 800;

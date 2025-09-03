@@ -6,7 +6,7 @@
 
 namespace paimon {
 
-struct ColorBlend {
+struct ColorBlendState {
   struct Attachment
   {
     bool enabled = false;

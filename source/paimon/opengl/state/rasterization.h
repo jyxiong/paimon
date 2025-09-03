@@ -3,7 +3,7 @@
 #include "glad/gl.h"
 
 namespace paimon {
-struct Rasterization
+struct RasterizationState
 {
   bool depthClampEnable = false;
   GLenum polygonMode = GL_FILL;

@@ -3,11 +3,12 @@
 #include "glad/gl.h"
 
 namespace paimon {
-struct InputAssemblly
+struct InputAssemblyState
 {
-  GLenum topology = GL_TRIANGLES;
+  GLenum primitiveTopology = GL_TRIANGLES;
   bool primitiveRestartEnable = false;
+  GLuint primitiveRestartIndex = 0;
 
-  bool operator==(const InputAssemblly &other) const noexcept = default;
+  bool operator==(const InputAssemblyState &other) const noexcept = default;
 };
 } // namespace paimon

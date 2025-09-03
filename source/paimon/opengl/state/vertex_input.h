@@ -5,7 +5,7 @@
 #include "glad/gl.h"
 
 namespace paimon {
-struct VertexInput {
+struct VertexInputState {
   class Attribute {
   public:
     unsigned int layout_location{0};
@@ -26,6 +26,6 @@ struct VertexInput {
   std::vector<Attribute> attributes;
   std::vector<Binding> bindings;
 
-  bool operator==(const VertexInput &other) const noexcept = default;
+  bool operator==(const VertexInputState &other) const noexcept = default;
 };
 } // namespace paimon

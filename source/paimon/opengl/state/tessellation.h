@@ -1,7 +1,7 @@
 #pragma once
 
 namespace paimon {
-  struct Tessellation
+  struct TessellationState
   {
     int patchControlPoints = 3;
   };

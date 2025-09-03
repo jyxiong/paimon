@@ -1,7 +1,6 @@
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 
-#include <paimon/opengl/state_setting.h>
 #include "paimon/core/base/macro.h"
 
 using namespace paimon;
@@ -39,13 +38,13 @@ int main() {
     return -1;
   }
 
-  // Example usage of StateSettingUnified
-  GLfloat red = 1.0f, green = 0.0f, blue = 0.0f, alpha = 1.0f;
-  auto setting =
-      paimon::StateSettingUnified(glBlendColor, red, green, blue, alpha);
+  // // Example usage of StateSettingUnified
+  // GLfloat red = 1.0f, green = 0.0f, blue = 0.0f, alpha = 1.0f;
+  // auto setting =
+  //     paimon::StateSettingUnified(glBlendColor, red, green, blue, alpha);
 
-  // Apply the setting
-  setting.apply(); // This will call glBlendColor(red, green, blue, alpha)
+  // // Apply the setting
+  // setting.apply(); // This will call glBlendColor(red, green, blue, alpha)
 
   glfwSwapInterval(1); // Enable vsync
   while (!glfwWindowShouldClose(window)) {
