@@ -25,60 +25,74 @@ void ColorBlendTracker::apply(const ColorBlendState &state) {
 
   if (m_cache.blendConstants != state.blendConstants) {
     m_cache.blendConstants = state.blendConstants;
-    glBlendColor(state.blendConstants[0], state.blendConstants[1], state.blendConstants[2], state.blendConstants[3]);
+    glBlendColor(state.blendConstants.red, state.blendConstants.green,
+                 state.blendConstants.blue, state.blendConstants.alpha);
   }
 
   for (size_t i = 0; i < state.attachments.size(); ++i) {
     const auto &src = state.attachments[i];
     auto &dst = m_cache.attachments[i];
 
-    if (dst.enabled != src.enabled) {
-      dst.enabled = src.enabled;
-      if (src.enabled) {
+    if (dst.blendEnabled != src.blendEnabled) {
+      dst.blendEnabled = src.blendEnabled;
+      if (src.blendEnabled) {
         glEnablei(GL_BLEND, static_cast<GLuint>(i));
       } else {
         glDisablei(GL_BLEND, static_cast<GLuint>(i));
       }
     }
 
-    if (dst.blendFactors != src.blendFactors) {
-      dst.blendFactors = src.blendFactors;
-      glBlendFuncSeparatei(
-          static_cast<GLuint>(i), src.blendFactors.srcRGBFactor,
-          src.blendFactors.dstRGBFactor, src.blendFactors.srcAlphaFactor,
-          src.blendFactors.dstAlphaFactor);
+    if (dst.blendFactor != src.blendFactor) {
+      dst.blendFactor = src.blendFactor;
+      glBlendFuncSeparatei(static_cast<GLuint>(i), src.blendFactor.srcRGBFactor,
+                           src.blendFactor.dstRGBFactor,
+                           src.blendFactor.srcAlphaFactor,
+                           src.blendFactor.dstAlphaFactor);
     }
 
-    if (dst.blendOp != src.blendOp) {
-      dst.blendOp = src.blendOp;
-      glBlendEquationSeparatei(static_cast<GLuint>(i), src.blendOp.rgbBlendOp,
-                               src.blendOp.alphaBlendOp);
+    if (dst.blendEquation != src.blendEquation) {
+      dst.blendEquation = src.blendEquation;
+      glBlendEquationSeparatei(static_cast<GLuint>(i),
+                               src.blendEquation.rgbBlendOp,
+                               src.blendEquation.alphaBlendOp);
+    }
+
+    if (dst.colorWriteMask != src.colorWriteMask) {
+      dst.colorWriteMask = src.colorWriteMask;
+      glColorMaski(static_cast<GLuint>(i), src.colorWriteMask.red,
+                   src.colorWriteMask.green, src.colorWriteMask.blue,
+                   src.colorWriteMask.alpha);
     }
   }
 }
 
 void DepthTracker::apply(const DepthState &state) {
-  if (m_cache.depthTest != state.depthTest) {
-    m_cache.depthTest = state.depthTest;
-    if (state.depthTest) {
+  if (m_cache.depthTestEnable != state.depthTestEnable) {
+    m_cache.depthTestEnable = state.depthTestEnable;
+    if (state.depthTestEnable) {
       glEnable(GL_DEPTH_TEST);
     } else {
       glDisable(GL_DEPTH_TEST);
     }
   }
 
-  if (m_cache.depthWrite != state.depthWrite) {
-    m_cache.depthWrite = state.depthWrite;
-    glDepthMask(state.depthWrite ? GL_TRUE : GL_FALSE);
+  if (m_cache.depthWriteEnable != state.depthWriteEnable) {
+    m_cache.depthWriteEnable = state.depthWriteEnable;
+    glDepthMask(state.depthWriteEnable ? GL_TRUE : GL_FALSE);
   }
 
-  if (m_cache.depthFunc != state.depthFunc) {
-    m_cache.depthFunc = state.depthFunc;
-    glDepthFunc(state.depthFunc);
+  if (m_cache.depthCompareOp != state.depthCompareOp) {
+    m_cache.depthCompareOp = state.depthCompareOp;
+    glDepthFunc(state.depthCompareOp);
   }
 }
 
 void InputAssemblyTracker::apply(const InputAssemblyState &state) {
+  if (m_cache.primitiveTopology != state.primitiveTopology)
+  {
+    m_cache.primitiveTopology = state.primitiveTopology;
+  }
+
   if (m_cache.primitiveRestartEnable != state.primitiveRestartEnable) {
     m_cache.primitiveRestartEnable = state.primitiveRestartEnable;
     if (state.primitiveRestartEnable) {
@@ -101,9 +115,9 @@ MultisampleTracker::MultisampleTracker() {
 }
 
 void MultisampleTracker::apply(const MultisampleState &state) {
-  if (m_cache.enable != state.enable) {
-    m_cache.enable = state.enable;
-    if (state.enable) {
+  if (m_cache.sampleShadingEnable != state.sampleShadingEnable) {
+    m_cache.sampleShadingEnable = state.sampleShadingEnable;
+    if (state.sampleShadingEnable) {
       glEnable(GL_SAMPLE_SHADING);
     } else {
       glDisable(GL_SAMPLE_SHADING);
@@ -151,19 +165,32 @@ void RasterizationTracker::apply(const RasterizationState &state) {
     }
   }
 
+  if (m_cache.rasterizerDiscardEnable != state.rasterizerDiscardEnable) {
+    m_cache.rasterizerDiscardEnable = state.rasterizerDiscardEnable;
+    if (state.rasterizerDiscardEnable) {
+      glEnable(GL_RASTERIZER_DISCARD);
+    } else {
+      glDisable(GL_RASTERIZER_DISCARD);
+    }
+  }
+
   if (m_cache.polygonMode != state.polygonMode) {
     m_cache.polygonMode = state.polygonMode;
     glPolygonMode(GL_FRONT_AND_BACK, state.polygonMode);
   }
 
+  if (m_cache.cullEnable != state.cullEnable) {
+    m_cache.cullEnable = state.cullEnable;
+    if (state.cullEnable) {
+      glEnable(GL_CULL_FACE);
+    } else {
+      glDisable(GL_CULL_FACE);
+    }
+  }
+
   if (m_cache.cullMode != state.cullMode) {
     m_cache.cullMode = state.cullMode;
-    if (state.cullMode == GL_NONE) {
-      glDisable(GL_CULL_FACE);
-    } else {
-      glEnable(GL_CULL_FACE);
-      glCullFace(state.cullMode);
-    }
+    glCullFace(state.cullMode);
   }
 
   if (m_cache.frontFace != state.frontFace) {
@@ -180,11 +207,9 @@ void RasterizationTracker::apply(const RasterizationState &state) {
     }
   }
 
-  if (m_cache.depthBiasConstantFactor != state.depthBiasConstantFactor ||
-      m_cache.depthBiasSlopeFactor != state.depthBiasSlopeFactor) {
-    m_cache.depthBiasConstantFactor = state.depthBiasConstantFactor;
-    m_cache.depthBiasSlopeFactor = state.depthBiasSlopeFactor;
-    glPolygonOffset(state.depthBiasSlopeFactor, state.depthBiasConstantFactor);
+  if (m_cache.depthBias != state.depthBias) {
+    m_cache.depthBias = state.depthBias;
+    glPolygonOffset(state.depthBias.constant, state.depthBias.slope);
   }
 
   if (m_cache.lineWidth != state.lineWidth) {
@@ -201,23 +226,34 @@ void RasterizationTracker::apply(const RasterizationState &state) {
 ScissorTracker::ScissorTracker() {
   int maxScissors = 0;
   glGetIntegerv(GL_MAX_VIEWPORTS, &maxScissors);
-  m_cache.scissors.resize(static_cast<size_t>(maxScissors));
+  m_cache.resize(static_cast<size_t>(maxScissors));
 }
 
-void ScissorTracker::apply(const ScissorState &state) {
-  for (size_t i = 0; i < state.scissors.size(); ++i) {
-    const auto &src = state.scissors[i];
-    auto &dst = m_cache.scissors[i];
-    if (dst != src) {
-      dst = src;
+void ScissorTracker::apply(const std::vector<ScissorState> &state) {
+  for (size_t i = 0; i < state.size(); ++i) {
+    const auto &src = state[i];
+    auto &dst = m_cache[i];
+
+    if (dst.enable != src.enable) {
+      dst.enable = src.enable;
       if (src.enable) {
         glEnablei(GL_SCISSOR_TEST, static_cast<GLuint>(i));
-        glScissorIndexed(static_cast<GLuint>(i), src.x, src.y, src.width, src.height);
       } else {
         glDisablei(GL_SCISSOR_TEST, static_cast<GLuint>(i));
       }
     }
+
+    if (dst.scissor != src.scissor) {
+      dst.scissor = src.scissor;
+      glScissorIndexed(static_cast<GLuint>(i), src.scissor.x, src.scissor.y,
+                       src.scissor.width, src.scissor.height);
+    }
   }
+}
+
+StencilTracker::StencilTracker() {
+  m_cache.faceOps[GL_FRONT] = {};
+  m_cache.faceOps[GL_BACK] = {};
 }
 
 void StencilTracker::apply(const StencilState &state) {
@@ -230,18 +266,31 @@ void StencilTracker::apply(const StencilState &state) {
     }
   }
 
-  if (m_cache.front != state.front) {
-    m_cache.front = state.front;
-    glStencilFuncSeparate(GL_FRONT, state.front.compareOp, state.front.reference, state.front.compareMask);
-    glStencilOpSeparate(GL_FRONT, state.front.failOp, state.front.depthFailOp, state.front.passOp);
-    glStencilMaskSeparate(GL_FRONT, state.front.writeMask);
-  }
+  for (const auto &[face, stencilOp] : state.faceOps) {
+    if (stencilOp.compareOp != m_cache.faceOps[face].compareOp ||
+        stencilOp.reference != m_cache.faceOps[face].reference ||
+        stencilOp.compareMask != m_cache.faceOps[face].compareMask) {
+      m_cache.faceOps[face].compareOp = stencilOp.compareOp;
+      m_cache.faceOps[face].reference = stencilOp.reference;
+      m_cache.faceOps[face].compareMask = stencilOp.compareMask;
+      glStencilFuncSeparate(face, stencilOp.compareOp, stencilOp.reference,
+                            stencilOp.compareMask);
+    }
 
-  if (m_cache.back != state.back) {
-    m_cache.back = state.back;
-    glStencilFuncSeparate(GL_BACK, state.back.compareOp, state.back.reference, state.back.compareMask);
-    glStencilOpSeparate(GL_BACK, state.back.failOp, state.back.depthFailOp, state.back.passOp);
-    glStencilMaskSeparate(GL_BACK, state.back.writeMask);
+    if (stencilOp.failOp != m_cache.faceOps[face].failOp ||
+        stencilOp.depthFailOp != m_cache.faceOps[face].depthFailOp ||
+        stencilOp.passOp != m_cache.faceOps[face].passOp) {
+      m_cache.faceOps[face].failOp = stencilOp.failOp;
+      m_cache.faceOps[face].depthFailOp = stencilOp.depthFailOp;
+      m_cache.faceOps[face].passOp = stencilOp.passOp;
+      glStencilOpSeparate(face, stencilOp.failOp, stencilOp.depthFailOp,
+                          stencilOp.passOp);
+    }
+
+    if (stencilOp.writeMask != m_cache.faceOps[face].writeMask) {
+      m_cache.faceOps[face].writeMask = stencilOp.writeMask;
+      glStencilMaskSeparate(face, stencilOp.writeMask);
+    }
   }
 }
 
@@ -255,18 +304,25 @@ void TessellationTracker::apply(const TessellationState &state) {
 ViewportTracker::ViewportTracker() {
   int maxViewports = 0;
   glGetIntegerv(GL_MAX_VIEWPORTS, &maxViewports);
-  m_cache.viewports.resize(static_cast<size_t>(maxViewports));
+  m_cache.resize(static_cast<size_t>(maxViewports));
 }
 
-void ViewportTracker::apply(const ViewportState &state) {
+void ViewportTracker::apply(const std::vector<ViewportState> &state) {
 
-  for (size_t i = 0; i < state.viewports.size(); ++i) {
-    const auto &src = state.viewports[i];
-    auto &dst = m_cache.viewports[i];
-    if (dst != src) {
-      dst = src;
-      glViewportIndexedf(static_cast<GLuint>(i), src.x, src.y, src.width, src.height);
-      glDepthRangeIndexed(static_cast<GLuint>(i), src.minDepth, src.maxDepth);
+  for (size_t i = 0; i < state.size(); ++i) {
+    const auto &src = state[i];
+    auto &dst = m_cache[i];
+
+    if (dst.viewport != src.viewport) {
+      dst.viewport = src.viewport;
+      glViewportIndexedf(static_cast<GLuint>(i), src.viewport.x, src.viewport.y,
+                         src.viewport.width, src.viewport.height);
+    }
+
+    if (dst.depthRange != src.depthRange) {
+      dst.depthRange = src.depthRange;
+      glDepthRangeIndexed(static_cast<GLuint>(i), src.depthRange.near,
+                          src.depthRange.far);
     }
   }
 }

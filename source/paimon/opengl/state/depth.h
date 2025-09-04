@@ -4,11 +4,8 @@
 
 namespace paimon {
 struct DepthState {
-
-  bool depthTest = false;
-  bool depthWrite = true;
-  GLenum depthFunc = GL_LESS;
-
-  bool operator==(const DepthState &other) const noexcept = default;
+  bool depthTestEnable = false;
+  bool depthWriteEnable = true;
+  GLenum depthCompareOp = GL_LESS;
 };
 } // namespace paimon

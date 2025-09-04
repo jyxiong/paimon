@@ -79,14 +79,14 @@ public:
   ScissorTracker();
   ~ScissorTracker() = default;
 
-  void apply(const ScissorState &state);
+  void apply(const std::vector<ScissorState> &state);
 private:
-  ScissorState m_cache;
+  std::vector<ScissorState> m_cache;
 };  
 
 class StencilTracker {
 public:
-  StencilTracker() = default;
+  StencilTracker();
   ~StencilTracker() = default;
 
   void apply(const StencilState &state);
@@ -110,9 +110,9 @@ public:
   ViewportTracker();
   ~ViewportTracker() = default;
 
-  void apply(const ViewportState &state);
+  void apply(const std::vector<ViewportState> &state);
 private:
-  ViewportState m_cache;
+  std::vector<ViewportState> m_cache;
 };
 
 class PipelineTracker {

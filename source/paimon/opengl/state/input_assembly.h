@@ -5,9 +5,8 @@
 namespace paimon {
 struct InputAssemblyState
 {
+  GLenum primitiveTopology = GL_TRIANGLES;
   bool primitiveRestartEnable = false;
   GLuint primitiveRestartIndex = 0;
-
-  bool operator==(const InputAssemblyState &other) const noexcept = default;
 };
 } // namespace paimon
