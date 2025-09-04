@@ -6,7 +6,7 @@ add_library(${TARGET_NAME} ${TARGET_SOURCES} ${TARGET_HEADERS})
 
 target_include_directories(${TARGET_NAME} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
 
-# target_compile_definitions(${TARGET_NAME})
+target_compile_definitions(${TARGET_NAME} PUBLIC GLFW_INCLUDE_NONE)
 
 # target_compile_options(${TARGET_NAME})
 
