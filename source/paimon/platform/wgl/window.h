@@ -1,12 +1,10 @@
-
 #pragma once
-#include <windows.h>
-#include <memory>
 
-namespace {
+#include <windows.h>
+
 class WindowClass {
 public:
-  WindowClass();
+  static WindowClass& instance();
   WindowClass(const WindowClass &) = delete;
   WindowClass(WindowClass &&other) = delete;
   ~WindowClass();
@@ -17,11 +15,10 @@ public:
   WindowClass &operator=(WindowClass &&other) = delete;
 
 private:
+  WindowClass();
   HMODULE m_instanceHandle;
   ATOM m_id;
 };
-} // namespace
-
 
 namespace paimon {
 
@@ -31,11 +28,12 @@ public:
   WindowsWindow(HWND hwnd, HDC hdc);
   ~WindowsWindow();
 
+  HDC hdc() const;
+
 private:
   HWND m_hwnd = nullptr;
   HDC m_hdc = nullptr;
   bool m_ownsHwnd = false;
-  std::weak_ptr<WindowClass> m_windowClass; // 仅自己创建窗口时持有
 };
 
 } // namespace paimon

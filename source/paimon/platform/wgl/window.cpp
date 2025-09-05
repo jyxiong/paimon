@@ -1,11 +1,11 @@
 
 #include "paimon/platform/wgl/window.h"
-#include <memory>
+
 #include "paimon/core/base/macro.h"
+#include <winuser.h>
 
 using namespace paimon;
 
-namespace {
 WindowClass::WindowClass() : m_id(0) {
   auto success = GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
                                    nullptr, &m_instanceHandle);
@@ -24,7 +24,7 @@ WindowClass::WindowClass() : m_id(0) {
   windowClass.hCursor = nullptr;
   windowClass.hbrBackground = reinterpret_cast<HBRUSH>(COLOR_BACKGROUND);
   windowClass.lpszMenuName = nullptr;
-  windowClass.lpszClassName = TEXT("playground");
+  windowClass.lpszClassName = TEXT("PaimonWindowClass");
   windowClass.hIconSm = nullptr;
 
   m_id = RegisterClassEx(&windowClass);
@@ -39,21 +39,34 @@ WindowClass::~WindowClass() {
   }
 }
 
-LPCTSTR WindowClass::id() const {
-  return reinterpret_cast<LPCTSTR>(m_id);
-}
+LPCTSTR WindowClass::id() const { return reinterpret_cast<LPCTSTR>(m_id); }
 
-std::shared_ptr<WindowClass> GetWindowClassInstance() {
-  static std::shared_ptr<WindowClass> instance = std::make_shared<WindowClass>();
+WindowClass &WindowClass::instance() {
+  static WindowClass instance;
   return instance;
 }
-} // namespace
 
+WindowsWindow::WindowsWindow() : m_ownsHwnd(true) {
+  HMODULE instance;
+  auto success = GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                                   nullptr, &instance);
+  if (!success) {
+    LOG_ERROR("GetModuleHandleEx failed");
+  }
 
+  m_hwnd =
+      CreateWindow(WindowClass::instance().id(), nullptr, WS_OVERLAPPEDWINDOW,
+                   CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+                   nullptr, nullptr, instance, nullptr);
 
-WindowsWindow::WindowsWindow()
-    : m_ownsHwnd(true), m_windowClass(GetWindowClassInstance()) {
+  if (!m_hwnd) {
+    LOG_ERROR("CreateWindow failed");
+  }
+
   m_hdc = GetDC(m_hwnd);
+  if (!m_hdc) {
+    LOG_ERROR("GetDC failed");
+  }
 }
 
 WindowsWindow::WindowsWindow(HWND hwnd, HDC hdc)
@@ -63,3 +76,5 @@ WindowsWindow::~WindowsWindow() {
   if (m_hdc && m_hwnd)
     ReleaseDC(m_hwnd, m_hdc);
 }
+
+HDC WindowsWindow::hdc() const { return m_hdc; }

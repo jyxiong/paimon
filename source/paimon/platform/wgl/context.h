@@ -4,19 +4,43 @@
 
 #include <windows.h>
 
+#include "paimon/platform/wgl/window.h"
+
 namespace paimon {
 
 class WGLContext : public Context {
 public:
-    WGLContext(HDC hdc, int major = 4, int minor = 6);
-    ~WGLContext();
+  WGLContext();
+  ~WGLContext();
 
-    void makeCurrent() override;
-    void doneCurrent() override;
+//   std::unique_ptr<Context> getCurrent() override;
+
+//   std::unique_ptr<Context> create(const ContextFormat &format);
+//   std::unique_ptr<Context> create(const Context *shared,
+//                                   const ContextFormat &format) override;
+
+  bool destroy() override;
+
+  long long nativeHandle() override;
+
+  bool valid() override;
+
+  bool makeCurrent() override;
+
+  bool doneCurrent() override;
+
+  static std::unique_ptr<Context> create(const ContextFormat &format);
 
 private:
-    HDC m_hdc = nullptr;
-    HGLRC m_ctx = nullptr;
+  void setPixelFormat() const;
+  void createContext(HGLRC shared, const ContextFormat &format);
+
+private:
+  std::unique_ptr<WindowsWindow> m_window;
+
+  HGLRC m_contextHandle;
+
+  bool m_owning;
 };
 
 } // namespace paimon
