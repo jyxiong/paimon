@@ -4,7 +4,7 @@ set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
 if(NOT TARGET glad)
     add_subdirectory(glad/cmake)
-    glad_add_library(glad STATIC REPRODUCIBLE API gl:core=4.6)
+    glad_add_library(glad STATIC REPRODUCIBLE LOADER API gl:core=4.6 wgl=1.0)
     set_target_properties(glad PROPERTIES FOLDER ${EXTERNAL_DIR}/glad)
 endif()
 
