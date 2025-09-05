@@ -1,5 +1,7 @@
 #pragma once
 
+#ifdef _WIN32
+
 #include "paimon/platform/context.h"
 
 #include <windows.h>
@@ -44,3 +46,5 @@ private:
 };
 
 } // namespace paimon
+
+#endif // _WIN32

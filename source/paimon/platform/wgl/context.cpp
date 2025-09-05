@@ -1,3 +1,5 @@
+#ifdef _WIN32
+
 #include "paimon/platform/wgl/context.h"
 
 #include <map>
@@ -192,3 +194,5 @@ std::unique_ptr<Context> WGLContext::create(const ContextFormat &format) {
 
   return context;
 }
+
+#endif // _WIN32
