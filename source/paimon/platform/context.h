@@ -1,9 +1,5 @@
 #pragma once
 
-#include <memory>
-
-#include "paimon/platform/context_format.h"
-
 namespace paimon {
 
 class Context {
@@ -25,9 +21,6 @@ public:
   virtual bool makeCurrent() = 0;
 
   virtual bool doneCurrent() = 0;
-
-private:
-  ContextFormat mFormat;
 };
 
 } // namespace paimon

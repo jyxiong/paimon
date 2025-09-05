@@ -4,12 +4,14 @@
 #include "paimon/platform/wgl/context.h"
 #endif
 
-using namespace paimon;
+namespace paimon {
 
-std::unique_ptr<Context> create(const ContextFormat &format) {
+std::unique_ptr<Context> createContext(const ContextFormat &format) {
 #if defined(_WIN32)
   return WGLContext::create(format);
 #else
   return nullptr;
 #endif
+}
+
 }
