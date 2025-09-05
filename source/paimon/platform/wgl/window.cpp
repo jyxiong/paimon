@@ -1,4 +1,6 @@
 
+#ifdef _WIN32
+
 #include "paimon/platform/wgl/window.h"
 
 #include "paimon/core/base/macro.h"
@@ -78,3 +80,5 @@ WindowsWindow::~WindowsWindow() {
 }
 
 HDC WindowsWindow::hdc() const { return m_hdc; }
+
+#endif // _WIN32

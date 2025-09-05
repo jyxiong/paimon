@@ -1,5 +1,7 @@
 #pragma once
 
+#ifdef _WIN32
+
 #include <windows.h>
 
 class WindowClass {
@@ -37,3 +39,5 @@ private:
 };
 
 } // namespace paimon
+
+#endif // _WIN32
