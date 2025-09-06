@@ -4,12 +4,13 @@
 
 #include <map>
 
-#include "glad/gl.h"
 #include "window.h"
 
 #include "glad/wgl.h"
 
 #include "paimon/core/base/macro.h"
+#include "paimon/platform/context_format.h"
+#include "paimon/platform/wgl/platform.h"
 
 using namespace paimon;
 
@@ -49,45 +50,7 @@ std::vector<int> createContextAttributeList(const ContextFormat &format) {
 }
 
 WGLContext::WGLContext() : m_owning(true) {
-  WindowsWindow window;
-
-  PIXELFORMATDESCRIPTOR pixelFormatDesc;
-  ZeroMemory(&pixelFormatDesc, sizeof(PIXELFORMATDESCRIPTOR));
-  pixelFormatDesc.nSize = sizeof(PIXELFORMATDESCRIPTOR);
-  pixelFormatDesc.nVersion = 1;
-  pixelFormatDesc.dwFlags = PFD_SUPPORT_OPENGL;
-  pixelFormatDesc.iPixelType = PFD_TYPE_RGBA;
-  pixelFormatDesc.iLayerType = PFD_MAIN_PLANE;
-
-  const auto pixelFormat =
-      ChoosePixelFormat(window.hdc(), &pixelFormatDesc);
-  if (pixelFormat == 0) {
-    LOG_ERROR("ChoosePixelFormat failed on temporary context");
-  }
-
-  auto success =
-      SetPixelFormat(window.hdc(), pixelFormat, &pixelFormatDesc);
-  if (!success) {
-    LOG_ERROR("SetPixelFormat failed on temporary context");
-  }
-
-  const auto dummyContext = wglCreateContext(window.hdc());
-  if (dummyContext == nullptr) {
-    LOG_ERROR("wglCreateContext failed on temporary context");
-  }
-
-  success = wglMakeCurrent(window.hdc(), dummyContext);
-  if (!success) {
-    wglDeleteContext(dummyContext);
-    LOG_ERROR("wglMakeCurrent failed on temporary context");
-  }
-
-  // 2. Load wglCreateContextAttribsARB
-  if (gladLoaderLoadWGL(window.hdc()) == 0) {
-    wglMakeCurrent(nullptr, nullptr);
-    wglDeleteContext(dummyContext);
-    LOG_ERROR("Failed to load WGL extensions");
-  }
+  Platform::instance();
 }
 
 WGLContext::~WGLContext() {}
@@ -176,19 +139,12 @@ void WGLContext::createContext(HGLRC shared, const ContextFormat &format) {
   if (m_contextHandle == nullptr) {
     LOG_ERROR("wglCreateContextAttribsARB failed");
   }
-
-  auto success = gladLoaderLoadGL();
-  if (!success) {
-    wglDeleteContext(m_contextHandle);
-    m_contextHandle = nullptr;
-    LOG_ERROR("Failed to load OpenGL functions");
-  }
 }
 
 std::unique_ptr<Context> WGLContext::create(const ContextFormat &format) {
   auto context = std::make_unique<WGLContext>();
 
-  context->m_window = std::make_unique<WindowsWindow>();
+  context->m_window = std::make_unique<Window>();
   context->setPixelFormat();
   context->createContext(nullptr, format);
 

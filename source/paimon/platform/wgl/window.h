@@ -24,11 +24,11 @@ private:
 
 namespace paimon {
 
-class WindowsWindow {
+class Window {
 public:
-  WindowsWindow();
-  WindowsWindow(HWND hwnd, HDC hdc);
-  ~WindowsWindow();
+  Window();
+  Window(HWND hwnd, HDC hdc);
+  ~Window();
 
   HDC hdc() const;
 

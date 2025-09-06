@@ -40,7 +40,7 @@ private:
   void createContext(HGLRC shared, const ContextFormat &format);
 
 private:
-  std::unique_ptr<WindowsWindow> m_window;
+  std::unique_ptr<Window> m_window;
 
   HGLRC m_contextHandle;
 
