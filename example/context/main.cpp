@@ -6,15 +6,13 @@ using namespace paimon;
 int main() {
   LogSystem::init();
 
-  auto context = createContext(ContextFormat{.versionMajor = 4,
-                                      .versionMinor = 6,
-                                      .profile = ContextProfile::Core,
-                                      .debug = true});
+  auto context = createContext(ContextFormat{.versionMajor = 3,
+                                             .versionMinor = 3,
+                                             .profile = ContextProfile::Core,
+                                             .debug = true});
 
-  if (context != nullptr) {
-    context->makeCurrent();
-    context->doneCurrent();
-  }
+  context->makeCurrent();
+  context->doneCurrent();
 
   return 0;
 }
