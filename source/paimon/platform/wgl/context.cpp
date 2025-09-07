@@ -50,7 +50,6 @@ std::vector<int> createContextAttributeList(const ContextFormat &format) {
 }
 
 WGLContext::WGLContext() : m_owning(true) {
-  Platform::instance();
 }
 
 WGLContext::~WGLContext() {}
@@ -96,6 +95,44 @@ bool WGLContext::doneCurrent() {
   return success;
 }
 
+std::unique_ptr<Context> WGLContext::getCurrent() {
+  auto context = std::make_unique<WGLContext>();
+
+  context->m_owning = false;
+
+  context->m_contextHandle = wglGetCurrentContext();
+  if (context->m_contextHandle == nullptr) {
+    LOG_ERROR("wglGetCurrentContext failed");
+    return nullptr;
+  }
+
+  auto deviceContext = wglGetCurrentDC();
+  if (deviceContext == nullptr) {
+    LOG_ERROR("wglGetCurrentDC failed");
+    return nullptr;
+  }
+
+  auto window = WindowFromDC(deviceContext);
+  if (window == nullptr) {
+    LOG_ERROR("WindowFromDC failed");
+    return nullptr;
+  }
+
+  context->m_window = std::make_unique<Window>(window, deviceContext);
+  return context;
+}
+
+std::unique_ptr<Context> WGLContext::create(const ContextFormat &format) {
+  auto context = std::make_unique<WGLContext>();
+
+  context->m_window = std::make_unique<Window>();
+  // load wgl extensions for the window's hdc
+  context->setPixelFormat();
+  context->createContext(nullptr, format);
+
+  return context;
+}
+
 void WGLContext::setPixelFormat() const {
   const auto hdc = m_window->hdc();
 
@@ -139,16 +176,6 @@ void WGLContext::createContext(HGLRC shared, const ContextFormat &format) {
   if (m_contextHandle == nullptr) {
     LOG_ERROR("wglCreateContextAttribsARB failed");
   }
-}
-
-std::unique_ptr<Context> WGLContext::create(const ContextFormat &format) {
-  auto context = std::make_unique<WGLContext>();
-
-  context->m_window = std::make_unique<Window>();
-  context->setPixelFormat();
-  context->createContext(nullptr, format);
-
-  return context;
 }
 
 #endif // _WIN32

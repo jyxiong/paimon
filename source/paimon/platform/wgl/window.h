@@ -4,6 +4,15 @@
 
 #include <windows.h>
 
+namespace paimon {
+
+class Window {
+public:
+/**
+ * @brief A singleton class that registers a window class for creating windows.
+ * This class ensures that the window class is registered only once during the
+ * application's lifetime.
+ */
 class WindowClass {
 public:
   static WindowClass& instance();
@@ -22,9 +31,6 @@ private:
   ATOM m_id;
 };
 
-namespace paimon {
-
-class Window {
 public:
   Window();
   Window(HWND hwnd, HDC hdc);
