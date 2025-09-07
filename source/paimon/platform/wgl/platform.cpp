@@ -1,3 +1,5 @@
+#ifdef _WIN32
+
 #include "paimon/platform/wgl/platform.h"
 
 #include "window.h"
@@ -55,3 +57,5 @@ Platform::Platform() {
 }
 
 Platform::~Platform() {}
+
+#endif // _WIN32

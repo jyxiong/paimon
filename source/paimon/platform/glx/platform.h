@@ -13,8 +13,6 @@ public:
 
   Display *display() const;
 
-  int screen() const;
-
 private:
   Platform();
 
@@ -22,7 +20,6 @@ private:
 
 private:
   Display *m_display;
-  int m_screen;
 };
 
 } // namespace paimon

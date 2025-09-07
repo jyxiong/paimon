@@ -4,6 +4,8 @@
 
 #include <map>
 
+#include <X11/Xlib.h>
+
 #include "paimon/core/base/macro.h"
 #include "paimon/platform/glx/platform.h"
 
@@ -101,6 +103,26 @@ bool GlxContext::doneCurrent() {
   return success;
 }
 
+std::unique_ptr<Context> GlxContext::getCurrent() {
+  auto context = std::make_unique<GlxContext>();
+
+  context->m_owning = false;
+
+  context->m_contextHandle = glXGetCurrentContext();
+  if (context->m_contextHandle == nullptr) {
+    LOG_ERROR("glXGetCurrentContext failed");
+    return nullptr;
+  }
+
+  context->m_drawable = glXGetCurrentDrawable();
+  if (context->m_drawable == 0) {
+    LOG_ERROR("glXGetCurrentDrawable failed");
+    return nullptr;
+  }
+
+  return context;
+}
+
 std::unique_ptr<Context> GlxContext::create(const ContextFormat &format) {
   auto context = std::make_unique<GlxContext>();
   context->createContext(nullptr, format);
@@ -108,26 +130,14 @@ std::unique_ptr<Context> GlxContext::create(const ContextFormat &format) {
 }
 
 void GlxContext::createContext(GLXContext shared, const ContextFormat &format) {
-  // // set custom error handler
-  // XErrorHandler xErrorHandler;
-
-  // get display
   Display *display = Platform::instance()->display();
-  int screen = Platform::instance()->screen();
 
-  //
-  // Select framebuffer configuration
-  //
   int fbCount;
-  GLXFBConfig *fbConfig = glXChooseFBConfig(display, screen, nullptr, &fbCount);
+  GLXFBConfig *fbConfig = glXChooseFBConfig(display, DefaultScreen(display), nullptr, &fbCount);
   if (fbConfig == nullptr) {
     LOG_ERROR("glXChooseFBConfig failed");
   }
-  // EnsureAtExit freeFBConfigAtExit([fbConfig] { XFree(fbConfig); });
 
-  //
-  // Create context
-  //
   const auto contextAttributes = createContextAttributeList(format);
   m_contextHandle = glXCreateContextAttribsARB(display, fbConfig[0], shared,
                                                True, contextAttributes.data());
@@ -141,17 +151,8 @@ void GlxContext::createContext(GLXContext shared, const ContextFormat &format) {
   const int pBufferAttributes[] = {GLX_PBUFFER_WIDTH, 1, GLX_PBUFFER_HEIGHT, 1,
                                    None};
   m_pBuffer = glXCreatePbuffer(display, fbConfig[0], pBufferAttributes);
-  XSync(display, false);
 
-  // check if pbuffer is supported
-  const auto success =
-      glXMakeContextCurrent(display, m_pBuffer, m_pBuffer, m_contextHandle);
-  if (success) {
-    glXMakeContextCurrent(display, None, None, nullptr);
-    m_drawable = m_pBuffer;
-  } else {
-    m_drawable = DefaultRootWindow(display);
-  }
+  XSync(display, false);
 }
 
 #endif // __linux__
