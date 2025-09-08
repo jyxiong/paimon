@@ -2,7 +2,6 @@
 
 #include "GLFW/glfw3.h"
 #include "glad/gl.h"
-#include "glad/glx.h"
 
 #include "paimon/core/base/macro.h"
 #include "paimon/platform/context_factory.h"
@@ -20,13 +19,6 @@ int main() {
   const auto window = glfwCreateWindow(320, 240, "", nullptr, nullptr);
 
   glfwMakeContextCurrent(window);
-
-//   int glx_version = gladLoaderLoadGLX(m_display, DefaultScreen(m_display));
-//   if (!glx_version) {
-//       LOG_ERROR("Unable to load GLX.");
-//   }
-
- auto a = glXGetCurrentContext();
 
   auto context = ContextFactory::getCurrentContext();
   if (context == nullptr || !context->valid()) {

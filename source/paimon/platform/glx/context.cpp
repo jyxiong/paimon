@@ -133,7 +133,8 @@ void GlxContext::createContext(GLXContext shared, const ContextFormat &format) {
   Display *display = Platform::instance()->display();
 
   int fbCount;
-  GLXFBConfig *fbConfig = glXChooseFBConfig(display, DefaultScreen(display), nullptr, &fbCount);
+  GLXFBConfig *fbConfig =
+      glXChooseFBConfig(display, DefaultScreen(display), nullptr, &fbCount);
   if (fbConfig == nullptr) {
     LOG_ERROR("glXChooseFBConfig failed");
   }
@@ -153,6 +154,16 @@ void GlxContext::createContext(GLXContext shared, const ContextFormat &format) {
   m_pBuffer = glXCreatePbuffer(display, fbConfig[0], pBufferAttributes);
 
   XSync(display, false);
+
+  // check if pbuffer is supported
+  const auto success =
+      glXMakeContextCurrent(display, m_pBuffer, m_pBuffer, m_contextHandle);
+  if (success) {
+    glXMakeContextCurrent(display, None, None, nullptr);
+    m_drawable = m_pBuffer;
+  } else {
+    m_drawable = DefaultRootWindow(display);
+  }
 }
 
 #endif // __linux__
