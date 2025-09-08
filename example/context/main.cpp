@@ -27,7 +27,6 @@ void getCurrent() {
   glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-  glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_EGL_CONTEXT_API);
   const auto window = glfwCreateWindow(320, 240, "", nullptr, nullptr);
 
   glfwMakeContextCurrent(window);

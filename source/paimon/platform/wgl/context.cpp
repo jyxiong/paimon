@@ -125,6 +125,8 @@ std::unique_ptr<Context> WGLContext::getCurrent() {
 std::unique_ptr<Context> WGLContext::create(const ContextFormat &format) {
   auto context = std::make_unique<WGLContext>();
 
+  WglPlatform::instance();
+
   context->m_window = std::make_unique<Window>();
   // load wgl extensions for the window's hdc
   context->setPixelFormat();

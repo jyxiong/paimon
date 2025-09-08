@@ -4,12 +4,12 @@
 
 namespace paimon {
 
-class Platform {
+class WglPlatform {
 public:
-   static Platform& instance();
+   static WglPlatform& instance();
 private:
-  Platform();
-  ~Platform();
+  WglPlatform();
+  ~WglPlatform();
 };
 } // namespace paimon
 

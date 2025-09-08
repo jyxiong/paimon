@@ -10,12 +10,12 @@
 
 using namespace paimon;
 
-Platform &Platform::instance() {
-  static Platform instance;
+WglPlatform &WglPlatform::instance() {
+  static WglPlatform instance;
   return instance;
 }
 
-Platform::Platform() {
+WglPlatform::WglPlatform() {
   Window window;
 
   PIXELFORMATDESCRIPTOR pixelFormatDesc;
@@ -56,6 +56,6 @@ Platform::Platform() {
   wglDeleteContext(dummyContext);
 }
 
-Platform::~Platform() {}
+WglPlatform::~WglPlatform() {}
 
 #endif // _WIN32
