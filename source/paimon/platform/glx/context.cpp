@@ -55,7 +55,7 @@ GlxContext::~GlxContext() {}
 
 bool GlxContext::destroy() {
   if (m_owning) {
-    auto *display = Platform::instance()->display();
+    auto *display = GlxPlatform::instance()->display();
 
     if (m_contextHandle != nullptr) {
       auto currentContext = glXGetCurrentContext();
@@ -85,7 +85,7 @@ bool GlxContext::valid() {
 }
 
 bool GlxContext::makeCurrent() {
-  auto *display = Platform::instance()->display();
+  auto *display = GlxPlatform::instance()->display();
   const auto success =
       glXMakeContextCurrent(display, m_drawable, m_drawable, m_contextHandle);
   if (!success) {
@@ -95,7 +95,7 @@ bool GlxContext::makeCurrent() {
 }
 
 bool GlxContext::doneCurrent() {
-  auto *display = Platform::instance()->display();
+  auto *display = GlxPlatform::instance()->display();
   const auto success = glXMakeContextCurrent(display, None, None, nullptr);
   if (!success) {
     LOG_ERROR("glXMakeContextCurrent(None, None, nullptr) failed");
@@ -130,7 +130,7 @@ std::unique_ptr<Context> GlxContext::create(const ContextFormat &format) {
 }
 
 void GlxContext::createContext(GLXContext shared, const ContextFormat &format) {
-  Display *display = Platform::instance()->display();
+  Display *display = GlxPlatform::instance()->display();
 
   int fbCount;
   GLXFBConfig *fbConfig =
