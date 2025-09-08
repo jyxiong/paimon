@@ -5,6 +5,10 @@
 #include "paimon/platform/context_format.h"
 
 namespace paimon {
+class ContextFactory {
+public:
+  static std::unique_ptr<Context> getCurrentContext();
 
-std::unique_ptr<Context> createContext(const ContextFormat &format);
-}
+  static std::unique_ptr<Context> createContext(const ContextFormat &format);
+};
+} // namespace paimon

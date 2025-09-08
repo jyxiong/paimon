@@ -26,6 +26,8 @@ public:
 
   bool doneCurrent() override;
 
+  static std::unique_ptr<Context> getCurrent();
+
   static std::unique_ptr<Context> create(const ContextFormat &format);
 
 private:

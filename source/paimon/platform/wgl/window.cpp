@@ -8,7 +8,7 @@
 
 using namespace paimon;
 
-WindowClass::WindowClass() : m_id(0) {
+Window::WindowClass::WindowClass() : m_id(0) {
   auto success = GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
                                    nullptr, &m_instanceHandle);
   if (!success) {
@@ -35,20 +35,20 @@ WindowClass::WindowClass() : m_id(0) {
   }
 }
 
-WindowClass::~WindowClass() {
+Window::WindowClass::~WindowClass() {
   if (m_id != 0) {
     UnregisterClass(id(), m_instanceHandle);
   }
 }
 
-LPCTSTR WindowClass::id() const { return reinterpret_cast<LPCTSTR>(m_id); }
+LPCTSTR Window::WindowClass::id() const { return reinterpret_cast<LPCTSTR>(m_id); }
 
-WindowClass &WindowClass::instance() {
+Window::WindowClass &Window::WindowClass::instance() {
   static WindowClass instance;
   return instance;
 }
 
-WindowsWindow::WindowsWindow() : m_ownsHwnd(true) {
+Window::Window() : m_ownsHwnd(true) {
   HMODULE instance;
   auto success = GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
                                    nullptr, &instance);
@@ -71,14 +71,14 @@ WindowsWindow::WindowsWindow() : m_ownsHwnd(true) {
   }
 }
 
-WindowsWindow::WindowsWindow(HWND hwnd, HDC hdc)
+Window::Window(HWND hwnd, HDC hdc)
     : m_hwnd(hwnd), m_hdc(hdc), m_ownsHwnd(false) {}
 
-WindowsWindow::~WindowsWindow() {
+Window::~Window() {
   if (m_hdc && m_hwnd)
     ReleaseDC(m_hwnd, m_hdc);
 }
 
-HDC WindowsWindow::hdc() const { return m_hdc; }
+HDC Window::hdc() const { return m_hdc; }
 
 #endif // _WIN32
