@@ -8,6 +8,7 @@
 #include "paimon/platform/wgl/context.h"
 #else
 #include "paimon/platform/glx/context.h"
+#include "paimon/platform/egl/context.h"
 #endif
 
 namespace paimon {
@@ -17,7 +18,8 @@ std::unique_ptr<Context> ContextFactory::getCurrentContext() {
 #if defined(_WIN32)
   context = WGLContext::getCurrent();
 #else
-  context = GlxContext::getCurrent();
+  // context = GlxContext::getCurrent();
+  context = EglContext::getCurrent();
 #endif
   if (context == nullptr) {
     LOG_ERROR("Failed to get current context");
@@ -38,7 +40,8 @@ std::unique_ptr<Context> ContextFactory::createContext(const ContextFormat &form
 #if defined(_WIN32)
   context = WGLContext::create(format);
 #else
-  context = GlxContext::create(format);
+  // context = GlxContext::create(format);
+  context = EglContext::create(format);
 #endif
 
   context->makeCurrent();

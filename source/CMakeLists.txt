@@ -1,6 +1,12 @@
 
-find_package(OpenGL REQUIRED)
+find_package(OpenGL
+    COMPONENTS OpenGL
+    # COMPONENTS EGL
+    # COMPONENTS GLX  
+    REQUIRED)
 find_package(X11 REQUIRED)
+
+message(STATUS "OpenGL_LIBRARIES: ${OPENGL_LIBRARIES}")
 
 set(TARGET_NAME paimon)
 file(GLOB_RECURSE TARGET_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")

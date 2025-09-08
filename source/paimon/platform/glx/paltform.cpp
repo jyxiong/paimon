@@ -8,14 +8,14 @@
 
 using namespace paimon;
 
-Platform *Platform::instance() {
-  static Platform platform;
+GlxPlatform *GlxPlatform::instance() {
+  static GlxPlatform platform;
   return &platform;
 }
 
-Display *Platform::display() const { return m_display; }
+Display *GlxPlatform::display() const { return m_display; }
 
-Platform::Platform() { 
+GlxPlatform::GlxPlatform() { 
   m_display = XOpenDisplay(nullptr);
   if (m_display == nullptr) {
       LOG_ERROR("Cannot open display");
@@ -27,7 +27,7 @@ Platform::Platform() {
   }
 }
 
-Platform::~Platform() {
+GlxPlatform::~GlxPlatform() {
   if (m_display != nullptr) {
     XCloseDisplay(m_display);
     m_display = nullptr;

@@ -7,16 +7,16 @@
 #include <fcntl.h>
 
 namespace paimon {
-class Platform {
+class GlxPlatform {
 public:
-  static Platform* instance();
+  static GlxPlatform* instance();
 
   Display *display() const;
 
 private:
-  Platform();
+  GlxPlatform();
 
-  ~Platform();
+  ~GlxPlatform();
 
 private:
   Display *m_display;

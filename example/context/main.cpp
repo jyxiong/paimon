@@ -8,32 +8,52 @@
 
 using namespace paimon;
 
-int main() {
-  LogSystem::init();
-
-  glfwInit();
-  glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-  const auto window = glfwCreateWindow(320, 240, "", nullptr, nullptr);
-
-  glfwMakeContextCurrent(window);
-
-  auto context = ContextFactory::getCurrentContext();
-  if (context == nullptr || !context->valid()) {
-    LOG_ERROR("Failed to get current context");
-    return -1;
-  }
-
-  glfwMakeContextCurrent(nullptr);
+void create() {
+  auto context = ContextFactory::createContext(
+      ContextFormat{.versionMajor = 3,
+                    .versionMinor = 3,
+                    .profile = ContextProfile::Core,
+                    .debug = true});
 
   context->makeCurrent();
   const auto versionString =
       reinterpret_cast<const char *>(glGetString(GL_VERSION));
   std::cout << "Created context with version " << versionString << std::endl;
+  context->doneCurrent();
+}
+
+void getCurrent() {
+  glfwInit();
+  glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+  glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_EGL_CONTEXT_API);
+  const auto window = glfwCreateWindow(320, 240, "", nullptr, nullptr);
+
+  glfwMakeContextCurrent(window);
+
+  auto versionString =
+      reinterpret_cast<const char *>(glGetString(GL_VERSION));
+  std::cout << "Created context with version " << versionString << std::endl;
+
+  auto context = ContextFactory::getCurrentContext();
+
+  context->makeCurrent();
+  versionString =
+      reinterpret_cast<const char *>(glGetString(GL_VERSION));
+  std::cout << "Created context with version " << versionString << std::endl;
 
   context->doneCurrent();
+  glfwMakeContextCurrent(nullptr);
+
+}
+
+int main() {
+  LogSystem::init();
+
+  create();
+
+  getCurrent();
 
   return 0;
 }
