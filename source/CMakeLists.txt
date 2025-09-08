@@ -2,7 +2,7 @@
 find_package(OpenGL
     COMPONENTS OpenGL
     # COMPONENTS EGL
-    COMPONENTS GLX    
+    # COMPONENTS GLX  
     REQUIRED)
 find_package(X11 REQUIRED)
 
