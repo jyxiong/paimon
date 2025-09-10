@@ -12,6 +12,13 @@
 
 namespace paimon {
 
+  class WGLExtensionLoader {
+public:
+    static void Load();
+private:
+    static bool s_loaded;
+};
+
 class WGLContext : public Context {
 public:
   WGLContext();

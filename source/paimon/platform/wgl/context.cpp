@@ -14,6 +14,24 @@
 
 using namespace paimon;
 
+bool WGLExtensionLoader::s_loaded = false;
+
+void WGLExtensionLoader::Load() {
+  if (s_loaded) {
+    return;
+  }
+
+  HMODULE instance;
+  auto success = GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                                   nullptr, &instance);
+
+  if (gladLoaderLoadWGL(nullptr) == 0) {
+    LOG_ERROR("Failed to load WGL extensions");
+  }
+
+  s_loaded = true;
+}
+
 std::vector<int> createContextAttributeList(const ContextFormat &format) {
   std::map<int, int> attributes;
 
