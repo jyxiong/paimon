@@ -1,10 +1,10 @@
+#include "context.h"
+#include <memory>
 #ifdef _WIN32
 
 #include "paimon/platform/wgl/context.h"
 
 #include <map>
-
-#include "window.h"
 
 #include "glad/wgl.h"
 
@@ -13,121 +13,6 @@
 #include "paimon/platform/wgl/platform.h"
 
 using namespace paimon;
-
-bool WGLExtensionLoader::s_loaded = false;
-
-void WGLExtensionLoader::Load() {
-  if (s_loaded) {
-    return;
-  }
-
-  HMODULE instance;
-  if (!GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-                                   nullptr, &instance)) {
-    LOG_ERROR("GetModuleHandleEx failed");
-    return;
-  }
-
-  WNDCLASSEX windowClass = {
-    .cbSize = sizeof(WNDCLASSEX),
-    .style = CS_OWNDC,
-    .lpfnWndProc = DefWindowProc,
-    .cbClsExtra = 0,
-    .cbWndExtra = 0,
-    .hInstance = instance,
-    .hIcon = nullptr,
-    .hCursor = nullptr,
-    .hbrBackground = reinterpret_cast<HBRUSH>(COLOR_BACKGROUND),
-    .lpszMenuName = nullptr,
-    .lpszClassName = TEXT("WGLExtensionLoader"),
-    .hIconSm = nullptr
-  };
-
-  auto id = RegisterClassEx(&windowClass);
-  if (id == 0) {
-    LOG_ERROR("RegisterClassEx failed");
-    return;
-  }
-
-  auto hwnd =
-      CreateWindow(reinterpret_cast<LPCTSTR>(id), nullptr, WS_OVERLAPPEDWINDOW,
-                   CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-                   nullptr, nullptr, instance, nullptr);
-
-  if (hwnd == nullptr) {
-    LOG_ERROR("CreateWindow failed");
-    return;
-  }
-
-  auto hdc = GetDC(hwnd);
-  if (hdc == nullptr) {
-    LOG_ERROR("GetDC failed");
-    return;
-  }
-
-  PIXELFORMATDESCRIPTOR pixelFormatDesc = {
-    .nSize = sizeof(PIXELFORMATDESCRIPTOR),
-    .nVersion = 1,
-    .dwFlags = PFD_SUPPORT_OPENGL | PFD_DRAW_TO_WINDOW,
-    .iPixelType = PFD_TYPE_RGBA,
-    .cColorBits = 24,
-    .cRedBits = 8,
-    .cRedShift = 0,
-    .cGreenBits = 8,
-    .cGreenShift = 0,
-    .cBlueBits = 8,
-    .cBlueShift = 0,
-    .cAlphaBits = 8,
-    .cAlphaShift = 0,
-    .cAccumBits = 0,
-    .cAccumRedBits = 0,
-    .cAccumGreenBits = 0,
-    .cAccumBlueBits = 0,
-    .cAccumAlphaBits = 0,
-    .cDepthBits = 24,
-    .cStencilBits = 8,
-    .cAuxBuffers = 0,
-    .iLayerType = PFD_MAIN_PLANE,
-    .bReserved = 0,
-    .dwLayerMask = 0,
-    .dwVisibleMask = 0,
-    .dwDamageMask = 0
-  };
-
-  auto pixelFormat = ChoosePixelFormat(hdc, &pixelFormatDesc);
-  if (pixelFormat == 0) {
-    LOG_ERROR("ChoosePixelFormat failed");
-    return;
-  }
-
-  if (!SetPixelFormat(hdc, pixelFormat, &pixelFormatDesc)) {
-    LOG_ERROR("SetPixelFormat failed");
-    return;
-  }
-
-  auto dummyContext = wglCreateContext(hdc);
-  if (dummyContext == nullptr) {
-    LOG_ERROR("wglCreateContext failed");
-    return;
-  }
-  
-  if (!wglMakeCurrent(hdc, dummyContext)) {
-    LOG_ERROR("wglMakeCurrent failed");
-    return;
-  }
-
-  if (gladLoaderLoadWGL(nullptr) == 0) {
-    LOG_ERROR("Failed to load WGL extensions");
-  }
-
-  wglMakeCurrent(nullptr, nullptr);
-  wglDeleteContext(dummyContext);
-  ReleaseDC(hwnd, hdc);
-  DestroyWindow(hwnd);
-  UnregisterClass(windowClass.lpszClassName, instance);
-
-  s_loaded = true;
-}
 
 std::vector<int> createContextAttributeList(const ContextFormat &format) {
   std::map<int, int> attributes;
@@ -165,6 +50,7 @@ std::vector<int> createContextAttributeList(const ContextFormat &format) {
 }
 
 WGLContext::WGLContext() : m_owning(true) {
+  WGLExtensionLoader::instance();
 }
 
 WGLContext::~WGLContext() {}
@@ -191,11 +77,11 @@ long long WGLContext::nativeHandle() {
 }
 
 bool WGLContext::valid() {
-  return m_contextHandle != nullptr && m_window != nullptr;
+  return m_contextHandle != nullptr && m_hdc != nullptr;
 }
 
 bool WGLContext::makeCurrent() {
-  auto success = wglMakeCurrent(m_window->hdc(), m_contextHandle);
+  auto success = wglMakeCurrent(m_hdc, m_contextHandle);
   if (!success) {
     LOG_ERROR("wglMakeCurrent failed");
   }
@@ -215,55 +101,87 @@ std::unique_ptr<Context> WGLContext::getCurrent() {
 
   context->m_owning = false;
 
+  context->m_hwnd = nullptr;
+
   context->m_contextHandle = wglGetCurrentContext();
   if (context->m_contextHandle == nullptr) {
     LOG_ERROR("wglGetCurrentContext failed");
     return nullptr;
   }
 
-  auto deviceContext = wglGetCurrentDC();
-  if (deviceContext == nullptr) {
+  context->m_hdc = wglGetCurrentDC();
+  if (context->m_hdc == nullptr) {
     LOG_ERROR("wglGetCurrentDC failed");
     return nullptr;
   }
 
-  auto window = WindowFromDC(deviceContext);
-  if (window == nullptr) {
-    LOG_ERROR("WindowFromDC failed");
+  return context;
+}
+
+std::unique_ptr<Context> WGLContext::create(const Context& shared, const ContextFormat &format) {
+  auto sharedWglContext = dynamic_cast<const WGLContext*>(&shared);
+  if (sharedWglContext == nullptr) {
+    LOG_ERROR("Shared context is not a WGLContext");
     return nullptr;
   }
 
-  context->m_window = std::make_unique<Window>(window, deviceContext);
+  auto context = std::make_unique<WGLContext>();
+
+  context->createWindow();
+  context->setPixelFormat();
+  context->createContext(sharedWglContext->m_contextHandle, format);
+
   return context;
 }
 
 std::unique_ptr<Context> WGLContext::create(const ContextFormat &format) {
   auto context = std::make_unique<WGLContext>();
 
-  WglPlatform::instance();
-
-  context->m_window = std::make_unique<Window>();
-  // load wgl extensions for the window's hdc
+  context->createWindow();
   context->setPixelFormat();
   context->createContext(nullptr, format);
 
   return context;
 }
 
-void WGLContext::setPixelFormat() const {
-  const auto hdc = m_window->hdc();
+void WGLContext::createWindow() {
+  const auto &registrar = WindowClassRegistrar::instance();
 
-  static const int attributes[] = {WGL_DRAW_TO_WINDOW_ARB,
-                                   GL_TRUE,
-                                   WGL_ACCELERATION_ARB,
-                                   WGL_FULL_ACCELERATION_ARB,
-                                   WGL_SUPPORT_OPENGL_ARB,
-                                   GL_TRUE,
-                                   0};
+  m_hwnd = CreateWindowEx(0, reinterpret_cast<LPCTSTR>(registrar.getId()),
+                          nullptr, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT,
+                          CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, nullptr,
+                          nullptr, registrar.getModule(), nullptr);
+
+  if (m_hwnd == nullptr) {
+    LOG_ERROR("CreateWindow failed");
+    return;
+  }
+
+  m_hdc = GetDC(m_hwnd);
+  if (m_hdc == nullptr) {
+    LOG_ERROR("GetDC failed");
+    return;
+  }
+}
+
+void WGLContext::setPixelFormat() const {
+
+  const int attributes[] = {WGL_DRAW_TO_WINDOW_ARB,
+                            GL_TRUE,
+                            WGL_ACCELERATION_ARB,
+                            WGL_FULL_ACCELERATION_ARB,
+                            WGL_SUPPORT_OPENGL_ARB,
+                            GL_TRUE,
+                            0};
 
   int pixelFormatIndex;
-  UINT numPixelFormats;
-  auto success = wglChoosePixelFormatARB(hdc, attributes, nullptr, 1,
+  unsigned int numPixelFormats;
+
+  if (!wglChoosePixelFormatARB) {
+    LOG_ERROR("wglChoosePixelFormatARB is nullptr!");
+  }
+
+  auto success = wglChoosePixelFormatARB(m_hdc, attributes, nullptr, 1,
                                          &pixelFormatIndex, &numPixelFormats);
   if (!success) {
     LOG_ERROR("wglChoosePixelFormatARB failed");
@@ -273,13 +191,13 @@ void WGLContext::setPixelFormat() const {
   }
 
   PIXELFORMATDESCRIPTOR descriptor;
-  success = DescribePixelFormat(hdc, pixelFormatIndex,
+  success = DescribePixelFormat(m_hdc, pixelFormatIndex,
                                 sizeof(PIXELFORMATDESCRIPTOR), &descriptor);
   if (!success) {
     LOG_ERROR("DescribePixelFormat failed");
   }
 
-  success = SetPixelFormat(hdc, pixelFormatIndex, &descriptor);
+  success = SetPixelFormat(m_hdc, pixelFormatIndex, &descriptor);
   if (!success) {
     LOG_ERROR("SetPixelFormat failed");
   }
@@ -288,8 +206,8 @@ void WGLContext::setPixelFormat() const {
 void WGLContext::createContext(HGLRC shared, const ContextFormat &format) {
   const auto contextAttributes = createContextAttributeList(format);
 
-  m_contextHandle = wglCreateContextAttribsARB(
-      m_window->hdc(), shared, contextAttributes.data());
+  m_contextHandle =
+      wglCreateContextAttribsARB(m_hdc, shared, contextAttributes.data());
   if (m_contextHandle == nullptr) {
     LOG_ERROR("wglCreateContextAttribsARB failed");
   }
