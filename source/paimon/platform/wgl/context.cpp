@@ -48,6 +48,7 @@ std::vector<int> createContextAttributeList(const ContextFormat &format) {
 }
 
 WGLContext::WGLContext() : m_owning(true) {
+  WGLExtensionLoader::instance();
 }
 
 WGLContext::~WGLContext() {
