@@ -56,32 +56,32 @@ WGLContext::WGLContext() : m_owning(true) {
 WGLContext::~WGLContext() {}
 
 bool WGLContext::destroy() {
-  if (m_owning && m_contextHandle != nullptr) {
+  if (m_owning && m_context != nullptr) {
     auto currentContext = wglGetCurrentContext();
-    if (currentContext == m_contextHandle) {
+    if (currentContext == m_context) {
       doneCurrent();
     }
 
-    auto success = wglDeleteContext(m_contextHandle);
+    auto success = wglDeleteContext(m_context);
     if (!success) {
       LOG_ERROR("wglDeleteContext failed");
       return false;
     }
-    m_contextHandle = nullptr;
+    m_context = nullptr;
   }
   return true;
 }
 
 long long WGLContext::nativeHandle() {
-  return reinterpret_cast<long long>(m_contextHandle);
+  return reinterpret_cast<long long>(m_context);
 }
 
 bool WGLContext::valid() {
-  return m_contextHandle != nullptr && m_hdc != nullptr;
+  return m_context != nullptr && m_hdc != nullptr;
 }
 
 bool WGLContext::makeCurrent() {
-  auto success = wglMakeCurrent(m_hdc, m_contextHandle);
+  auto success = wglMakeCurrent(m_hdc, m_context);
   if (!success) {
     LOG_ERROR("wglMakeCurrent failed");
   }
@@ -103,8 +103,8 @@ std::unique_ptr<Context> WGLContext::getCurrent() {
 
   context->m_hwnd = nullptr;
 
-  context->m_contextHandle = wglGetCurrentContext();
-  if (context->m_contextHandle == nullptr) {
+  context->m_context = wglGetCurrentContext();
+  if (context->m_context == nullptr) {
     LOG_ERROR("wglGetCurrentContext failed");
     return nullptr;
   }
@@ -129,7 +129,7 @@ std::unique_ptr<Context> WGLContext::create(const Context& shared, const Context
 
   context->createWindow();
   context->setPixelFormat();
-  context->createContext(sharedWglContext->m_contextHandle, format);
+  context->createContext(sharedWglContext->m_context, format);
 
   return context;
 }
@@ -176,11 +176,6 @@ void WGLContext::setPixelFormat() const {
 
   int pixelFormatIndex;
   unsigned int numPixelFormats;
-
-  if (!wglChoosePixelFormatARB) {
-    LOG_ERROR("wglChoosePixelFormatARB is nullptr!");
-  }
-
   auto success = wglChoosePixelFormatARB(m_hdc, attributes, nullptr, 1,
                                          &pixelFormatIndex, &numPixelFormats);
   if (!success) {
@@ -206,9 +201,9 @@ void WGLContext::setPixelFormat() const {
 void WGLContext::createContext(HGLRC shared, const ContextFormat &format) {
   const auto contextAttributes = createContextAttributeList(format);
 
-  m_contextHandle =
+  m_context =
       wglCreateContextAttribsARB(m_hdc, shared, contextAttributes.data());
-  if (m_contextHandle == nullptr) {
+  if (m_context == nullptr) {
     LOG_ERROR("wglCreateContextAttribsARB failed");
   }
 }

@@ -39,8 +39,7 @@ private:
 private:
   HWND m_hwnd = nullptr;
   HDC m_hdc = nullptr;
-  HGLRC m_contextHandle;
-
+  HGLRC m_context;
   bool m_owning;
 };
 

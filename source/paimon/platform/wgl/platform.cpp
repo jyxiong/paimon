@@ -125,17 +125,8 @@ WGLExtensionLoader::WGLExtensionLoader() {
     return;
   }
 
-auto proc = wglGetProcAddress("wglChoosePixelFormatARB");
-if (!proc) {
-    // 说明驱动/环境/像素格式不支持
-}
-
-  if (gladLoaderLoadWGL(nullptr) == 0) {
+  if (gladLoaderLoadWGL(hdc) == 0) {
     LOG_ERROR("Failed to load WGL extensions");
-  }
-
-  if (!wglChoosePixelFormatARB) {
-    LOG_ERROR("wglChoosePixelFormatARB is nullptr!");
   }
 
   wglMakeCurrent(nullptr, nullptr);
