@@ -8,20 +8,12 @@
 #include <windows.h>
 #include <memory>
 
-#include "paimon/platform/wgl/window.h"
-
 namespace paimon {
 
 class WGLContext : public Context {
 public:
   WGLContext();
   ~WGLContext();
-
-//   std::unique_ptr<Context> getCurrent() override;
-
-//   std::unique_ptr<Context> create(const ContextFormat &format);
-//   std::unique_ptr<Context> create(const Context *shared,
-//                                   const ContextFormat &format) override;
 
   bool destroy() override;
 
@@ -35,17 +27,19 @@ public:
 
   static std::unique_ptr<Context> getCurrent();
 
+  static std::unique_ptr<Context> create(const Context& shared, const ContextFormat &format);
+
   static std::unique_ptr<Context> create(const ContextFormat &format);
 
 private:
+  void createWindow();
   void setPixelFormat() const;
   void createContext(HGLRC shared, const ContextFormat &format);
 
 private:
-  std::unique_ptr<Window> m_window;
-
-  HGLRC m_contextHandle;
-
+  HWND m_hwnd = nullptr;
+  HDC m_hdc = nullptr;
+  HGLRC m_context;
   bool m_owning;
 };
 

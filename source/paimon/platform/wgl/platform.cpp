@@ -2,60 +2,134 @@
 
 #include "paimon/platform/wgl/platform.h"
 
-#include "window.h"
-
 #include "glad/wgl.h"
 
 #include "paimon/core/base/macro.h"
 
 using namespace paimon;
 
-Platform &Platform::instance() {
-  static Platform instance;
+
+const TCHAR* WindowClassRegistrar::s_name = TEXT("PaimonWindowClass");
+
+WindowClassRegistrar &WindowClassRegistrar::instance() {
+  static WindowClassRegistrar instance;
   return instance;
 }
 
-Platform::Platform() {
-  Window window;
+WindowClassRegistrar::~WindowClassRegistrar() {
+  UnregisterClass(s_name, m_module);
+}
 
-  PIXELFORMATDESCRIPTOR pixelFormatDesc;
-  ZeroMemory(&pixelFormatDesc, sizeof(PIXELFORMATDESCRIPTOR));
-  pixelFormatDesc.nSize = sizeof(PIXELFORMATDESCRIPTOR);
-  pixelFormatDesc.nVersion = 1;
-  pixelFormatDesc.dwFlags = PFD_SUPPORT_OPENGL;
-  pixelFormatDesc.iPixelType = PFD_TYPE_RGBA;
-  pixelFormatDesc.iLayerType = PFD_MAIN_PLANE;
+WindowClassRegistrar::WindowClassRegistrar() {
+  m_module = GetModuleHandle(0);
+  if (m_module == nullptr) {
+    LOG_ERROR("GetModuleHandleEx failed");
+    return;
+  }
 
-  const auto pixelFormat = ChoosePixelFormat(window.hdc(), &pixelFormatDesc);
+  WNDCLASS windowClass = {
+    .style = CS_OWNDC,
+    .lpfnWndProc = DefWindowProc,
+    .cbClsExtra = 0,
+    .cbWndExtra = 0,
+    .hInstance = m_module,
+    .hIcon = 0,
+    .hCursor = 0,
+    .hbrBackground = 0,
+    .lpszMenuName = 0,
+    .lpszClassName = s_name,
+  };
+
+  m_id = RegisterClass(&windowClass);
+  if (m_id == 0) {
+    LOG_ERROR("RegisterClass failed");
+    return;
+  }
+}
+
+WGLExtensionLoader &WGLExtensionLoader::instance() {
+  static WGLExtensionLoader instance;
+  return instance;
+}
+
+WGLExtensionLoader::WGLExtensionLoader() {
+  const auto &registrar = WindowClassRegistrar::instance();
+
+  auto hwnd =
+      CreateWindow(reinterpret_cast<LPCTSTR>(registrar.getId()), nullptr, WS_OVERLAPPEDWINDOW,
+                   CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+                   nullptr, nullptr, registrar.getModule(), nullptr);
+
+  if (hwnd == nullptr) {
+    LOG_ERROR("CreateWindow failed");
+    return;
+  }
+
+  auto hdc = GetDC(hwnd);
+  if (hdc == nullptr) {
+    LOG_ERROR("GetDC failed");
+    return;
+  }
+
+  PIXELFORMATDESCRIPTOR pixelFormatDesc = {
+    .nSize = sizeof(PIXELFORMATDESCRIPTOR),
+    .nVersion = 1,
+    .dwFlags = PFD_SUPPORT_OPENGL | PFD_DRAW_TO_WINDOW,
+    .iPixelType = PFD_TYPE_RGBA,
+    .cColorBits = 24,
+    .cRedBits = 0,
+    .cRedShift = 0,
+    .cGreenBits = 0,
+    .cGreenShift = 0,
+    .cBlueBits = 0,
+    .cBlueShift = 0,
+    .cAlphaBits = 0,
+    .cAlphaShift = 0,
+    .cAccumBits = 0,
+    .cAccumRedBits = 0,
+    .cAccumGreenBits = 0,
+    .cAccumBlueBits = 0,
+    .cAccumAlphaBits = 0,
+    .cDepthBits = 24,
+    .cStencilBits = 0,
+    .cAuxBuffers = 0,
+    .iLayerType = PFD_MAIN_PLANE,
+    .bReserved = 0,
+    .dwLayerMask = 0,
+    .dwVisibleMask = 0,
+    .dwDamageMask = 0
+  };
+
+  auto pixelFormat = ChoosePixelFormat(hdc, &pixelFormatDesc);
   if (pixelFormat == 0) {
-    LOG_ERROR("ChoosePixelFormat failed on temporary context");
+    LOG_ERROR("ChoosePixelFormat failed");
+    return;
   }
 
-  auto success = SetPixelFormat(window.hdc(), pixelFormat, &pixelFormatDesc);
-  if (!success) {
-    LOG_ERROR("SetPixelFormat failed on temporary context");
+  if (!SetPixelFormat(hdc, pixelFormat, &pixelFormatDesc)) {
+    LOG_ERROR("SetPixelFormat failed");
+    return;
   }
 
-  const auto dummyContext = wglCreateContext(window.hdc());
+  auto dummyContext = wglCreateContext(hdc);
   if (dummyContext == nullptr) {
-    LOG_ERROR("wglCreateContext failed on temporary context");
+    LOG_ERROR("wglCreateContext failed");
+    return;
+  }
+  
+  if (!wglMakeCurrent(hdc, dummyContext)) {
+    LOG_ERROR("wglMakeCurrent failed");
+    return;
   }
 
-  success = wglMakeCurrent(window.hdc(), dummyContext);
-  if (!success) {
-    wglDeleteContext(dummyContext);
-    LOG_ERROR("wglMakeCurrent failed on temporary context");
-  }
-
-  // 2. Load wglCreateContextAttribsARB
-  if (gladLoaderLoadWGL(window.hdc()) == 0) {
+  if (gladLoaderLoadWGL(hdc) == 0) {
     LOG_ERROR("Failed to load WGL extensions");
   }
 
   wglMakeCurrent(nullptr, nullptr);
   wglDeleteContext(dummyContext);
+  ReleaseDC(hwnd, hdc);
+  DestroyWindow(hwnd);
 }
-
-Platform::~Platform() {}
 
 #endif // _WIN32

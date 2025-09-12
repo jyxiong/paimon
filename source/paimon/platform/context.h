@@ -7,11 +7,6 @@ public:
   Context() = default;
   virtual ~Context() = default;
 
-  // virtual std::unique_ptr<Context> getCurrent() = 0;
-  // virtual std::unique_ptr<Context> create(const ContextFormat &format) = 0;
-  // virtual std::unique_ptr<Context> create(const Context *shared,
-  //                                         const ContextFormat &format) = 0;
-
   virtual bool destroy() = 0;
 
   virtual long long nativeHandle() = 0;

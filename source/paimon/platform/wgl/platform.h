@@ -1,16 +1,41 @@
 #pragma once
 
+
 #ifdef _WIN32
+#include <windows.h>
 
 namespace paimon {
 
-class Platform {
+class WindowClassRegistrar {
 public:
-   static Platform& instance();
+  static WindowClassRegistrar &instance();
+
+  ~WindowClassRegistrar();
+
+  HMODULE getModule() const { return m_module; }
+  ATOM getId() const { return m_id; }
+
 private:
-  Platform();
-  ~Platform();
+  WindowClassRegistrar();
+
+private:
+  static const TCHAR* s_name;
+
+  HMODULE m_module;
+  ATOM m_id;
+
 };
+
+class WGLExtensionLoader {
+public:
+  static WGLExtensionLoader& instance();
+
+  ~WGLExtensionLoader() = default;
+
+private:
+  WGLExtensionLoader();
+};
+
 } // namespace paimon
 
 #endif // _WIN32

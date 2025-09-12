@@ -19,6 +19,10 @@ void create() {
   const auto versionString =
       reinterpret_cast<const char *>(glGetString(GL_VERSION));
   std::cout << "Created context with version " << versionString << std::endl;
+
+  const auto vendorSting = reinterpret_cast<const char*>(glGetString(GL_VENDOR));
+  std::cout << "Created context with vendor " << vendorSting << std::endl;
+
   context->doneCurrent();
 }
 
@@ -27,7 +31,6 @@ void getCurrent() {
   glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-  glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_EGL_CONTEXT_API);
   const auto window = glfwCreateWindow(320, 240, "", nullptr, nullptr);
 
   glfwMakeContextCurrent(window);
