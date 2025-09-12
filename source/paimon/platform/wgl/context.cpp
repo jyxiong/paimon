@@ -118,7 +118,7 @@ std::unique_ptr<Context> WGLContext::getCurrent() {
 }
 
 std::unique_ptr<Context> WGLContext::create(const Context& shared, const ContextFormat &format) {
-  if (shared.valid()) {
+  if (!shared.valid()) {
     LOG_ERROR("Shared context is not a WGLContext");
     return nullptr;
   }

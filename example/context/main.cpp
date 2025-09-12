@@ -1,13 +1,15 @@
 #include "glad/gl.h"
 
+#include <iostream>
+
 #include "paimon/core/base/macro.h"
 #include "paimon/platform/context_factory.h"
 
 using namespace paimon;
 
-void workerThread1(Context *shared,
-                   const ContextFormat &format = ContextFormat()) {
-  auto context = ContextFactory::createContext(*shared, format);
+void workerThread1(Context *shared) {
+  auto context = ContextFactory::createContext(
+      *shared, ContextFormat{});
   if (!context->valid()) {
     LOG_ERROR("Worker 1: failed to create shared context");
     return;
@@ -33,11 +35,10 @@ void workerThread2(Context *context) {
 }
 
 int main() {
+  LogSystem::init();
+
   auto context = ContextFactory::createContext(
-      ContextFormat{.versionMajor = 3,
-                    .versionMinor = 3,
-                    .profile = ContextProfile::Core,
-                    .debug = true});
+      ContextFormat{});
   if (!context->valid()) {
     LOG_ERROR("Failed to create main context");
     return EXIT_FAILURE;
@@ -61,15 +62,19 @@ int main() {
   // Worker 2 receives a pointer to a shared context created on the main thread
   //
   auto worker2Context = ContextFactory::createContext(
-      *context, ContextFormat{.versionMajor = 3,
-                             .versionMinor = 3,
-                             .profile = ContextProfile::Core,
-                             .debug = true});
+      *context, ContextFormat{});
 
   if (!worker2Context->valid()) {
     LOG_ERROR("Worker 2: failed to create shared context");
     return EXIT_FAILURE;
   }
+
+  worker2Context->makeCurrent();
+
+  // LOG_INFO("Main: created shared context for worker 2 with version {}",
+  //          reinterpret_cast<const char *>(glGetString(GL_VERSION)));
+
+  worker2Context->doneCurrent();
 
   auto worker2 = std::thread(&workerThread2, worker2Context.get());
 
