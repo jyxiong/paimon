@@ -8,19 +8,21 @@
 
 using namespace paimon;
 
+const TCHAR *WGLPlatform::s_name = TEXT("PaimonWindowClass");
 
-const TCHAR* WindowClassRegistrar::s_name = TEXT("PaimonWindowClass");
-
-WindowClassRegistrar &WindowClassRegistrar::instance() {
-  static WindowClassRegistrar instance;
+WGLPlatform &WGLPlatform::instance() {
+  static WGLPlatform instance;
   return instance;
 }
 
-WindowClassRegistrar::~WindowClassRegistrar() {
-  UnregisterClass(s_name, m_module);
+WGLPlatform::~WGLPlatform() { UnregisterClass(s_name, m_module); }
+
+WGLPlatform::WGLPlatform() {
+  registerWindowClass();
+  loadExtensions();
 }
 
-WindowClassRegistrar::WindowClassRegistrar() {
+void WGLPlatform::registerWindowClass() {
   m_module = GetModuleHandle(0);
   if (m_module == nullptr) {
     LOG_ERROR("GetModuleHandleEx failed");
@@ -28,16 +30,16 @@ WindowClassRegistrar::WindowClassRegistrar() {
   }
 
   WNDCLASS windowClass = {
-    .style = CS_OWNDC,
-    .lpfnWndProc = DefWindowProc,
-    .cbClsExtra = 0,
-    .cbWndExtra = 0,
-    .hInstance = m_module,
-    .hIcon = 0,
-    .hCursor = 0,
-    .hbrBackground = 0,
-    .lpszMenuName = 0,
-    .lpszClassName = s_name,
+      .style = CS_OWNDC,
+      .lpfnWndProc = DefWindowProc,
+      .cbClsExtra = 0,
+      .cbWndExtra = 0,
+      .hInstance = m_module,
+      .hIcon = 0,
+      .hCursor = 0,
+      .hbrBackground = 0,
+      .lpszMenuName = 0,
+      .lpszClassName = s_name,
   };
 
   m_id = RegisterClass(&windowClass);
@@ -47,18 +49,11 @@ WindowClassRegistrar::WindowClassRegistrar() {
   }
 }
 
-WGLExtensionLoader &WGLExtensionLoader::instance() {
-  static WGLExtensionLoader instance;
-  return instance;
-}
-
-WGLExtensionLoader::WGLExtensionLoader() {
-  const auto &registrar = WindowClassRegistrar::instance();
-
-  auto hwnd =
-      CreateWindow(reinterpret_cast<LPCTSTR>(registrar.getId()), nullptr, WS_OVERLAPPEDWINDOW,
-                   CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-                   nullptr, nullptr, registrar.getModule(), nullptr);
+void WGLPlatform::loadExtensions() {
+  auto hwnd = CreateWindow(reinterpret_cast<LPCTSTR>(m_id), nullptr,
+                           WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
+                           CW_USEDEFAULT, CW_USEDEFAULT, nullptr, nullptr,
+                           m_module, nullptr);
 
   if (hwnd == nullptr) {
     LOG_ERROR("CreateWindow failed");
@@ -72,33 +67,32 @@ WGLExtensionLoader::WGLExtensionLoader() {
   }
 
   PIXELFORMATDESCRIPTOR pixelFormatDesc = {
-    .nSize = sizeof(PIXELFORMATDESCRIPTOR),
-    .nVersion = 1,
-    .dwFlags = PFD_SUPPORT_OPENGL | PFD_DRAW_TO_WINDOW,
-    .iPixelType = PFD_TYPE_RGBA,
-    .cColorBits = 24,
-    .cRedBits = 0,
-    .cRedShift = 0,
-    .cGreenBits = 0,
-    .cGreenShift = 0,
-    .cBlueBits = 0,
-    .cBlueShift = 0,
-    .cAlphaBits = 0,
-    .cAlphaShift = 0,
-    .cAccumBits = 0,
-    .cAccumRedBits = 0,
-    .cAccumGreenBits = 0,
-    .cAccumBlueBits = 0,
-    .cAccumAlphaBits = 0,
-    .cDepthBits = 24,
-    .cStencilBits = 0,
-    .cAuxBuffers = 0,
-    .iLayerType = PFD_MAIN_PLANE,
-    .bReserved = 0,
-    .dwLayerMask = 0,
-    .dwVisibleMask = 0,
-    .dwDamageMask = 0
-  };
+      .nSize = sizeof(PIXELFORMATDESCRIPTOR),
+      .nVersion = 1,
+      .dwFlags = PFD_SUPPORT_OPENGL | PFD_DRAW_TO_WINDOW,
+      .iPixelType = PFD_TYPE_RGBA,
+      .cColorBits = 24,
+      .cRedBits = 0,
+      .cRedShift = 0,
+      .cGreenBits = 0,
+      .cGreenShift = 0,
+      .cBlueBits = 0,
+      .cBlueShift = 0,
+      .cAlphaBits = 0,
+      .cAlphaShift = 0,
+      .cAccumBits = 0,
+      .cAccumRedBits = 0,
+      .cAccumGreenBits = 0,
+      .cAccumBlueBits = 0,
+      .cAccumAlphaBits = 0,
+      .cDepthBits = 24,
+      .cStencilBits = 0,
+      .cAuxBuffers = 0,
+      .iLayerType = PFD_MAIN_PLANE,
+      .bReserved = 0,
+      .dwLayerMask = 0,
+      .dwVisibleMask = 0,
+      .dwDamageMask = 0};
 
   auto pixelFormat = ChoosePixelFormat(hdc, &pixelFormatDesc);
   if (pixelFormat == 0) {
@@ -116,7 +110,7 @@ WGLExtensionLoader::WGLExtensionLoader() {
     LOG_ERROR("wglCreateContext failed");
     return;
   }
-  
+
   if (!wglMakeCurrent(hdc, dummyContext)) {
     LOG_ERROR("wglMakeCurrent failed");
     return;
