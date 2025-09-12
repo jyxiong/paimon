@@ -54,4 +54,24 @@ std::unique_ptr<Context> ContextFactory::createContext(const ContextFormat &form
   return context;
 }
 
+std::unique_ptr<Context> ContextFactory::createContext(const Context& shared, const ContextFormat &format) {
+  std::unique_ptr<Context> context;
+#if defined(_WIN32)
+  context = WGLContext::create(shared, format);
+#else
+  // context = GlxContext::create(format);
+  context = EglContext::create(format);
+#endif
+
+  context->makeCurrent();
+
+  auto success = gladLoaderLoadGL();
+  if (!success) {
+    LOG_ERROR("Failed to load OpenGL functions");
+  }
+
+  return context;
+
+}
+
 } // namespace paimon

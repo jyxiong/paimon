@@ -10,5 +10,7 @@ public:
   static std::unique_ptr<Context> getCurrentContext();
 
   static std::unique_ptr<Context> createContext(const ContextFormat &format);
+
+  static std::unique_ptr<Context> createContext(const Context& shared, const ContextFormat &format);
 };
 } // namespace paimon
