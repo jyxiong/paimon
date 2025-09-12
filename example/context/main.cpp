@@ -20,8 +20,8 @@ void create() {
       reinterpret_cast<const char *>(glGetString(GL_VERSION));
   std::cout << "Created context with version " << versionString << std::endl;
 
-  const auto venderSting = reinterpret_cast<const char*>(glGetString(GL_VENDOR));
-  std::cout << "Created context with vendor " << venderSting << std::endl;
+  const auto vendorSting = reinterpret_cast<const char*>(glGetString(GL_VENDOR));
+  std::cout << "Created context with vendor " << vendorSting << std::endl;
 
   context->doneCurrent();
 }

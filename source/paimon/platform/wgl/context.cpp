@@ -1,5 +1,3 @@
-#include "context.h"
-#include <memory>
 #ifdef _WIN32
 
 #include "paimon/platform/wgl/context.h"

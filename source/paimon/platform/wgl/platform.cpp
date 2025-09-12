@@ -21,15 +21,13 @@ WindowClassRegistrar::~WindowClassRegistrar() {
 }
 
 WindowClassRegistrar::WindowClassRegistrar() {
-  auto success = GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-                                   nullptr, &m_module);
-  if (!success) {
+  m_module = GetModuleHandle(0);
+  if (m_module == nullptr) {
     LOG_ERROR("GetModuleHandleEx failed");
     return;
   }
 
-  WNDCLASSEX windowClass = {
-    .cbSize = sizeof(WNDCLASSEX),
+  WNDCLASS windowClass = {
     .style = CS_OWNDC,
     .lpfnWndProc = DefWindowProc,
     .cbClsExtra = 0,
@@ -40,12 +38,11 @@ WindowClassRegistrar::WindowClassRegistrar() {
     .hbrBackground = 0,
     .lpszMenuName = 0,
     .lpszClassName = s_name,
-    .hIconSm = 0
   };
 
-  m_id = RegisterClassEx(&windowClass);
+  m_id = RegisterClass(&windowClass);
   if (m_id == 0) {
-    LOG_ERROR("RegisterClassEx failed");
+    LOG_ERROR("RegisterClass failed");
     return;
   }
 }
@@ -77,30 +74,30 @@ WGLExtensionLoader::WGLExtensionLoader() {
   PIXELFORMATDESCRIPTOR pixelFormatDesc = {
     .nSize = sizeof(PIXELFORMATDESCRIPTOR),
     .nVersion = 1,
-    .dwFlags = PFD_SUPPORT_OPENGL | PFD_DRAW_TO_WINDOW, // 必须加上 PFD_DRAW_TO_WINDOW
+    .dwFlags = PFD_SUPPORT_OPENGL | PFD_DRAW_TO_WINDOW,
     .iPixelType = PFD_TYPE_RGBA,
-    // .cColorBits = 24,
-    // .cRedBits = 0,
-    // .cRedShift = 0,
-    // .cGreenBits = 0,
-    // .cGreenShift = 0,
-    // .cBlueBits = 0,
-    // .cBlueShift = 0,
-    // .cAlphaBits = 0,
-    // .cAlphaShift = 0,
-    // .cAccumBits = 0,
-    // .cAccumRedBits = 0,
-    // .cAccumGreenBits = 0,
-    // .cAccumBlueBits = 0,
-    // .cAccumAlphaBits = 0,
-    // .cDepthBits = 24,
-    // .cStencilBits = 0,
-    // .cAuxBuffers = 0,
+    .cColorBits = 24,
+    .cRedBits = 0,
+    .cRedShift = 0,
+    .cGreenBits = 0,
+    .cGreenShift = 0,
+    .cBlueBits = 0,
+    .cBlueShift = 0,
+    .cAlphaBits = 0,
+    .cAlphaShift = 0,
+    .cAccumBits = 0,
+    .cAccumRedBits = 0,
+    .cAccumGreenBits = 0,
+    .cAccumBlueBits = 0,
+    .cAccumAlphaBits = 0,
+    .cDepthBits = 24,
+    .cStencilBits = 0,
+    .cAuxBuffers = 0,
     .iLayerType = PFD_MAIN_PLANE,
-    // .bReserved = 0,
-    // .dwLayerMask = 0,
-    // .dwVisibleMask = 0,
-    // .dwDamageMask = 0
+    .bReserved = 0,
+    .dwLayerMask = 0,
+    .dwVisibleMask = 0,
+    .dwDamageMask = 0
   };
 
   auto pixelFormat = ChoosePixelFormat(hdc, &pixelFormatDesc);
