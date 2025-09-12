@@ -2,6 +2,8 @@
 
 #ifdef __linux__
 
+#include <vector>
+
 #include "glad/egl.h"
 
 namespace paimon {
@@ -17,9 +19,8 @@ private:
   ~EglPlatform();
 
 private:
+  std::vector<EGLDeviceEXT> m_devices;
   EGLDisplay m_display;
-  int m_major;
-  int m_minor;
 };
 
 } // namespace paimon
