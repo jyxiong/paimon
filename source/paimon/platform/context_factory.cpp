@@ -13,6 +13,28 @@
 
 namespace paimon {
 
+void loadGLFunctions(const Context &context) {
+  context.makeCurrent();
+
+  static std::once_flag glad_flag;
+  std::call_once(glad_flag, []() {
+    if (!gladLoaderLoadGL()) {
+      LOG_ERROR("Failed to load OpenGL functions");
+    }
+
+    auto glVersion = glGetString(GL_VERSION);
+    auto glRenderer = glGetString(GL_RENDERER);
+    auto glVendor = glGetString(GL_VENDOR);
+    LOG_INFO("Loaded OpenGL functions");
+    LOG_INFO("  OpenGL Version: {}", reinterpret_cast<const char *>(glVersion));
+    LOG_INFO("  OpenGL Renderer: {}",
+             reinterpret_cast<const char *>(glRenderer));
+    LOG_INFO("  OpenGL Vendor: {}", reinterpret_cast<const char *>(glVendor));
+  });
+
+  context.doneCurrent();
+}
+
 std::unique_ptr<Context> ContextFactory::getCurrentContext() {
   std::unique_ptr<Context> context;
 #if defined(_WIN32)
@@ -26,10 +48,7 @@ std::unique_ptr<Context> ContextFactory::getCurrentContext() {
     return nullptr;
   }
 
-  auto success = gladLoaderLoadGL();
-  if (!success) {
-    LOG_ERROR("Failed to load OpenGL functions");
-  }
+  loadGLFunctions(*context);
 
   return context;
 }
@@ -44,12 +63,7 @@ std::unique_ptr<Context> ContextFactory::createContext(const ContextFormat &form
   context = EglContext::create(format);
 #endif
 
-  context->makeCurrent();
-
-  auto success = gladLoaderLoadGL();
-  if (!success) {
-    LOG_ERROR("Failed to load OpenGL functions");
-  }
+  loadGLFunctions(*context);
 
   return context;
 }
@@ -63,12 +77,7 @@ std::unique_ptr<Context> ContextFactory::createContext(const Context& shared, co
   context = EglContext::create(format);
 #endif
 
-  context->makeCurrent();
-
-  auto success = gladLoaderLoadGL();
-  if (!success) {
-    LOG_ERROR("Failed to load OpenGL functions");
-  }
+  loadGLFunctions(*context);
 
   return context;
 

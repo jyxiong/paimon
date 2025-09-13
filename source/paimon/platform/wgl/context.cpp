@@ -47,13 +47,9 @@ std::vector<int> createContextAttributeList(const ContextFormat &format) {
   return std::move(list);
 }
 
-WGLContext::WGLContext() : m_owning(true) {
-  WGLExtensionLoader::instance();
-}
+WGLContext::WGLContext() : m_owning(true) {}
 
-WGLContext::~WGLContext() {
-  destroy();
-}
+WGLContext::~WGLContext() { destroy(); }
 
 bool WGLContext::destroy() {
   if (m_owning && m_context != nullptr) {
@@ -118,7 +114,8 @@ std::unique_ptr<Context> WGLContext::getCurrent() {
   return context;
 }
 
-std::unique_ptr<Context> WGLContext::create(const Context& shared, const ContextFormat &format) {
+std::unique_ptr<Context> WGLContext::create(const Context &shared,
+                                            const ContextFormat &format) {
   if (!shared.valid()) {
     LOG_ERROR("Shared context is not a WGLContext");
     return nullptr;
@@ -128,8 +125,8 @@ std::unique_ptr<Context> WGLContext::create(const Context& shared, const Context
 
   context->createWindow();
   context->setPixelFormat();
-  context->createContext(
-      reinterpret_cast<HGLRC>(shared.nativeHandle()), format);
+  context->createContext(reinterpret_cast<HGLRC>(shared.nativeHandle()),
+                         format);
 
   return context;
 }
