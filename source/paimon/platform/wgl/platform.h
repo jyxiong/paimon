@@ -6,17 +6,21 @@
 
 namespace paimon {
 
-class WindowClassRegistrar {
+class WGLPlatform {
 public:
-  static WindowClassRegistrar &instance();
+  static WGLPlatform &instance();
 
-  ~WindowClassRegistrar();
+  ~WGLPlatform();
 
   HMODULE getModule() const { return m_module; }
   ATOM getId() const { return m_id; }
 
 private:
-  WindowClassRegistrar();
+  WGLPlatform();
+
+  void registerWindowClass();
+
+  void loadExtensions();
 
 private:
   static const TCHAR* s_name;
@@ -24,16 +28,6 @@ private:
   HMODULE m_module;
   ATOM m_id;
 
-};
-
-class WGLExtensionLoader {
-public:
-  static WGLExtensionLoader& instance();
-
-  ~WGLExtensionLoader() = default;
-
-private:
-  WGLExtensionLoader();
 };
 
 } // namespace paimon

@@ -18,13 +18,13 @@ public:
 
   bool destroy() override;
 
-  long long nativeHandle() override;
+  long long nativeHandle() const override;
 
-  bool valid() override;
+  bool valid() const override;
 
-  bool makeCurrent() override;
+  bool makeCurrent() const override;
 
-  bool doneCurrent() override;
+  bool doneCurrent() const override;
 
   static std::unique_ptr<Context> getCurrent();
 
