@@ -73,8 +73,8 @@ std::unique_ptr<Context> ContextFactory::createContext(const Context& shared, co
 #if defined(_WIN32)
   context = WGLContext::create(shared, format);
 #else
-  // context = GlxContext::create(format);
-  context = EglContext::create(format);
+  // context = GlxContext::create(shared, format);
+  context = EglContext::create(shared, format);
 #endif
 
   loadGLFunctions(*context);
