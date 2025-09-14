@@ -21,6 +21,9 @@ private:
 private:
   std::vector<EGLDeviceEXT> m_devices;
   EGLDisplay m_display;
+
+  EGLint m_major_version;
+  EGLint m_minor_version;
 };
 
 } // namespace paimon

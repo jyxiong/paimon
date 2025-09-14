@@ -37,7 +37,7 @@ EglPlatform::EglPlatform() : m_display(nullptr) {
     return;
   }
 
-  if (!eglInitialize(m_display, nullptr, nullptr)) {
+  if (!eglInitialize(m_display, &m_major_version, &m_minor_version)) {
     LOG_ERROR("Unable to initialize EGL");
     m_display = nullptr;
     return;
@@ -49,8 +49,6 @@ EglPlatform::EglPlatform() : m_display(nullptr) {
     m_display = nullptr;
     return;
   }
-
-  eglBindAPI(EGL_OPENGL_API);
 }
 
 EglPlatform::~EglPlatform() { eglTerminate(m_display); }

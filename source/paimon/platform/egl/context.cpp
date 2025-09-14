@@ -157,6 +157,7 @@ std::unique_ptr<Context> EglContext::getCurrent() {
 std::unique_ptr<Context> EglContext::create(const Context &shared,
                                             const ContextFormat &format) {
   auto context = std::make_unique<EglContext>();
+
   context->createContext(reinterpret_cast<EGLContext>(shared.nativeHandle()),
                          format);
   return context;
@@ -171,8 +172,14 @@ std::unique_ptr<Context> EglContext::create(const ContextFormat &format) {
 void EglContext::createContext(EGLContext shared, const ContextFormat &format) {
   auto display = EglPlatform::instance()->display();
 
-  static EGLint configAttributes[] = {EGL_SURFACE_TYPE, EGL_PBUFFER_BIT, EGL_RENDERABLE_TYPE,
-                                      EGL_OPENGL_BIT, EGL_NONE};
+  // IMPORTANT: eglBindAPI is thread-local and must be called in each thread before creating an OpenGL context.
+  if (eglQueryAPI() != EGL_OPENGL_API) {
+    eglBindAPI(EGL_OPENGL_API);
+  }
+
+  static EGLint configAttributes[] = {EGL_SURFACE_TYPE, 0,
+                                      EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
+                                      EGL_NONE};
   EGLint numConfigs;
   EGLConfig config;
   if (!eglChooseConfig(display, configAttributes, &config, 1, &numConfigs)) {

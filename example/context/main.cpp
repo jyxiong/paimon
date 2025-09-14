@@ -59,12 +59,12 @@ int main() {
   //
   // Worker 2 receives a pointer to a shared context created on the main thread
   //
-  // auto worker2Context = ContextFactory::createContext(*context);
+  auto worker2Context = ContextFactory::createContext(*context);
 
-  // if (!worker2Context->valid()) {
-  //   LOG_ERROR("Worker 2: failed to create shared context");
-  //   return EXIT_FAILURE;
-  // }
+  if (!worker2Context->valid()) {
+    LOG_ERROR("Worker 2: failed to create shared context");
+    return EXIT_FAILURE;
+  }
 
   // auto worker2 = std::thread(&workerThread2, worker2Context.get());
 
