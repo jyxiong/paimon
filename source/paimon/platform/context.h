@@ -1,5 +1,6 @@
 #pragma once
 
+#include <mutex>
 #include <thread>
 
 namespace paimon {
@@ -19,8 +20,16 @@ public:
 
   virtual bool doneCurrent() const = 0;
 
+  void init();
+
+private:
+  static void loadGLFunctions();
+
 protected:
   std::thread::id m_threadId;
+
+private:
+  static std::once_flag s_glad_flag;
 };
 
 } // namespace paimon
