@@ -51,7 +51,9 @@ std::vector<int> createContextAttributeList(const ContextFormat &format) {
 
 GlxContext::GlxContext() : m_owning(true) {}
 
-GlxContext::~GlxContext() {}
+GlxContext::~GlxContext() {
+  destroy();
+}
 
 bool GlxContext::destroy() {
   if (m_owning) {
@@ -76,15 +78,15 @@ bool GlxContext::destroy() {
   return true;
 }
 
-long long GlxContext::nativeHandle() {
+long long GlxContext::nativeHandle() const {
   return reinterpret_cast<long long>(m_contextHandle);
 }
 
-bool GlxContext::valid() {
+bool GlxContext::valid() const {
   return m_contextHandle != nullptr && m_drawable != 0;
 }
 
-bool GlxContext::makeCurrent() {
+bool GlxContext::makeCurrent() const {
   auto *display = GlxPlatform::instance()->display();
   const auto success =
       glXMakeContextCurrent(display, m_drawable, m_drawable, m_contextHandle);
@@ -94,7 +96,7 @@ bool GlxContext::makeCurrent() {
   return success;
 }
 
-bool GlxContext::doneCurrent() {
+bool GlxContext::doneCurrent() const {
   auto *display = GlxPlatform::instance()->display();
   const auto success = glXMakeContextCurrent(display, None, None, nullptr);
   if (!success) {

@@ -1,7 +1,5 @@
 #include "paimon/platform/context_factory.h"
 
-#include "glad/gl.h"
-
 #include "paimon/core/base/macro.h"
 #include <memory>
 #if defined(_WIN32)
@@ -26,10 +24,7 @@ std::unique_ptr<Context> ContextFactory::getCurrentContext() {
     return nullptr;
   }
 
-  auto success = gladLoaderLoadGL();
-  if (!success) {
-    LOG_ERROR("Failed to load OpenGL functions");
-  }
+  context->init();
 
   return context;
 }
@@ -44,14 +39,24 @@ std::unique_ptr<Context> ContextFactory::createContext(const ContextFormat &form
   context = EglContext::create(format);
 #endif
 
-  context->makeCurrent();
-
-  auto success = gladLoaderLoadGL();
-  if (!success) {
-    LOG_ERROR("Failed to load OpenGL functions");
-  }
+  context->init();
 
   return context;
+}
+
+std::unique_ptr<Context> ContextFactory::createContext(const Context& shared, const ContextFormat &format) {
+  std::unique_ptr<Context> context;
+#if defined(_WIN32)
+  context = WGLContext::create(shared, format);
+#else
+  // context = GlxContext::create(shared, format);
+  context = EglContext::create(shared, format);
+#endif
+
+  context->init();
+
+  return context;
+
 }
 
 } // namespace paimon

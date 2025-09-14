@@ -12,22 +12,32 @@ EglPlatform *EglPlatform::instance() {
 }
 
 EglPlatform::EglPlatform() : m_display(nullptr) {
-  int egl_version = gladLoaderLoadEGL(nullptr);
+  auto egl_version = gladLoaderLoadEGL(nullptr);
   if (!egl_version) {
     LOG_ERROR("Unable to load EGL.");
     return;
   }
 
-  LOG_INFO("Loaded EGL {}.{} on first load.",
-           GLAD_VERSION_MAJOR(egl_version), GLAD_VERSION_MINOR(egl_version));
+  EGLint num_devices = 0;
+  if (!eglQueryDevicesEXT(0, nullptr, &num_devices) || num_devices <= 0) {
+    LOG_ERROR("No EGL devices found.");
+    return;
+  }
+  m_devices.resize(num_devices);
+  if (!eglQueryDevicesEXT(num_devices, m_devices.data(), &num_devices)){
+    LOG_ERROR("Failed to query EGL devices.");
+    m_devices.clear();
+    return;
+  }
 
-  m_display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+  m_display = eglGetPlatformDisplayEXT(EGL_PLATFORM_DEVICE_EXT,
+                                     m_devices[0], nullptr);
   if (m_display == EGL_NO_DISPLAY) {
     LOG_ERROR("Got no EGL display.");
     return;
   }
 
-  if (!eglInitialize(m_display, nullptr, nullptr)) {
+  if (!eglInitialize(m_display, &m_major_version, &m_minor_version)) {
     LOG_ERROR("Unable to initialize EGL");
     m_display = nullptr;
     return;
@@ -39,12 +49,6 @@ EglPlatform::EglPlatform() : m_display(nullptr) {
     m_display = nullptr;
     return;
   }
-  m_major = GLAD_VERSION_MAJOR(egl_version);
-  m_minor = GLAD_VERSION_MINOR(egl_version);
-
-  LOG_INFO("Loaded EGL {}.{} after reload.", m_major, m_minor);
-
-  eglBindAPI(EGL_OPENGL_API);
 }
 
 EglPlatform::~EglPlatform() { eglTerminate(m_display); }

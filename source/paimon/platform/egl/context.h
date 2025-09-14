@@ -18,19 +18,21 @@ public:
   ~EglContext() override;
 
   bool destroy() override;
-  long long nativeHandle() override;
-  bool valid() override;
-  bool makeCurrent() override;
-  bool doneCurrent() override;
+  long long nativeHandle() const override;
+  bool valid() const override;
+  bool makeCurrent() const override;
+  bool doneCurrent() const override;
 
   static std::unique_ptr<Context> getCurrent();
+  static std::unique_ptr<Context> create(const Context& shared, const ContextFormat &format);
   static std::unique_ptr<Context> create(const ContextFormat &format);
 
 private:
   void createContext(EGLContext shared, const ContextFormat &format);
 
 private:
-  EGLContext m_contextHandle;
+  EGLSurface m_surface;
+  EGLContext m_context;
   bool m_owning;
 };
 

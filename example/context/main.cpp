@@ -1,62 +1,75 @@
-#include <iostream>
-
-#include "GLFW/glfw3.h"
 #include "glad/gl.h"
+
+#include <iostream>
 
 #include "paimon/core/base/macro.h"
 #include "paimon/platform/context_factory.h"
 
 using namespace paimon;
 
-void create() {
-  auto context = ContextFactory::createContext(
-      ContextFormat{.versionMajor = 3,
-                    .versionMinor = 3,
-                    .profile = ContextProfile::Core,
-                    .debug = true});
+void workerThread1(Context *shared) {
+  auto context = ContextFactory::createContext(*shared);
+  if (!context->valid()) {
+    LOG_ERROR("Worker 1: failed to create shared context");
+    return;
+  }
 
   context->makeCurrent();
+
   const auto versionString =
       reinterpret_cast<const char *>(glGetString(GL_VERSION));
-  std::cout << "Created context with version " << versionString << std::endl;
-
-  const auto vendorSting = reinterpret_cast<const char*>(glGetString(GL_VENDOR));
-  std::cout << "Created context with vendor " << vendorSting << std::endl;
+  LOG_INFO("Worker 1: created shared context with version {}", versionString);
 
   context->doneCurrent();
 }
 
-void getCurrent() {
-  glfwInit();
-  glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-  const auto window = glfwCreateWindow(320, 240, "", nullptr, nullptr);
-
-  glfwMakeContextCurrent(window);
-
-  auto versionString =
-      reinterpret_cast<const char *>(glGetString(GL_VERSION));
-  std::cout << "Created context with version " << versionString << std::endl;
-
-  auto context = ContextFactory::getCurrentContext();
-
+void workerThread2(Context *context) {
   context->makeCurrent();
-  versionString =
+
+  const auto versionString =
       reinterpret_cast<const char *>(glGetString(GL_VERSION));
-  std::cout << "Created context with version " << versionString << std::endl;
+  LOG_INFO("Worker 2: using shared context with version {}", versionString);
 
   context->doneCurrent();
-  glfwMakeContextCurrent(nullptr);
-
 }
 
 int main() {
   LogSystem::init();
 
-  create();
+  auto context = ContextFactory::createContext();
+  if (!context->valid()) {
+    LOG_ERROR("Failed to create main context");
+    return EXIT_FAILURE;
+  }
 
-  getCurrent();
+  context->makeCurrent();
 
-  return 0;
+  const auto versionString =
+      reinterpret_cast<const char *>(glGetString(GL_VERSION));
+  LOG_INFO("Main: created main context with version {}", versionString);
+
+  context->doneCurrent();
+
+  //
+  // Worker 1 receives a pointer to the main context and creates its own shared
+  // context
+  //
+  auto worker1 = std::thread(&workerThread1, context.get());
+
+  //
+  // Worker 2 receives a pointer to a shared context created on the main thread
+  //
+  auto worker2Context = ContextFactory::createContext(*context);
+
+  if (!worker2Context->valid()) {
+    LOG_ERROR("Worker 2: failed to create shared context");
+    return EXIT_FAILURE;
+  }
+
+  // auto worker2 = std::thread(&workerThread2, worker2Context.get());
+
+  worker1.join();
+  // worker2.join();
+
+  return EXIT_SUCCESS;
 }

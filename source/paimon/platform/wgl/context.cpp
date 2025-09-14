@@ -47,11 +47,9 @@ std::vector<int> createContextAttributeList(const ContextFormat &format) {
   return std::move(list);
 }
 
-WGLContext::WGLContext() : m_owning(true) {
-  WGLExtensionLoader::instance();
-}
+WGLContext::WGLContext() : m_owning(true) {}
 
-WGLContext::~WGLContext() {}
+WGLContext::~WGLContext() { destroy(); }
 
 bool WGLContext::destroy() {
   if (m_owning && m_context != nullptr) {
@@ -70,15 +68,15 @@ bool WGLContext::destroy() {
   return true;
 }
 
-long long WGLContext::nativeHandle() {
+long long WGLContext::nativeHandle() const {
   return reinterpret_cast<long long>(m_context);
 }
 
-bool WGLContext::valid() {
+bool WGLContext::valid() const {
   return m_context != nullptr && m_hdc != nullptr;
 }
 
-bool WGLContext::makeCurrent() {
+bool WGLContext::makeCurrent() const {
   auto success = wglMakeCurrent(m_hdc, m_context);
   if (!success) {
     LOG_ERROR("wglMakeCurrent failed");
@@ -86,7 +84,7 @@ bool WGLContext::makeCurrent() {
   return success;
 }
 
-bool WGLContext::doneCurrent() {
+bool WGLContext::doneCurrent() const {
   auto success = wglMakeCurrent(nullptr, nullptr);
   if (!success) {
     LOG_ERROR("wglMakeCurrent(nullptr, nullptr) failed");
@@ -116,9 +114,9 @@ std::unique_ptr<Context> WGLContext::getCurrent() {
   return context;
 }
 
-std::unique_ptr<Context> WGLContext::create(const Context& shared, const ContextFormat &format) {
-  auto sharedWglContext = dynamic_cast<const WGLContext*>(&shared);
-  if (sharedWglContext == nullptr) {
+std::unique_ptr<Context> WGLContext::create(const Context &shared,
+                                            const ContextFormat &format) {
+  if (!shared.valid()) {
     LOG_ERROR("Shared context is not a WGLContext");
     return nullptr;
   }
@@ -127,7 +125,8 @@ std::unique_ptr<Context> WGLContext::create(const Context& shared, const Context
 
   context->createWindow();
   context->setPixelFormat();
-  context->createContext(sharedWglContext->m_context, format);
+  context->createContext(reinterpret_cast<HGLRC>(shared.nativeHandle()),
+                         format);
 
   return context;
 }
@@ -143,7 +142,7 @@ std::unique_ptr<Context> WGLContext::create(const ContextFormat &format) {
 }
 
 void WGLContext::createWindow() {
-  const auto &registrar = WindowClassRegistrar::instance();
+  const auto &registrar = WGLPlatform::instance();
 
   m_hwnd = CreateWindowEx(0, reinterpret_cast<LPCTSTR>(registrar.getId()),
                           nullptr, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT,
