@@ -12,9 +12,9 @@ using namespace paimon;
 std::map<int, int> createContextAttributeList(const ContextFormat &format) {
   std::map<int, int> attributes;
 
-  if (format.majorVersion > 0) {
-    attributes[GLFW_CONTEXT_VERSION_MAJOR] = format.majorVersion;
-    attributes[GLFW_CONTEXT_VERSION_MINOR] = format.minorVersion;
+  if (format.versionMajor > 0) {
+    attributes[GLFW_CONTEXT_VERSION_MAJOR] = format.versionMajor;
+    attributes[GLFW_CONTEXT_VERSION_MINOR] = format.versionMinor;
   }
 
   if (format.debug) {
