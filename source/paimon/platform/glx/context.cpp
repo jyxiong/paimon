@@ -51,26 +51,24 @@ std::vector<int> createContextAttributeList(const ContextFormat &format) {
 
 GlxContext::GlxContext() : m_owning(true) {}
 
-GlxContext::~GlxContext() {
-  destroy();
-}
+GlxContext::~GlxContext() { destroy(); }
 
 bool GlxContext::destroy() {
   if (m_owning) {
     auto *display = GlxPlatform::instance()->display();
 
-    if (m_contextHandle != nullptr) {
+    if (m_context != nullptr) {
       auto currentContext = glXGetCurrentContext();
-      if (currentContext == m_contextHandle) {
+      if (currentContext == m_context) {
         doneCurrent();
       }
-      glXDestroyContext(display, m_contextHandle);
-      m_contextHandle = nullptr;
+      glXDestroyContext(display, m_context);
+      m_context = nullptr;
     }
 
-    if (m_pBuffer != 0) {
-      glXDestroyPbuffer(display, m_pBuffer);
-      m_pBuffer = 0;
+    if (m_drawable != 0) {
+      glXDestroyPbuffer(display, m_drawable);
+      m_drawable = 0;
     }
 
     m_drawable = 0;
@@ -79,17 +77,17 @@ bool GlxContext::destroy() {
 }
 
 long long GlxContext::nativeHandle() const {
-  return reinterpret_cast<long long>(m_contextHandle);
+  return reinterpret_cast<long long>(m_context);
 }
 
 bool GlxContext::valid() const {
-  return m_contextHandle != nullptr && m_drawable != 0;
+  return m_context != nullptr && m_drawable != 0;
 }
 
 bool GlxContext::makeCurrent() const {
   auto *display = GlxPlatform::instance()->display();
   const auto success =
-      glXMakeContextCurrent(display, m_drawable, m_drawable, m_contextHandle);
+      glXMakeContextCurrent(display, m_drawable, m_drawable, m_context);
   if (!success) {
     LOG_ERROR("glXMakeContextCurrent failed");
   }
@@ -110,8 +108,8 @@ std::unique_ptr<Context> GlxContext::getCurrent() {
 
   context->m_owning = false;
 
-  context->m_contextHandle = glXGetCurrentContext();
-  if (context->m_contextHandle == nullptr) {
+  context->m_context = glXGetCurrentContext();
+  if (context->m_context == nullptr) {
     LOG_ERROR("glXGetCurrentContext failed");
     return nullptr;
   }
@@ -122,6 +120,14 @@ std::unique_ptr<Context> GlxContext::getCurrent() {
     return nullptr;
   }
 
+  return context;
+}
+
+std::unique_ptr<Context> GlxContext::create(const Context &shared,
+                                            const ContextFormat &format) {
+  auto context = std::make_unique<GlxContext>();
+  context->createContext(reinterpret_cast<GLXContext>(shared.nativeHandle()),
+                         format);
   return context;
 }
 
@@ -142,30 +148,12 @@ void GlxContext::createContext(GLXContext shared, const ContextFormat &format) {
   }
 
   const auto contextAttributes = createContextAttributeList(format);
-  m_contextHandle = glXCreateContextAttribsARB(display, fbConfig[0], shared,
-                                               True, contextAttributes.data());
-  XSync(display, false);
-  // if (m_contextHandle == nullptr || xErrorHandler.errorCode() != Success) {
-  //     throw InternalException(Error::INVALID_CONFIGURATION,
-  //     "glXCreateContextAttribsARB returned nullptr (" +
-  //     xErrorHandler.errorString() + ")");
-  // }
+  m_context = glXCreateContextAttribsARB(display, fbConfig[0], shared, True,
+                                         contextAttributes.data());
 
   const int pBufferAttributes[] = {GLX_PBUFFER_WIDTH, 1, GLX_PBUFFER_HEIGHT, 1,
                                    None};
-  m_pBuffer = glXCreatePbuffer(display, fbConfig[0], pBufferAttributes);
-
-  XSync(display, false);
-
-  // check if pbuffer is supported
-  const auto success =
-      glXMakeContextCurrent(display, m_pBuffer, m_pBuffer, m_contextHandle);
-  if (success) {
-    glXMakeContextCurrent(display, None, None, nullptr);
-    m_drawable = m_pBuffer;
-  } else {
-    m_drawable = DefaultRootWindow(display);
-  }
+  m_drawable = glXCreatePbuffer(display, fbConfig[0], pBufferAttributes);
 }
 
 #endif // __linux__

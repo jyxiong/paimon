@@ -28,6 +28,8 @@ public:
 
   static std::unique_ptr<Context> getCurrent();
 
+  static std::unique_ptr<Context> create(const Context& shared, const ContextFormat &format);
+
   static std::unique_ptr<Context> create(const ContextFormat &format);
 
 private:
@@ -35,8 +37,7 @@ private:
 
 private:
   GLXDrawable m_drawable;
-  GLXPbuffer m_pBuffer;
-  GLXContext m_contextHandle;
+  GLXContext m_context;
   bool m_owning;
 };
 } // namespace paimon
