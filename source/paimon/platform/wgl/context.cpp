@@ -6,7 +6,7 @@
 
 #include "glad/wgl.h"
 
-#include "paimon/core/base/macro.h"
+#include "paimon/core/log/log_system.h"
 #include "paimon/platform/context_format.h"
 #include "paimon/platform/wgl/platform.h"
 

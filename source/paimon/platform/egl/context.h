@@ -1,7 +1,5 @@
 #pragma once
 
-#ifdef __linux__
-
 #include "paimon/platform/context.h"
 
 #include <memory>
@@ -37,5 +35,3 @@ private:
 };
 
 } // namespace paimon
-
-#endif // __linux__

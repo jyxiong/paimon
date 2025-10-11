@@ -1,7 +1,9 @@
 #include "paimon/platform/context_factory.h"
 
-#include "paimon/core/base/macro.h"
 #include <memory>
+
+#include "paimon/core/log/log_system.h"
+
 #if defined(_WIN32)
 #include "paimon/platform/wgl/context.h"
 #else

@@ -1,4 +1,4 @@
-#include "paimon/core/base/macro.h"
+#include "paimon/core/log/log_system.h"
 
 #include <iostream>
 

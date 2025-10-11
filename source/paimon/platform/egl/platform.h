@@ -1,7 +1,5 @@
 #pragma once
 
-#ifdef __linux__
-
 #include <vector>
 
 #include "glad/egl.h"
@@ -27,5 +25,3 @@ private:
 };
 
 } // namespace paimon
-
-#endif // __linux__

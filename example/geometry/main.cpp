@@ -7,7 +7,7 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 
-#include "paimon/core/base/macro.h"
+#include "paimon/core/log/log_system.h"
 #include "paimon/opengl/buffer.h"
 #include "paimon/opengl/program_pipeline.h"
 #include "paimon/opengl/shader_program.h"

@@ -1,10 +1,8 @@
-#ifdef __linux__
-
 #include "paimon/platform/egl/context.h"
 
 #include <map>
 
-#include "paimon/core/base/macro.h"
+#include "paimon/core/log/log_system.h"
 #include "paimon/platform/egl/platform.h"
 
 using namespace paimon;
@@ -197,5 +195,3 @@ void EglContext::createContext(EGLContext shared, const ContextFormat &format) {
     return;
   }
 }
-
-#endif // __linux__

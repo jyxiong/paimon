@@ -1,8 +1,9 @@
 #pragma once
 
-#include "paimon/core/log/log_system.h"
+#if defined _WIN32 || defined WIN32 || defined __WIN32__
+#define PAIMON_OS_WINDOWS
+#endif
 
-#define LOG_INFO(...) paimon::LogSystem::getLogger()->info(__VA_ARGS__)
-#define LOG_ERROR(...) paimon::LogSystem::getLogger()->error(__VA_ARGS__)
-#define LOG_WARN(...) paimon::LogSystem::getLogger()->warn(__VA_ARGS__)
-#define LOG_DEBUG(...) paimon::LogSystem::getLogger()->debug(__VA_ARGS__)
+#if defined linux || defined __linux || defined __linux__
+#define PAIMON_OS_LINUX
+#endif

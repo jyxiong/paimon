@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include "paimon/core/base/macro.h"
+#include "paimon/core/log/log_system.h"
 #include "paimon/platform/context_factory.h"
 
 using namespace paimon;

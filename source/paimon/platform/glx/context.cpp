@@ -6,7 +6,7 @@
 
 #include <X11/Xlib.h>
 
-#include "paimon/core/base/macro.h"
+#include "paimon/core/log/log_system.h"
 #include "paimon/platform/glx/platform.h"
 
 using namespace paimon;

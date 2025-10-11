@@ -1,7 +1,7 @@
 #include "screen_quad.h"
 
 #include "glad/gl.h"
-#include "paimon/core/base/macro.h"
+#include "paimon/core/log/log_system.h"
 #include "paimon/opengl/shader.h"
 
 const char * ScreenQuad::s_vertexShaderSource = R"(
