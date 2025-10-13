@@ -5,5 +5,5 @@
 #endif
 
 #if defined linux || defined __linux || defined __linux__
-#define PAIMON_OS_LINUX
+#define PAIMON_OS_UNIX
 #endif

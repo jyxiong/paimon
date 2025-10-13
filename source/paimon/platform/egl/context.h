@@ -1,5 +1,7 @@
 #pragma once
 
+#if defined PAIMON_OS_UNIX
+
 #include "paimon/platform/context.h"
 
 #include <memory>
@@ -35,3 +37,5 @@ private:
 };
 
 } // namespace paimon
+
+#endif // PAIMON_OS_UNIX

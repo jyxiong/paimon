@@ -1,7 +1,5 @@
 #include "glad/gl.h"
 
-#include <iostream>
-
 #include "paimon/core/log/log_system.h"
 #include "paimon/platform/context_factory.h"
 
