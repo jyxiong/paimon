@@ -7,16 +7,18 @@
 
 namespace paimon {
 
-class ContextImpl : public Context {
+class GlfwContext : public Context {
 public:
-  ContextImpl();
-  ~ContextImpl();
+  GlfwContext();
+  ~GlfwContext();
 
   bool destroy() override;
 
   long long nativeHandle() const override;
 
   bool valid() const override;
+
+  bool loadGLFunctions() const override;
 
   bool makeCurrent() const override;
 

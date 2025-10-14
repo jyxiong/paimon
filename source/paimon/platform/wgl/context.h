@@ -1,6 +1,6 @@
 #pragma once
 
-#ifdef _WIN32
+#ifdef PAIMON_PLATFORM_WIN32
 
 #include "paimon/platform/context.h"
 #include "paimon/platform/context_format.h"
@@ -10,16 +10,18 @@
 
 namespace paimon {
 
-class WGLContext : public Context {
+class NativeContext : public Context {
 public:
-  WGLContext();
-  ~WGLContext();
+  NativeContext();
+  ~NativeContext();
 
   bool destroy() override;
 
   long long nativeHandle() const override;
 
   bool valid() const override;
+
+  bool loadGLFunctions() const override;
 
   bool makeCurrent() const override;
 

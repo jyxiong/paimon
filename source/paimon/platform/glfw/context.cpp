@@ -35,11 +35,11 @@ std::map<int, int> createContextAttributeList(const ContextFormat &format) {
   return std::move(attributes);
 }
 
-ContextImpl::ContextImpl() : m_owning(true) {}
+GlfwContext::GlfwContext() : m_owning(true) {}
 
-ContextImpl::~ContextImpl() { destroy(); }
+GlfwContext::~GlfwContext() { destroy(); }
 
-bool ContextImpl::destroy() {
+bool GlfwContext::destroy() {
   if (m_owning && m_context != nullptr) {
     auto currentContext = glfwGetCurrentContext();
     if (currentContext == m_context) {
@@ -51,24 +51,28 @@ bool ContextImpl::destroy() {
   return true;
 }
 
-long long ContextImpl::nativeHandle() const {
+long long GlfwContext::nativeHandle() const {
   return reinterpret_cast<long long>(m_context);
 }
 
-bool ContextImpl::valid() const { return m_context != nullptr; }
+bool GlfwContext::valid() const { return m_context != nullptr; }
 
-bool ContextImpl::makeCurrent() const {
+bool GlfwContext::loadGLFunctions() const {
+  return gladLoadGL(glfwGetProcAddress) != 0;
+}
+
+bool GlfwContext::makeCurrent() const {
   glfwMakeContextCurrent(m_context);
   return true;
 }
 
-bool ContextImpl::doneCurrent() const {
+bool GlfwContext::doneCurrent() const {
   glfwMakeContextCurrent(nullptr);
   return true;
 }
 
-std::unique_ptr<Context> ContextImpl::getCurrent() {
-  auto context = std::make_unique<ContextImpl>();
+std::unique_ptr<Context> GlfwContext::getCurrent() {
+  auto context = std::make_unique<GlfwContext>();
 
   context->m_owning = false;
 
@@ -81,14 +85,14 @@ std::unique_ptr<Context> ContextImpl::getCurrent() {
   return context;
 }
 
-std::unique_ptr<Context> ContextImpl::create(const Context &shared,
+std::unique_ptr<Context> GlfwContext::create(const Context &shared,
                                              const ContextFormat &format) {
   if (!shared.valid()) {
-    LOG_ERROR("Shared context is not a ContextImpl");
+    LOG_ERROR("Shared context is not a GlfwContext");
     return nullptr;
   }
 
-  auto context = std::make_unique<ContextImpl>();
+  auto context = std::make_unique<GlfwContext>();
 
   context->createContext(reinterpret_cast<GLFWwindow *>(shared.nativeHandle()),
                          format);
@@ -96,15 +100,15 @@ std::unique_ptr<Context> ContextImpl::create(const Context &shared,
   return context;
 }
 
-std::unique_ptr<Context> ContextImpl::create(const ContextFormat &format) {
-  auto context = std::make_unique<ContextImpl>();
+std::unique_ptr<Context> GlfwContext::create(const ContextFormat &format) {
+  auto context = std::make_unique<GlfwContext>();
 
   context->createContext(nullptr, format);
 
   return context;
 }
 
-void ContextImpl::createContext(GLFWwindow *shared,
+void GlfwContext::createContext(GLFWwindow *shared,
                                 const ContextFormat &format) {
   glfwDefaultWindowHints();
 

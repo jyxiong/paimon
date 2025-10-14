@@ -1,7 +1,9 @@
+
 #pragma once
 
-#include <vector>
+#ifdef PAIMON_PLATFORM_EGL
 
+#include <vector>
 #include "glad/egl.h"
 
 namespace paimon {
@@ -25,3 +27,5 @@ private:
 };
 
 } // namespace paimon
+
+#endif // PAIMON_PLATFORM_EGL

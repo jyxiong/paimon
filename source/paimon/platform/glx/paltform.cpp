@@ -1,4 +1,4 @@
-#ifdef __linux__
+#ifdef PAIMON_PLATFORM_X11
 
 #include "paimon/platform/glx/platform.h"
 
@@ -34,4 +34,4 @@ GlxPlatform::~GlxPlatform() {
   }
 }
 
-#endif // __linux__
+#endif // PAIMON_PLATFORM_X11

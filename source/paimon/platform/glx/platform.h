@@ -1,6 +1,6 @@
 #pragma once
 
-#ifdef __linux__
+#ifdef PAIMON_PLATFORM_X11
 
 #include <X11/X.h>
 #include <X11/Xlib.h>
@@ -24,4 +24,4 @@ private:
 
 } // namespace paimon
 
-#endif // __linux__
+#endif // PAIMON_PLATFORM_X11

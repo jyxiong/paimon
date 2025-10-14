@@ -1,6 +1,6 @@
 #pragma once
 
-#ifdef __linux__
+#ifdef PAIMON_PLATFORM_X11
 
 #include "paimon/platform/context.h"
 
@@ -11,16 +11,18 @@
 #include "paimon/platform/context_format.h"
 
 namespace paimon {
-class GlxContext : public Context {
+class NativeContext : public Context {
 public:
-  GlxContext();
-  ~GlxContext() override;
+  NativeContext();
+  ~NativeContext() override;
 
   bool destroy() override;
 
   long long nativeHandle() const override;
 
   bool valid() const override;
+
+  bool loadGLFunctions() const override;
 
   bool makeCurrent() const override;
 
@@ -42,4 +44,4 @@ private:
 };
 } // namespace paimon
 
-#endif // __linux__
+#endif // PAIMON_PLATFORM_X11

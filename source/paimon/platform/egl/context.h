@@ -1,6 +1,6 @@
 #pragma once
 
-#if defined PAIMON_OS_UNIX
+#if defined(PAIMON_PLATFORM_EGL)
 
 #include "paimon/platform/context.h"
 
@@ -12,14 +12,15 @@
 
 namespace paimon {
 
-class EglContext : public Context {
+class NativeContext : public Context {
 public:
-  EglContext();
-  ~EglContext() override;
+  NativeContext();
+  ~NativeContext() override;
 
   bool destroy() override;
   long long nativeHandle() const override;
   bool valid() const override;
+  bool loadGLFunctions() const override;
   bool makeCurrent() const override;
   bool doneCurrent() const override;
 

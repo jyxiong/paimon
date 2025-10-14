@@ -1,4 +1,4 @@
-#ifdef _WIN32
+#ifdef PAIMON_PLATFORM_WIN32
 
 #include "paimon/platform/wgl/platform.h"
 

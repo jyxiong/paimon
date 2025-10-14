@@ -1,5 +1,7 @@
-#include "paimon/platform/egl/platform.h"
 
+#ifdef PAIMON_PLATFORM_EGL
+
+#include "paimon/platform/egl/platform.h"
 #include "paimon/core/log/log_system.h"
 
 using namespace paimon;
@@ -52,3 +54,5 @@ EglPlatform::EglPlatform() : m_display(nullptr) {
 EglPlatform::~EglPlatform() { eglTerminate(m_display); }
 
 EGLDisplay EglPlatform::display() const { return m_display; }
+
+#endif // PAIMON_PLATFORM_EGL
