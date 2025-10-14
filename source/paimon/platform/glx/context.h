@@ -8,8 +8,6 @@
 
 #include "glad/glx.h"
 
-#include "paimon/platform/context_format.h"
-
 namespace paimon {
 class NativeContext : public Context {
 public:

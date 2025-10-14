@@ -1,7 +1,6 @@
 #pragma once
 
 #include "paimon/platform/context.h"
-#include "paimon/platform/context_format.h"
 
 #include "GLFW/glfw3.h"
 

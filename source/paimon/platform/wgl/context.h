@@ -3,7 +3,6 @@
 #ifdef PAIMON_PLATFORM_WIN32
 
 #include "paimon/platform/context.h"
-#include "paimon/platform/context_format.h"
 
 #include <windows.h>
 #include <memory>

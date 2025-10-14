@@ -4,9 +4,16 @@
 #include <thread>
 #include <memory>
 
-#include "paimon/platform/context_format.h"
-
 namespace paimon {
+
+enum class ContextProfile : unsigned int { NONE, Core, Compatibility };
+
+struct ContextFormat {
+  unsigned int versionMajor = 0;
+  unsigned int versionMinor = 0;
+  ContextProfile profile = ContextProfile::NONE;
+  bool debug = false;
+};
 
 class Context {
 public:
