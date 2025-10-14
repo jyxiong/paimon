@@ -2,8 +2,6 @@
 
 #include <cassert>
 
-#include "glad/gl.h"
-
 #include "paimon/core/log/log_system.h"
 
 #if defined(PAIMON_PLATFORM_WIN32)
@@ -63,15 +61,6 @@ void Context::init() {
     if (!loadGLFunctions()) {
       LOG_ERROR("Failed to load OpenGL functions");
     }
-
-    auto glVersion = glGetString(GL_VERSION);
-    auto glRenderer = glGetString(GL_RENDERER);
-    auto glVendor = glGetString(GL_VENDOR);
-    LOG_INFO("Loaded OpenGL functions");
-    LOG_INFO("  OpenGL Version: {}", reinterpret_cast<const char *>(glVersion));
-    LOG_INFO("  OpenGL Renderer: {}",
-             reinterpret_cast<const char *>(glRenderer));
-    LOG_INFO("  OpenGL Vendor: {}", reinterpret_cast<const char *>(glVendor));
   });
 
   doneCurrent();
