@@ -1,10 +1,10 @@
-#ifdef _WIN32
+#ifdef PAIMON_PLATFORM_WIN32
 
-#include "paimon/platform/wgl/platform.h"
+#include "paimon/platform/wgl_context/platform.h"
 
 #include "glad/wgl.h"
 
-#include "paimon/core/base/macro.h"
+#include "paimon/core/log/log_system.h"
 
 using namespace paimon;
 

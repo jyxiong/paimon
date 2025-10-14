@@ -1,7 +1,7 @@
 #pragma once
 
 
-#ifdef _WIN32
+#ifdef PAIMON_PLATFORM_WIN32
 #include <windows.h>
 
 namespace paimon {
@@ -32,4 +32,4 @@ private:
 
 } // namespace paimon
 
-#endif // _WIN32
+#endif // PAIMON_PLATFORM_WIN32

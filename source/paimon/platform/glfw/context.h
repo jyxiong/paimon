@@ -1,22 +1,23 @@
 #pragma once
 
 #include "paimon/platform/context.h"
-#include "paimon/platform/context_format.h"
 
 #include "GLFW/glfw3.h"
 
 namespace paimon {
 
-class ContextImpl : public Context {
+class GlfwContext : public Context {
 public:
-  ContextImpl();
-  ~ContextImpl();
+  GlfwContext();
+  ~GlfwContext();
 
   bool destroy() override;
 
   long long nativeHandle() const override;
 
   bool valid() const override;
+
+  bool loadGLFunctions() const override;
 
   bool makeCurrent() const override;
 

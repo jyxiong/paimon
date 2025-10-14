@@ -1,41 +1,49 @@
 #pragma once
 
-#ifdef __linux__
+#ifdef PAIMON_PLATFORM_WIN32
 
 #include "paimon/platform/context.h"
 
+#include <windows.h>
 #include <memory>
-
-#include "glad/egl.h"
-
-#include "paimon/platform/context_format.h"
 
 namespace paimon {
 
-class EglContext : public Context {
+class NativeContext : public Context {
 public:
-  EglContext();
-  ~EglContext() override;
+  NativeContext();
+  ~NativeContext();
 
   bool destroy() override;
+
   long long nativeHandle() const override;
+
   bool valid() const override;
+
+  bool loadGLFunctions() const override;
+
   bool makeCurrent() const override;
+
   bool doneCurrent() const override;
 
   static std::unique_ptr<Context> getCurrent();
+
   static std::unique_ptr<Context> create(const Context& shared, const ContextFormat &format);
+
   static std::unique_ptr<Context> create(const ContextFormat &format);
 
 private:
-  void createContext(EGLContext shared, const ContextFormat &format);
+  void createWindow();
+  void setPixelFormat() const;
+  void createContext(HGLRC shared, const ContextFormat &format);
 
 private:
-  EGLSurface m_surface;
-  EGLContext m_context;
+  HWND m_hwnd = nullptr;
+  HDC m_hdc = nullptr;
+  HGLRC m_context;
   bool m_owning;
 };
 
 } // namespace paimon
 
-#endif // __linux__
+#endif // _WIN32

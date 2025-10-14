@@ -1,11 +1,13 @@
-#ifdef __linux__
+#ifdef PAIMON_PLATFORM_EGL
 
-#include "paimon/platform/egl/context.h"
+#include "paimon/platform/egl_context/context.h"
 
 #include <map>
 
-#include "paimon/core/base/macro.h"
-#include "paimon/platform/egl/platform.h"
+#include "glad/gl.h"
+
+#include "paimon/core/log/log_system.h"
+#include "paimon/platform/egl_context/platform.h"
 
 using namespace paimon;
 
@@ -93,12 +95,12 @@ EGLint checkEglError(const std::string &msg) {
 
 } // namespace
 
-EglContext::EglContext()
+NativeContext::NativeContext()
     : m_surface(EGL_NO_SURFACE), m_context(EGL_NO_CONTEXT), m_owning(true) {}
 
-EglContext::~EglContext() { destroy(); }
+NativeContext::~NativeContext() { destroy(); }
 
-bool EglContext::destroy() {
+bool NativeContext::destroy() {
   if (m_owning) {
     if (m_context != EGL_NO_CONTEXT) {
       if (!eglDestroyContext(EglPlatform::instance()->display(), m_context)) {
@@ -112,13 +114,17 @@ bool EglContext::destroy() {
   return true;
 }
 
-long long EglContext::nativeHandle() const {
+long long NativeContext::nativeHandle() const {
   return reinterpret_cast<long long>(m_context);
 }
 
-bool EglContext::valid() const { return m_context != EGL_NO_CONTEXT; }
+bool NativeContext::valid() const { return m_context != EGL_NO_CONTEXT; }
 
-bool EglContext::makeCurrent() const {
+bool NativeContext::loadGLFunctions() const {
+  return gladLoaderLoadGL() != 0;
+}
+
+bool NativeContext::makeCurrent() const {
   auto success = eglMakeCurrent(EglPlatform::instance()->display(), m_surface,
                                 m_surface, m_context);
   if (!success) {
@@ -127,7 +133,7 @@ bool EglContext::makeCurrent() const {
   return success;
 }
 
-bool EglContext::doneCurrent() const {
+bool NativeContext::doneCurrent() const {
   auto success = eglMakeCurrent(EglPlatform::instance()->display(),
                                 EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 
@@ -137,8 +143,8 @@ bool EglContext::doneCurrent() const {
   return success;
 }
 
-std::unique_ptr<Context> EglContext::getCurrent() {
-  auto context = std::make_unique<EglContext>();
+std::unique_ptr<Context> NativeContext::getCurrent() {
+  auto context = std::make_unique<NativeContext>();
 
   context->m_owning = false;
   context->m_context = eglGetCurrentContext();
@@ -154,22 +160,22 @@ std::unique_ptr<Context> EglContext::getCurrent() {
   return context;
 }
 
-std::unique_ptr<Context> EglContext::create(const Context &shared,
+std::unique_ptr<Context> NativeContext::create(const Context &shared,
                                             const ContextFormat &format) {
-  auto context = std::make_unique<EglContext>();
+  auto context = std::make_unique<NativeContext>();
 
   context->createContext(reinterpret_cast<EGLContext>(shared.nativeHandle()),
                          format);
   return context;
 }
 
-std::unique_ptr<Context> EglContext::create(const ContextFormat &format) {
-  auto context = std::make_unique<EglContext>();
+std::unique_ptr<Context> NativeContext::create(const ContextFormat &format) {
+  auto context = std::make_unique<NativeContext>();
   context->createContext(EGL_NO_CONTEXT, format);
   return context;
 }
 
-void EglContext::createContext(EGLContext shared, const ContextFormat &format) {
+void NativeContext::createContext(EGLContext shared, const ContextFormat &format) {
   auto display = EglPlatform::instance()->display();
 
   // IMPORTANT: eglBindAPI is thread-local and must be called in each thread before creating an OpenGL context.
@@ -198,4 +204,4 @@ void EglContext::createContext(EGLContext shared, const ContextFormat &format) {
   }
 }
 
-#endif // __linux__
+#endif // PAIMON_PLATFORM_EGL

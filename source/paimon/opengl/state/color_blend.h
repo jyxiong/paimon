@@ -11,14 +11,14 @@ struct BlendFactor {
   GLenum srcAlphaFactor = GL_ONE;
   GLenum dstAlphaFactor = GL_ZERO;
 
-  bool operator==(const BlendFactor &other) const;
+  bool operator==(const BlendFactor &other) const = default;
 };
 
 struct BlendEquation {
   GLenum rgbBlendOp = GL_FUNC_ADD;
   GLenum alphaBlendOp = GL_FUNC_ADD;
 
-  bool operator==(const BlendEquation &other) const;
+  bool operator==(const BlendEquation &other) const = default;
 };
 
 struct ColorWriteMask {

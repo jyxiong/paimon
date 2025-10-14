@@ -2,8 +2,18 @@
 
 #include <mutex>
 #include <thread>
+#include <memory>
 
 namespace paimon {
+
+enum class ContextProfile : unsigned int { NONE, Core, Compatibility };
+
+struct ContextFormat {
+  unsigned int versionMajor = 0;
+  unsigned int versionMinor = 0;
+  ContextProfile profile = ContextProfile::NONE;
+  bool debug = false;
+};
 
 class Context {
 public:
@@ -16,20 +26,27 @@ public:
 
   virtual bool valid() const = 0;
 
+  virtual bool loadGLFunctions() const = 0;
+
   virtual bool makeCurrent() const = 0;
 
   virtual bool doneCurrent() const = 0;
 
-  void init();
+  static std::unique_ptr<Context> getCurrent();
+
+  static std::unique_ptr<Context> create(const ContextFormat &format = {});
+
+  static std::unique_ptr<Context> create(const Context& shared, const ContextFormat &format = {});
 
 private:
-  static void loadGLFunctions();
+
+  void init();
 
 protected:
   std::thread::id m_threadId;
 
 private:
-  static std::once_flag s_glad_flag;
+  static std::once_flag s_gladLoadFlag;
 };
 
 } // namespace paimon

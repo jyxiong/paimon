@@ -1,10 +1,10 @@
-#ifdef __linux__
+#ifdef PAIMON_PLATFORM_X11
 
-#include "paimon/platform/glx/platform.h"
+#include "paimon/platform/glx_context/platform.h"
 
 #include "glad/glx.h"
 
-#include "paimon/core/base/macro.h"
+#include "paimon/core/log/log_system.h"
 
 using namespace paimon;
 
@@ -34,4 +34,4 @@ GlxPlatform::~GlxPlatform() {
   }
 }
 
-#endif // __linux__
+#endif // PAIMON_PLATFORM_X11

@@ -1,14 +1,14 @@
-#ifdef _WIN32
+#ifdef PAIMON_PLATFORM_WIN32
 
-#include "paimon/platform/wgl/context.h"
+#include "paimon/platform/wgl_context/context.h"
 
 #include <map>
 
 #include "glad/wgl.h"
+#include "glad/gl.h"
 
-#include "paimon/core/base/macro.h"
-#include "paimon/platform/context_format.h"
-#include "paimon/platform/wgl/platform.h"
+#include "paimon/core/log/log_system.h"
+#include "paimon/platform/wgl_context/platform.h"
 
 using namespace paimon;
 
@@ -47,11 +47,11 @@ std::vector<int> createContextAttributeList(const ContextFormat &format) {
   return std::move(list);
 }
 
-WGLContext::WGLContext() : m_owning(true) {}
+NativeContext::NativeContext() : m_owning(true) {}
 
-WGLContext::~WGLContext() { destroy(); }
+NativeContext::~NativeContext() { destroy(); }
 
-bool WGLContext::destroy() {
+bool NativeContext::destroy() {
   if (m_owning && m_context != nullptr) {
     auto currentContext = wglGetCurrentContext();
     if (currentContext == m_context) {
@@ -68,15 +68,19 @@ bool WGLContext::destroy() {
   return true;
 }
 
-long long WGLContext::nativeHandle() const {
+long long NativeContext::nativeHandle() const {
   return reinterpret_cast<long long>(m_context);
 }
 
-bool WGLContext::valid() const {
+bool NativeContext::valid() const {
   return m_context != nullptr && m_hdc != nullptr;
 }
 
-bool WGLContext::makeCurrent() const {
+bool NativeContext::loadGLFunctions() const {
+  return gladLoaderLoadGL() != 0;
+}
+
+bool NativeContext::makeCurrent() const {
   auto success = wglMakeCurrent(m_hdc, m_context);
   if (!success) {
     LOG_ERROR("wglMakeCurrent failed");
@@ -84,7 +88,7 @@ bool WGLContext::makeCurrent() const {
   return success;
 }
 
-bool WGLContext::doneCurrent() const {
+bool NativeContext::doneCurrent() const {
   auto success = wglMakeCurrent(nullptr, nullptr);
   if (!success) {
     LOG_ERROR("wglMakeCurrent(nullptr, nullptr) failed");
@@ -92,8 +96,8 @@ bool WGLContext::doneCurrent() const {
   return success;
 }
 
-std::unique_ptr<Context> WGLContext::getCurrent() {
-  auto context = std::make_unique<WGLContext>();
+std::unique_ptr<Context> NativeContext::getCurrent() {
+  auto context = std::make_unique<NativeContext>();
 
   context->m_owning = false;
 
@@ -114,14 +118,14 @@ std::unique_ptr<Context> WGLContext::getCurrent() {
   return context;
 }
 
-std::unique_ptr<Context> WGLContext::create(const Context &shared,
+std::unique_ptr<Context> NativeContext::create(const Context &shared,
                                             const ContextFormat &format) {
   if (!shared.valid()) {
-    LOG_ERROR("Shared context is not a WGLContext");
+    LOG_ERROR("Shared context is not a NativeContext");
     return nullptr;
   }
 
-  auto context = std::make_unique<WGLContext>();
+  auto context = std::make_unique<NativeContext>();
 
   context->createWindow();
   context->setPixelFormat();
@@ -131,8 +135,8 @@ std::unique_ptr<Context> WGLContext::create(const Context &shared,
   return context;
 }
 
-std::unique_ptr<Context> WGLContext::create(const ContextFormat &format) {
-  auto context = std::make_unique<WGLContext>();
+std::unique_ptr<Context> NativeContext::create(const ContextFormat &format) {
+  auto context = std::make_unique<NativeContext>();
 
   context->createWindow();
   context->setPixelFormat();
@@ -141,7 +145,7 @@ std::unique_ptr<Context> WGLContext::create(const ContextFormat &format) {
   return context;
 }
 
-void WGLContext::createWindow() {
+void NativeContext::createWindow() {
   const auto &registrar = WGLPlatform::instance();
 
   m_hwnd = CreateWindowEx(0, reinterpret_cast<LPCTSTR>(registrar.getId()),
@@ -161,7 +165,7 @@ void WGLContext::createWindow() {
   }
 }
 
-void WGLContext::setPixelFormat() const {
+void NativeContext::setPixelFormat() const {
 
   const int attributes[] = {WGL_DRAW_TO_WINDOW_ARB,
                             GL_TRUE,
@@ -195,7 +199,7 @@ void WGLContext::setPixelFormat() const {
   }
 }
 
-void WGLContext::createContext(HGLRC shared, const ContextFormat &format) {
+void NativeContext::createContext(HGLRC shared, const ContextFormat &format) {
   const auto contextAttributes = createContextAttributeList(format);
 
   m_context =

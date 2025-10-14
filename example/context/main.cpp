@@ -1,14 +1,12 @@
 #include "glad/gl.h"
 
-#include <iostream>
-
-#include "paimon/core/base/macro.h"
-#include "paimon/platform/context_factory.h"
+#include "paimon/core/log/log_system.h"
+#include "paimon/platform/context.h"
 
 using namespace paimon;
 
 void workerThread1(Context *shared) {
-  auto context = ContextFactory::createContext(*shared);
+  auto context = Context::create(*shared);
   if (!context->valid()) {
     LOG_ERROR("Worker 1: failed to create shared context");
     return;
@@ -36,7 +34,7 @@ void workerThread2(Context *context) {
 int main() {
   LogSystem::init();
 
-  auto context = ContextFactory::createContext();
+  auto context = Context::create();
   if (!context->valid()) {
     LOG_ERROR("Failed to create main context");
     return EXIT_FAILURE;
@@ -59,7 +57,7 @@ int main() {
   //
   // Worker 2 receives a pointer to a shared context created on the main thread
   //
-  auto worker2Context = ContextFactory::createContext(*context);
+  auto worker2Context = Context::create(*context);
 
   if (!worker2Context->valid()) {
     LOG_ERROR("Worker 2: failed to create shared context");

@@ -1,13 +1,15 @@
-#ifdef __linux__
+#ifdef PAIMON_PLATFORM_X11
 
-#include "paimon/platform/glx/context.h"
+#include "paimon/platform/glx_context/context.h"
 
 #include <map>
 
 #include <X11/Xlib.h>
 
-#include "paimon/core/base/macro.h"
-#include "paimon/platform/glx/platform.h"
+#include "glad/gl.h"
+
+#include "paimon/core/log/log_system.h"
+#include "paimon/platform/glx_context/platform.h"
 
 using namespace paimon;
 
@@ -49,11 +51,11 @@ std::vector<int> createContextAttributeList(const ContextFormat &format) {
 }
 } // namespace
 
-GlxContext::GlxContext() : m_owning(true) {}
+NativeContext::NativeContext() : m_owning(true) {}
 
-GlxContext::~GlxContext() { destroy(); }
+NativeContext::~NativeContext() { destroy(); }
 
-bool GlxContext::destroy() {
+bool NativeContext::destroy() {
   if (m_owning) {
     auto *display = GlxPlatform::instance()->display();
 
@@ -76,15 +78,19 @@ bool GlxContext::destroy() {
   return true;
 }
 
-long long GlxContext::nativeHandle() const {
+long long NativeContext::nativeHandle() const {
   return reinterpret_cast<long long>(m_context);
 }
 
-bool GlxContext::valid() const {
+bool NativeContext::valid() const {
   return m_context != nullptr && m_drawable != 0;
 }
 
-bool GlxContext::makeCurrent() const {
+bool NativeContext::loadGLFunctions() const {
+  return gladLoaderLoadGL() != 0;
+}
+
+bool NativeContext::makeCurrent() const {
   auto *display = GlxPlatform::instance()->display();
   const auto success =
       glXMakeContextCurrent(display, m_drawable, m_drawable, m_context);
@@ -94,7 +100,7 @@ bool GlxContext::makeCurrent() const {
   return success;
 }
 
-bool GlxContext::doneCurrent() const {
+bool NativeContext::doneCurrent() const {
   auto *display = GlxPlatform::instance()->display();
   const auto success = glXMakeContextCurrent(display, None, None, nullptr);
   if (!success) {
@@ -103,8 +109,8 @@ bool GlxContext::doneCurrent() const {
   return success;
 }
 
-std::unique_ptr<Context> GlxContext::getCurrent() {
-  auto context = std::make_unique<GlxContext>();
+std::unique_ptr<Context> NativeContext::getCurrent() {
+  auto context = std::make_unique<NativeContext>();
 
   context->m_owning = false;
 
@@ -123,21 +129,21 @@ std::unique_ptr<Context> GlxContext::getCurrent() {
   return context;
 }
 
-std::unique_ptr<Context> GlxContext::create(const Context &shared,
+std::unique_ptr<Context> NativeContext::create(const Context &shared,
                                             const ContextFormat &format) {
-  auto context = std::make_unique<GlxContext>();
+  auto context = std::make_unique<NativeContext>();
   context->createContext(reinterpret_cast<GLXContext>(shared.nativeHandle()),
                          format);
   return context;
 }
 
-std::unique_ptr<Context> GlxContext::create(const ContextFormat &format) {
-  auto context = std::make_unique<GlxContext>();
+std::unique_ptr<Context> NativeContext::create(const ContextFormat &format) {
+  auto context = std::make_unique<NativeContext>();
   context->createContext(nullptr, format);
   return context;
 }
 
-void GlxContext::createContext(GLXContext shared, const ContextFormat &format) {
+void NativeContext::createContext(GLXContext shared, const ContextFormat &format) {
   Display *display = GlxPlatform::instance()->display();
 
   int fbCount;
@@ -156,4 +162,4 @@ void GlxContext::createContext(GLXContext shared, const ContextFormat &format) {
   m_drawable = glXCreatePbuffer(display, fbConfig[0], pBufferAttributes);
 }
 
-#endif // __linux__
+#endif // PAIMON_PLATFORM_X11
