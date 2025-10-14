@@ -6,14 +6,12 @@
 
 #include "paimon/core/log/log_system.h"
 
-#include "paimon/platform/glfw/context.h"
-
 #if defined(PAIMON_PLATFORM_WIN32)
-#include "paimon/platform/wgl/context.h"
+#include "paimon/platform/wgl_context/context.h"
 #elif defined(PAIMON_PLATFORM_X11)
-#include "paimon/platform/glx/context.h"
+#include "paimon/platform/glx_context/context.h"
 #elif defined(PAIMON_PLATFORM_EGL)
-#include "paimon/platform/egl/context.h"
+#include "paimon/platform/egl_context/context.h"
 #endif
 
 using namespace paimon;

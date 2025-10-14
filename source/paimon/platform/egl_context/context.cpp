@@ -1,13 +1,13 @@
 #ifdef PAIMON_PLATFORM_EGL
 
-#include "paimon/platform/egl/context.h"
+#include "paimon/platform/egl_context/context.h"
 
 #include <map>
 
 #include "glad/gl.h"
 
 #include "paimon/core/log/log_system.h"
-#include "paimon/platform/egl/platform.h"
+#include "paimon/platform/egl_context/platform.h"
 
 using namespace paimon;
 

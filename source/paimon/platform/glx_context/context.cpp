@@ -1,6 +1,6 @@
 #ifdef PAIMON_PLATFORM_X11
 
-#include "paimon/platform/glx/context.h"
+#include "paimon/platform/glx_context/context.h"
 
 #include <map>
 
@@ -9,7 +9,7 @@
 #include "glad/gl.h"
 
 #include "paimon/core/log/log_system.h"
-#include "paimon/platform/glx/platform.h"
+#include "paimon/platform/glx_context/platform.h"
 
 using namespace paimon;
 

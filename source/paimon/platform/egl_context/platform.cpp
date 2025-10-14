@@ -1,7 +1,7 @@
 
 #ifdef PAIMON_PLATFORM_EGL
 
-#include "paimon/platform/egl/platform.h"
+#include "paimon/platform/egl_context/platform.h"
 #include "paimon/core/log/log_system.h"
 
 using namespace paimon;

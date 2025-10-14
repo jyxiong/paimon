@@ -1,6 +1,6 @@
 #ifdef PAIMON_PLATFORM_X11
 
-#include "paimon/platform/glx/platform.h"
+#include "paimon/platform/glx_context/platform.h"
 
 #include "glad/glx.h"
 

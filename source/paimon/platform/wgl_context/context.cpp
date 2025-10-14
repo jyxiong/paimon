@@ -1,6 +1,6 @@
 #ifdef PAIMON_PLATFORM_WIN32
 
-#include "paimon/platform/wgl/context.h"
+#include "paimon/platform/wgl_context/context.h"
 
 #include <map>
 
@@ -8,7 +8,7 @@
 #include "glad/gl.h"
 
 #include "paimon/core/log/log_system.h"
-#include "paimon/platform/wgl/platform.h"
+#include "paimon/platform/wgl_context/platform.h"
 
 using namespace paimon;
 
