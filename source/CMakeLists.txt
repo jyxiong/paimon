@@ -29,6 +29,6 @@ endif()
 
 # target_compile_options(${TARGET_NAME})
 
-target_link_libraries(${TARGET_NAME} PUBLIC glad glfw glm spdlog ${OPENGL_LIBRARIES} ${X11_LIBRARIES})
+target_link_libraries(${TARGET_NAME} PUBLIC glad glfw glm spdlog stb ${OPENGL_LIBRARIES} ${X11_LIBRARIES})
 
 # target_link_options(${TARGET_NAME})
