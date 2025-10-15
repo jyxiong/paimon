@@ -138,7 +138,7 @@ int main() {
   texture.set_storage_2d(1, GL_RGBA8, 100, 100);
 
   Framebuffer fbo;
-  fbo.setTexture(GL_COLOR_ATTACHMENT0, texture.get_name(), 0);
+  fbo.attachTexture(GL_COLOR_ATTACHMENT0, &texture, 0);
   if (!fbo.isComplete(GL_DRAW_FRAMEBUFFER)) {
     LOG_ERROR("Framebuffer is not complete!");
   }
