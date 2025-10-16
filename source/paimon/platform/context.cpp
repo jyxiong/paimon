@@ -2,7 +2,7 @@
 
 #include <cassert>
 
-#include "paimon/core/log/log_system.h"
+#include "paimon/core/log_system.h"
 
 #if defined(PAIMON_PLATFORM_WIN32)
 #include "paimon/platform/wgl_context/context.h"
