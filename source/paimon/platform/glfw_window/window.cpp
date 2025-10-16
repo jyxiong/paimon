@@ -2,7 +2,8 @@
 
 #include "GLFW/glfw3.h"
 #include "glad/gl.h"
-#include "paimon/core/log/log_system.h"
+
+#include "paimon/core/log_system.h"
 
 using namespace paimon;
 
