@@ -8,7 +8,7 @@
 
 #include "glad/gl.h"
 
-#include "paimon/core/log/log_system.h"
+#include "paimon/core/log_system.h"
 #include "paimon/platform/glx_context/platform.h"
 
 using namespace paimon;
