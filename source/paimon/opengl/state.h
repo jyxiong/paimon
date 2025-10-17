@@ -35,14 +35,6 @@ private:
   DepthState m_cache;
 };
 
-class StateTracker {
-public:
-  StateTracker() = default;
-  ~StateTracker() = default;
-
-private:
-};
-
 class InputAssemblyTracker {
 public:
   InputAssemblyTracker() = default;
@@ -127,7 +119,8 @@ public:
   MultisampleTracker multisample;
   RasterizationTracker rasterization;
   ScissorTracker scissor;
+  StencilTracker stencil;
   TessellationTracker tessellation;
   ViewportTracker viewport;
 };
-} // namespace paimon 
+} // namespace paimon

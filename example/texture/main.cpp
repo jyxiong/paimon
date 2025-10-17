@@ -1,15 +1,15 @@
+
+#include <glm/glm.hpp>
+
 #include "paimon/core/log_system.h"
 
-#include "glad/gl.h"
-#include "GLFW/glfw3.h"
-#include "glm/glm.hpp"
-
-#include "paimon/opengl/program.h"
-#include "paimon/opengl/vertex_array.h"
-#include "paimon/opengl/shader.h"
 #include "paimon/opengl/buffer.h"
-#include "paimon/opengl/texture.h"
+#include "paimon/opengl/program.h"
 #include "paimon/opengl/sampler.h"
+#include "paimon/opengl/shader.h"
+#include "paimon/opengl/texture.h"
+#include "paimon/opengl/vertex_array.h"
+#include "paimon/platform/window.h"
 
 using namespace paimon;
 
@@ -49,60 +49,24 @@ std::string fragment_source = R"(
 glm::ivec2 g_size = {};
 } // namespace
 
-void error(int errnum, const char *errmsg) {
-  LOG_ERROR("GLFW error {}: {}", errnum, errmsg);
-}
-
-void framebuffer_size_callback(GLFWwindow * /*window*/, int width, int height) {
-  g_size = glm::ivec2{width, height};
-}
-
-void key_callback(GLFWwindow *window, int key, int /*scancode*/, int action,
-                  int /*modes*/) {
-  if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE)
-    glfwSetWindowShouldClose(window, true);
-}
-
-void glfwError(int error_code, const char *description) {
-  LOG_INFO("GLFW error {}: {}", error_code, description);
-}
-
 int main() {
   LogSystem::init();
 
-  if (!glfwInit()) {
-    LOG_ERROR("GLFW initialization failed. Terminate execution.");
-
-    return 1;
-  }
-
-  glfwSetErrorCallback(error);
-
-  glfwDefaultWindowHints();
-  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-
-  // Create a context and, if valid, make it current
-  GLFWwindow *window =
-      glfwCreateWindow(640, 480, "paimon Texture", nullptr, nullptr);
-  if (window == nullptr) {
-    LOG_ERROR("GLFW window creation failed. Terminate execution.");
-
-    glfwTerminate();
-    return -1;
-  }
-  glfwSetKeyCallback(window, key_callback);
-  glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-
-  glfwMakeContextCurrent(window);
-
-  int version = gladLoadGL(glfwGetProcAddress);
-  if (version == 0) {
-    LOG_ERROR("Failed to initialize OpenGL context");
-
-    return -1;
-  }
+  auto window = Window::create(WindowConfig{
+      .title = "globjects Texture",
+      .format =
+          ContextFormat{
+              .majorVersion = 4,
+              .minorVersion = 6,
+              .profile = ContextProfile::Core,
+              .debug = false,
+          },
+      .width = 640,
+      .height = 480,
+      .resizable = false,
+      .visible = true,
+      .vsync = false,
+  });
 
   Shader vertex_shader(GL_VERTEX_SHADER);
   Shader fragment_shader(GL_FRAGMENT_SHADER);
@@ -150,18 +114,20 @@ int main() {
   pos_vbo.bind(GL_ARRAY_BUFFER);
 
   Buffer tex_vbo;
-  tex_vbo.set_storage(sizeof(glm::vec2) * texcoords.size(), texcoords
-                      .data(), GL_DYNAMIC_STORAGE_BIT);
+  tex_vbo.set_storage(sizeof(glm::vec2) * texcoords.size(), texcoords.data(),
+                      GL_DYNAMIC_STORAGE_BIT);
   tex_vbo.bind(GL_ARRAY_BUFFER);
 
   Buffer ebo;
-  ebo.set_storage(sizeof(unsigned int) * indices.size(), indices.data(), GL_DYNAMIC_STORAGE_BIT);
+  ebo.set_storage(sizeof(unsigned int) * indices.size(), indices.data(),
+                  GL_DYNAMIC_STORAGE_BIT);
   ebo.bind(GL_ELEMENT_ARRAY_BUFFER);
 
   VertexArray vao;
   vao.bind();
   auto &binding_pos = vao.get_binding(0);
-  binding_pos.bind_buffer(pos_vbo, 0, sizeof(glm::vec3)); // stride = sizeof(glm::vec3), offset = 0
+  binding_pos.bind_buffer(
+      pos_vbo, 0, sizeof(glm::vec3)); // stride = sizeof(glm::vec3), offset = 0
   auto &binding_tex = vao.get_binding(1);
   binding_tex.bind_buffer(tex_vbo, 0, sizeof(glm::vec2));
 
@@ -188,7 +154,7 @@ int main() {
   Texture texture(GL_TEXTURE_2D);
   texture.set_storage_2d(1, GL_RGBA8, 10, 10);
   texture.set_sub_image_2d(0, 0, 0, 10, 10, GL_RGBA, GL_UNSIGNED_BYTE,
-                            image_data.data());
+                           image_data.data());
 
   Sampler sampler;
   sampler.set(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -196,10 +162,10 @@ int main() {
   sampler.set(GL_TEXTURE_WRAP_S, GL_REPEAT);
   sampler.set(GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-  while (!glfwWindowShouldClose(window)) {
+  while (!window->shouldClose()) {
     // Check if any events have been activated (key pressed, mouse moved etc.)
     // and call corresponding response functions
-    glfwPollEvents();
+    window->pollEvents();
 
     // Render
     // Clear the colorbuffer
@@ -219,11 +185,11 @@ int main() {
                    GL_UNSIGNED_INT, 0);
 
     // Swap the screen buffers
-    glfwSwapBuffers(window);
+    window->swapBuffers();
   }
 
   // Terminates GLFW, clearing any resources allocated by GLFW.
-  glfwTerminate();
+  window->destroy();
 
   return 0;
 }

@@ -1,17 +1,16 @@
+#include <cmath>
 #include <string>
 #include <vector>
-#include <cmath>
 
-#include "GLFW/glfw3.h"
-#include "glad/gl.h"
-#include "glm/glm.hpp"
-#include "glm/gtc/matrix_transform.hpp"
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 #include "paimon/core/log_system.h"
 #include "paimon/opengl/buffer.h"
 #include "paimon/opengl/program_pipeline.h"
 #include "paimon/opengl/shader_program.h"
 #include "paimon/opengl/vertex_array.h"
+#include "paimon/platform/window.h"
 
 using namespace paimon;
 
@@ -179,65 +178,20 @@ void main() {
 
 glm::ivec2 g_size = {};
 
-void error(int errnum, const char *errmsg) {
-  LOG_ERROR("GLFW error {}: {}", errnum, errmsg);
-}
-
-void framebuffer_size_callback(GLFWwindow * /*window*/, int width, int height) {
-  g_size = glm::ivec2{width, height};
-}
-
-void key_callback(GLFWwindow *window, int key, int /*scancode*/, int action,
-                  int /*modes*/) {
-  if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE)
-    glfwSetWindowShouldClose(window, true);
-}
-
-void glfwError(int error_code, const char *description) {
-  LOG_INFO("GLFW error {}: {}", error_code, description);
-}
-
 int main() {
   LogSystem::init();
 
-  if (!glfwInit()) {
-    LOG_ERROR("GLFW initialization failed. Terminate execution.");
-
-    return 1;
-  }
-
-  glfwSetErrorCallback(error);
-
-  glfwDefaultWindowHints();
-  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-
-  // Create a context and, if valid, make it current
-  GLFWwindow *window =
-      glfwCreateWindow(640, 480, "globjects Texture", nullptr, nullptr);
-  if (window == nullptr) {
-    LOG_ERROR("GLFW window creation failed. Terminate execution.");
-
-    glfwTerminate();
-    return -1;
-  }
-  glfwSetKeyCallback(window, key_callback);
-  glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-
-  // initialize framebuffer size immediately to avoid a 0-sized viewport
-  int fbw = 0, fbh = 0;
-  glfwGetFramebufferSize(window, &fbw, &fbh);
-  g_size = glm::ivec2{fbw, fbh};
-
-  glfwMakeContextCurrent(window);
-
-  int version = gladLoadGL(glfwGetProcAddress);
-  if (version == 0) {
-    LOG_ERROR("Failed to initialize OpenGL context");
-
-    return -1;
-  }
+  auto window = Window::create(WindowConfig{
+      .title = "Geometry Shader Example",
+      .format =
+          ContextFormat{
+              .majorVersion = 4,
+              .minorVersion = 6,
+              .profile = ContextProfile::Core,
+          },
+      .width = 800,
+      .height = 600,
+  });
 
   // enable depth test for correct 3D rasterization
   glEnable(GL_DEPTH_TEST);
@@ -251,11 +205,14 @@ int main() {
     LOG_ERROR("Failed to create shader programs");
     // print info logs to help debugging
     auto vlog = vertex_program.get_info_log();
-    if (!vlog.empty()) LOG_ERROR("Vertex program log:\n{}", vlog);
+    if (!vlog.empty())
+      LOG_ERROR("Vertex program log:\n{}", vlog);
     auto g_log = geometry_program.get_info_log();
-    if (!g_log.empty()) LOG_ERROR("Geometry program log:\n{}", g_log);
+    if (!g_log.empty())
+      LOG_ERROR("Geometry program log:\n{}", g_log);
     auto f_log = fragment_program.get_info_log();
-    if (!f_log.empty()) LOG_ERROR("Fragment program log:\n{}", f_log);
+    if (!f_log.empty())
+      LOG_ERROR("Fragment program log:\n{}", f_log);
     return EXIT_FAILURE;
   }
 
@@ -270,13 +227,17 @@ int main() {
     return EXIT_FAILURE;
   }
 
-  // Print program info logs (useful if shaders compiled but linked with warnings)
+  // Print program info logs (useful if shaders compiled but linked with
+  // warnings)
   auto vlog = vertex_program.get_info_log();
-  if (!vlog.empty()) LOG_INFO("Vertex program log:\n{}", vlog);
+  if (!vlog.empty())
+    LOG_INFO("Vertex program log:\n{}", vlog);
   auto glog = geometry_program.get_info_log();
-  if (!glog.empty()) LOG_INFO("Geometry program log:\n{}", glog);
+  if (!glog.empty())
+    LOG_INFO("Geometry program log:\n{}", glog);
   auto flog = fragment_program.get_info_log();
-  if (!flog.empty()) LOG_INFO("Fragment program log:\n{}", flog);
+  if (!flog.empty())
+    LOG_INFO("Fragment program log:\n{}", flog);
 
   // Validate pipeline
   if (!pipeline.validate()) {
@@ -336,7 +297,8 @@ int main() {
   GLint bound0 = 0, bound1 = 0;
   glGetIntegeri_v(GL_UNIFORM_BUFFER_BINDING, 0, &bound0);
   glGetIntegeri_v(GL_UNIFORM_BUFFER_BINDING, 1, &bound1);
-  LOG_INFO("UBO binding 0 -> buffer {}, binding 1 -> buffer {}", bound0, bound1);
+  LOG_INFO("UBO binding 0 -> buffer {}, binding 1 -> buffer {}", bound0,
+           bound1);
 
   // ------------------------------------------------------
 
@@ -411,34 +373,36 @@ int main() {
     return EXIT_FAILURE;
   }
 
-  while (!glfwWindowShouldClose(window)) {
+  while (!window->shouldClose()) {
     // Render here
     glViewport(0, 0, g_size.x, g_size.y);
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // If camera/projection can change, update per-frame UBO each frame
-  perFrameData.view = view;
+    perFrameData.view = view;
     float aspect = (g_size.y == 0) ? 1.0f : float(g_size.x) / float(g_size.y);
-    perFrameData.proj = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
-  perFrameData.camera_pos = glm::vec4(view_pos, 1.0f);
+    perFrameData.proj =
+        glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
+    perFrameData.camera_pos = glm::vec4(view_pos, 1.0f);
     perFrameUBOBuffer.set_sub_data(0, sizeof(PerFrameUBO), &perFrameData);
 
     pipeline.bind();
     vao.bind();
 
     // draw as lines so geometry shader receives 'lines' primitives
-  glDrawElements(GL_LINES, static_cast<GLsizei>(indices.size()),
-           GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_LINES, static_cast<GLsizei>(indices.size()),
+                   GL_UNSIGNED_INT, 0);
 
     // Swap front and back buffers
-    glfwSwapBuffers(window);
+    window->swapBuffers();
 
     // Poll for and process events
-    glfwPollEvents();
+    window->pollEvents();
   }
 
   // cleanup glfw
-  glfwTerminate();
+  window->destroy();
+
   return 0;
 }

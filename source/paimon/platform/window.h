@@ -7,14 +7,15 @@
 
 namespace paimon {
 struct WindowConfig {
-  std::string title;
+  std::string title = "Paimon Window";
   ContextFormat format;
-  uint32_t width, height;
-  bool resizable;
-  bool visible;
-  bool fullscreen;
-  bool vsync;
-  bool headless;
+  uint32_t width = 800;
+  uint32_t height = 600;
+  bool resizable = false;
+  bool visible = true;
+  bool fullscreen = false;
+  bool vsync = true;
+  bool headless = false;
 };
 
 class Window {

@@ -1,14 +1,11 @@
+#include <glm/glm.hpp>
+
 #include "paimon/core/log_system.h"
-
-#include "glad/gl.h"
-#include "GLFW/glfw3.h"
-#include "glm/glm.hpp"
-
 #include "paimon/opengl/framebuffer.h"
 #include "paimon/opengl/texture.h"
+#include "paimon/platform/window.h"
 
 #include "screen_quad.h"
-
 
 using namespace paimon;
 
@@ -37,60 +34,20 @@ std::string fragment_source = R"(
 glm::ivec2 g_size = {800, 600};
 } // namespace
 
-void error(int errnum, const char *errmsg) {
-  LOG_ERROR("GLFW error {}: {}", errnum, errmsg);
-}
-
-void framebuffer_size_callback(GLFWwindow * /*window*/, int width, int height) {
-  g_size = glm::ivec2{width, height};
-}
-
-void key_callback(GLFWwindow *window, int key, int /*scancode*/, int action,
-                  int /*modes*/) {
-  if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE)
-    glfwSetWindowShouldClose(window, true);
-}
-
-void glfwError(int error_code, const char *description) {
-  LOG_INFO("GLFW error {}: {}", error_code, description);
-}
-
 int main() {
   LogSystem::init();
 
-  if (!glfwInit()) {
-    LOG_ERROR("GLFW initialization failed. Terminate execution.");
-
-    return 1;
-  }
-
-  glfwSetErrorCallback(error);
-
-  glfwDefaultWindowHints();
-  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-
-  // Create a context and, if valid, make it current
-  GLFWwindow *window =
-      glfwCreateWindow(640, 480, "paimon Texture", nullptr, nullptr);
-  if (window == nullptr) {
-    LOG_ERROR("GLFW window creation failed. Terminate execution.");
-
-    glfwTerminate();
-    return -1;
-  }
-  glfwSetKeyCallback(window, key_callback);
-  glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-
-  glfwMakeContextCurrent(window);
-
-  int version = gladLoadGL(glfwGetProcAddress);
-  if (version == 0) {
-    LOG_ERROR("Failed to initialize OpenGL context");
-
-    return -1;
-  }
+  auto window = Window::create(WindowConfig{
+      .title = "Framebuffer Example",
+      .format =
+          ContextFormat{
+              .majorVersion = 4,
+              .minorVersion = 5,
+              .profile = ContextProfile::Core,
+          },
+      .width = static_cast<uint32_t>(g_size.x),
+      .height = static_cast<uint32_t>(g_size.y),
+  });
 
   Shader vertex_shader(GL_VERTEX_SHADER);
   Shader fragment_shader(GL_FRAGMENT_SHADER);
@@ -117,8 +74,8 @@ int main() {
   float vertices[] = {
       // positions
       -0.5f, -0.5f, 0.0f, // bottom left
-      0.5f, -0.5f, 0.0f,  // bottom right
-      0.0f, 0.5f, 0.0f    // top
+      0.5f,  -0.5f, 0.0f, // bottom right
+      0.0f,  0.5f,  0.0f  // top
   };
   // Create a Vertex Buffer Object (VBO) and copy the vertices to it
   Buffer vbo;
@@ -145,10 +102,10 @@ int main() {
 
   ScreenQuad quad;
 
-  while (!glfwWindowShouldClose(window)) {
+  while (!window->shouldClose()) {
     // Check if any events have been activated (key pressed, mouse moved etc.)
     // and call corresponding response functions
-    glfwPollEvents();
+    window->pollEvents();
 
     fbo.bind();
 
@@ -169,11 +126,11 @@ int main() {
     quad.draw(texture);
 
     // Swap the screen buffers
-    glfwSwapBuffers(window);
+    window->swapBuffers();
   }
 
   // Terminates GLFW, clearing any resources allocated by GLFW.
-  glfwTerminate();
+  window->destroy();
 
   return 0;
 }

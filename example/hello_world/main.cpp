@@ -1,14 +1,10 @@
+#include <glm/glm.hpp>
+
 #include "paimon/core/log_system.h"
-
-#include "glad/gl.h"
-#include "GLFW/glfw3.h"
-#include "glm/glm.hpp"
-
-#include "paimon/opengl/program.h"
-#include "paimon/opengl/vertex_array.h"
-#include "paimon/opengl/shader.h"
 #include "paimon/opengl/buffer.h"
-
+#include "paimon/opengl/program.h"
+#include "paimon/opengl/shader.h"
+#include "paimon/opengl/vertex_array.h"
 #include "paimon/platform/window.h"
 
 using namespace paimon;
@@ -43,12 +39,13 @@ int main() {
 
   auto window = Window::create(WindowConfig{
       .title = "globjects Texture",
-      .format = ContextFormat{
-          .versionMajor = 4,
-          .versionMinor = 6,
-          .profile = ContextProfile::Core,
-          .debug = false,
-      },
+      .format =
+          ContextFormat{
+              .majorVersion = 4,
+              .minorVersion = 6,
+              .profile = ContextProfile::Core,
+              .debug = false,
+          },
       .width = 640,
       .height = 480,
       .resizable = false,
@@ -81,8 +78,8 @@ int main() {
   float vertices[] = {
       // positions
       -0.5f, -0.5f, 0.0f, // bottom left
-      0.5f, -0.5f, 0.0f,  // bottom right
-      0.0f, 0.5f, 0.0f    // top
+      0.5f,  -0.5f, 0.0f, // bottom right
+      0.0f,  0.5f,  0.0f  // top
   };
   // Create a Vertex Buffer Object (VBO) and copy the vertices to it
   Buffer vbo;
@@ -91,7 +88,7 @@ int main() {
 
   VertexArray vao;
   vao.bind();
-  
+
   auto &binding = vao.get_binding(0);
   binding.bind_buffer(vbo, 0, 3 * sizeof(float));
 
