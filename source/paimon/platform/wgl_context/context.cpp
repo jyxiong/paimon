@@ -15,9 +15,9 @@ using namespace paimon;
 std::vector<int> createContextAttributeList(const ContextFormat &format) {
   std::map<int, int> attributes;
 
-  if (format.versionMajor > 0) {
-    attributes[WGL_CONTEXT_MAJOR_VERSION_ARB] = format.versionMajor;
-    attributes[WGL_CONTEXT_MINOR_VERSION_ARB] = format.versionMinor;
+  if (format.majorVersion > 0) {
+    attributes[WGL_CONTEXT_MAJOR_VERSION_ARB] = format.majorVersion;
+    attributes[WGL_CONTEXT_MINOR_VERSION_ARB] = format.minorVersion;
   }
 
   if (format.debug) {

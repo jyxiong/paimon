@@ -9,9 +9,9 @@ namespace paimon {
 enum class ContextProfile : unsigned int { NONE, Core, Compatibility };
 
 struct ContextFormat {
-  unsigned int versionMajor = 0;
-  unsigned int versionMinor = 0;
-  ContextProfile profile = ContextProfile::NONE;
+  unsigned int majorVersion = 3;
+  unsigned int minorVersion = 3;
+  ContextProfile profile = ContextProfile::Core;
   bool debug = false;
 };
 

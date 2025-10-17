@@ -15,9 +15,9 @@ namespace {
 std::vector<int> createContextAttributeList(const ContextFormat &format) {
   std::map<int, int> attributes;
 
-  if (format.versionMajor > 0) {
-    attributes[EGL_CONTEXT_MAJOR_VERSION] = format.versionMajor;
-    attributes[EGL_CONTEXT_MINOR_VERSION] = format.versionMinor;
+  if (format.majorVersion > 0) {
+    attributes[EGL_CONTEXT_MAJOR_VERSION] = format.majorVersion;
+    attributes[EGL_CONTEXT_MINOR_VERSION] = format.minorVersion;
   }
 
   if (format.debug) {

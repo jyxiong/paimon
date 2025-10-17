@@ -27,7 +27,7 @@ GlfwWindow::GlfwWindow() {
   }
 
   glfwSetErrorCallback([](int error, const char *description) {
-    LOG_ERROR("GLFW error %d: %s", error, description);
+    LOG_ERROR("GLFW error {}: {}", error, description);
   });
 }
 
@@ -58,8 +58,8 @@ std::unique_ptr<Window> GlfwWindow::create(const WindowConfig &config) {
   glfwDefaultWindowHints();
   glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
   glfwWindowHint(GLFW_OPENGL_PROFILE, toGlfw(config.format.profile));
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, config.format.versionMajor);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, config.format.versionMinor);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, config.format.majorVersion);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, config.format.minorVersion);
   glfwWindowHint(GLFW_CONTEXT_DEBUG, toGlfw(config.format.debug));
   glfwWindowHint(GLFW_RESIZABLE, toGlfw(config.resizable));
   glfwWindowHint(GLFW_VISIBLE, toGlfw(config.visible));
