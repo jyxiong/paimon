@@ -1,8 +1,15 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
+#include <memory>
+
+#include "paimon/core/fg/pass_node.h"
 
 namespace paimon {
+using ResourceId = std::size_t;
+using Version = std::size_t;
+
 class ResourceConcept {
 public:
   ResourceConcept() = default;
@@ -70,8 +77,7 @@ public:
 
 public:
   ImportedResource(const Descriptor &descriptor, const TResource &resource)
-    : Resource<TResource>() {
-    this->m_descriptor = descriptor;
+    : Resource<TResource>(descriptor) {
     this->m_resource = resource;
   };
 
@@ -96,6 +102,45 @@ public:
   bool isTransient() const override {
     return false; // Imported resources are not transient
   }
+};
+
+class ResourceEntry {
+public:
+  template <typename T>
+  ResourceEntry(ResourceId id, const typename T::Desc &, T &&);
+
+  ResourceEntry() = delete;
+  ResourceEntry(const ResourceEntry &) = delete;
+  ResourceEntry(ResourceEntry &&) noexcept = default;
+
+  ResourceEntry &operator=(const ResourceEntry &) = delete;
+  ResourceEntry &operator=(ResourceEntry &&) noexcept = delete;
+
+  void create(void *allocator);
+  void destroy(void *allocator);
+
+  void preRead(uint32_t flags, void *context);
+  void preWrite(uint32_t flags, void *context);
+
+  bool isTransient() const { return m_concept->isTransient(); }
+
+  template <class TResource>
+  TResource &get() {
+    return dynamic_cast<Resource<TResource>>(*m_concept).get();
+  }
+
+  template <class TResource>
+  typename TResource::Descriptor &get_desc() {
+    return dynamic_cast<Resource<TResource>>(*m_concept).get_desc();
+  }
+
+private:
+  ResourceId m_id;
+  Version m_version;
+  std::unique_ptr<ResourceConcept> m_concept;
+
+  PassNode *m_producer{nullptr};
+  PassNode *m_last{nullptr};
 };
 
 } // namespace paimon
