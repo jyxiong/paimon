@@ -22,6 +22,8 @@ public:
   [[nodiscard]] std::string_view getName() const { return m_name; }
   [[nodiscard]] auto getRefCount() const { return m_refCount; }
 
+  void setRefCount(int32_t count) { m_refCount = count; }
+
   void increaseRef() { ++m_refCount; }
   void decreaseRef() {
     if (m_refCount > 0) {

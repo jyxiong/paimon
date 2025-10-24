@@ -1,6 +1,7 @@
 #pragma once
 
 #include "paimon/core/fg/pass_node.h"
+#include "paimon/core/fg/resource_entry.h"
 #include "paimon/core/fg/resource_node.h"
 #include "paimon/core/log_system.h"
 
@@ -64,12 +65,14 @@ public:
     const std::string &name, const typename TResource::Descriptor &desc,
     NodeId creator
   ) {
-    auto id = m_resource_nodes.size();
-    auto *resource = new Resource<TResource>(desc);
-    m_resource_nodes.emplace_back(
-      name, id, std::unique_ptr<ResourceConcept>(resource), creator
+    auto res_id = m_resource_entries.size();
+    m_resource_entries.emplace_back(
+      res_id, std::make_unique<Resource<TResource>>(desc)
     );
-    return id;
+
+    auto node_id = m_resource_nodes.size();
+    m_resource_nodes.emplace_back(name, node_id, res_id, 0);
+    return node_id;
   }
 
   template <class TResource>
@@ -77,30 +80,58 @@ public:
     const std::string &name, const typename TResource::Descriptor &desc,
     TResource &&resource
   ) {
-    auto id = m_resource_nodes.size();
-    auto *impoerted_resource =
-      new ImportedResource<TResource>(desc, std::move(resource));
-    m_resource_nodes.emplace_back(
-      name, id, std::unique_ptr<ResourceConcept>(impoerted_resource)
+    auto res_id = m_resource_entries.size();
+    m_resource_entries.emplace_back(
+      res_id,
+      std::make_unique<ImportedResource<TResource>>(desc, std::move(resource))
     );
-    return id;
+
+    auto node_id = m_resource_nodes.size();
+    m_resource_nodes.emplace_back(name, node_id, res_id, 0);
+    return node_id;
+  }
+
+  NodeId clone(NodeId id) {
+    const auto &node = getResourceNode(id);
+    auto &entry = getResourceEntry(node.getResourceId());
+    entry.incrementVersion();
+
+    auto node_id = m_resource_nodes.size();
+    m_resource_nodes.emplace_back(
+      node.getName(), node_id, node.getResourceId(), entry.getVersion()
+    );
+    return node_id;
   }
 
   template <class TResource>
   TResource &get(NodeId id) {
-    return m_resource_nodes[id].get<TResource>();
+    return getResourceEntry(getResourceNode(id).getResourceId())
+      .get<TResource>();
   }
 
   template <class TResource>
   typename TResource::Descriptor &get_desc(NodeId id) {
-    return m_resource_nodes[id].get_desc<TResource>();
+    return getResourceEntry(getResourceNode(id).getResourceId())
+      .get_desc<TResource>();
   }
 
   ResourceNode &getResourceNode(NodeId id) { return m_resource_nodes[id]; }
 
+  const ResourceNode &getResourceNode(NodeId id) const {
+    return m_resource_nodes[id];
+  }
+
+  ResourceEntry &getResourceEntry(ResourceId id) {
+    return m_resource_entries[id];
+  }
+
+  const ResourceEntry &getResourceEntry(ResourceId id) const {
+    return m_resource_entries[id];
+  }
+
   void compile();
 
-  void execute(void *context = nullptr);
+  void execute(void *context, void *allocator);
 
 private:
   struct PassExecution {
@@ -111,45 +142,8 @@ private:
 
   std::vector<PassNode> m_pass_nodes;
   std::vector<ResourceNode> m_resource_nodes;
+  std::vector<ResourceEntry> m_resource_entries;
+
   std::vector<PassExecution> m_execution_order;
 };
-
-class FrameGraphResources {
-public:
-  FrameGraphResources(const FrameGraph &fg, const PassNode &node);
-
-  FrameGraphResources() = delete;
-  FrameGraphResources(const FrameGraphResources &) = delete;
-  FrameGraphResources(FrameGraphResources &&) noexcept = delete;
-
-  FrameGraphResources &operator=(const FrameGraphResources &) = delete;
-  FrameGraphResources &operator=(FrameGraphResources &&) noexcept = delete;
-
-  template <class TResource>
-  TResource &get(NodeId id) const {
-    auto has = m_passNode.has_create(id) || m_passNode.has_read(id) ||
-               m_passNode.has_write(id);
-    if (!has) {
-      LOG_ERROR("PassNode does not access the resource with id {}", id);
-    }
-
-    return m_frameGraph.get<TResource>(id);
-  }
-
-  template <class TResource>
-  typename TResource::Descriptor &get_desc(NodeId id) const {
-    auto has = m_passNode.has_create(id) || m_passNode.has_read(id) ||
-               m_passNode.has_write(id);
-    if (!has) {
-      LOG_ERROR("PassNode does not access the resource with id {}", id);
-    }
-
-    return m_frameGraph.get_desc<TResource>(id);
-  }
-
-private:
-  const FrameGraph &m_frameGraph;
-  const PassNode &m_passNode;
-};
-
 } // namespace paimon

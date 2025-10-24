@@ -57,13 +57,9 @@ public:
 
   bool isTransient() const override { return true; }
 
-  TResource &get() {
-    return m_resource;
-  }
+  TResource &get() { return m_resource; }
 
-  Descriptor &get_desc() {
-    return m_descriptor;
-  }
+  Descriptor &get_desc() { return m_descriptor; }
 
 private:
   Descriptor m_descriptor;
@@ -103,44 +99,4 @@ public:
     return false; // Imported resources are not transient
   }
 };
-
-class ResourceEntry {
-public:
-  template <typename T>
-  ResourceEntry(ResourceId id, const typename T::Desc &, T &&);
-
-  ResourceEntry() = delete;
-  ResourceEntry(const ResourceEntry &) = delete;
-  ResourceEntry(ResourceEntry &&) noexcept = default;
-
-  ResourceEntry &operator=(const ResourceEntry &) = delete;
-  ResourceEntry &operator=(ResourceEntry &&) noexcept = delete;
-
-  void create(void *allocator);
-  void destroy(void *allocator);
-
-  void preRead(uint32_t flags, void *context);
-  void preWrite(uint32_t flags, void *context);
-
-  bool isTransient() const { return m_concept->isTransient(); }
-
-  template <class TResource>
-  TResource &get() {
-    return dynamic_cast<Resource<TResource>>(*m_concept).get();
-  }
-
-  template <class TResource>
-  typename TResource::Descriptor &get_desc() {
-    return dynamic_cast<Resource<TResource>>(*m_concept).get_desc();
-  }
-
-private:
-  ResourceId m_id;
-  Version m_version;
-  std::unique_ptr<ResourceConcept> m_concept;
-
-  PassNode *m_producer{nullptr};
-  PassNode *m_last{nullptr};
-};
-
 } // namespace paimon

@@ -15,7 +15,7 @@ public:
   PassConcept &operator=(const PassConcept &) = delete;
   PassConcept &operator=(PassConcept &&) noexcept = delete;
 
-  virtual void execute(FrameGraphResources &, void *) = 0;
+  virtual void execute(FrameGraphResources &, void *) const = 0;
 };
 
 template <class TData, class TExecutor>
@@ -25,7 +25,7 @@ public:
 
   ~Pass() override = default;
 
-  void execute(FrameGraphResources &resources, void *context) override {
+  void execute(FrameGraphResources &resources, void *context) const override {
     m_executor(resources, context);
   }
 

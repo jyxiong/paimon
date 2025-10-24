@@ -1,5 +1,7 @@
 #include "paimon/core/fg/frame_graph.h"
 
+#include "paimon/core/fg/frame_graph_resources.h"
+
 #include <stack>
 
 using namespace paimon;
@@ -8,151 +10,89 @@ FrameGraph::Builder::Builder(FrameGraph &fg, PassNode &node)
   : m_frameGraph{fg}, m_passNode{node} {}
 
 NodeId FrameGraph::Builder::read(NodeId id, uint32_t flags) {
-  m_passNode.read(id, flags);
-  m_frameGraph.m_resource_nodes[id].addReader(m_passNode.getId());
-  return id;
+  return m_passNode.read(id, flags);
 }
 
 NodeId FrameGraph::Builder::write(NodeId id, uint32_t flags) {
-  m_passNode.write(id, flags);
-  m_frameGraph.m_resource_nodes[id].addWriter(m_passNode.getId());
-  return id;
-}
 
-FrameGraphResources::FrameGraphResources(
-  const FrameGraph &fg, const PassNode &node
-)
-  : m_frameGraph{fg}, m_passNode{node} {}
+if (m_passNode.has_create(id)) {
+    return m_passNode.write(id, flags);
+  } else {
+    // Writing to a texture produces a renamed handle.
+    // This allows us to catch errors when resources are modified in
+    // undefined order (when same resource is written by different passes).
+    // Renaming resources enforces a specific execution order of the render
+    // passes.
+    m_passNode.read(id, 0);
+
+    auto resource = m_frameGraph.clone(id);
+    // auto &node = m_frameGraph.getResourceNode(resource);
+    // node.setProducer(&m_passNode);
+
+    return m_passNode.write(resource, flags);
+  }
+}
 
 void FrameGraph::compile() {
-  // Culling via flood fill from unreferenced resources.
-  std::stack<NodeId> unrefResId;
-  for (NodeId i = 0; i < m_resource_nodes.size(); ++i) {
-    if (m_resource_nodes[i].getRefCount() == 0) {
-      unrefResId.push(i);
+  for (auto &pass : m_pass_nodes) {
+    pass.setRefCount(pass.getWrites().size());
+    for (const auto id : pass.getReads()) {
+      auto &consumed = m_resource_nodes[id];
+      consumed.increaseRef();
+    }
+    for (const auto id : pass.getWrites()) {
+      auto &written = m_resource_nodes[id];
+      written.m_producer = &pass;
     }
   }
 
-  while (!unrefResId.empty()) {
-    auto resId = unrefResId.top();
-    unrefResId.pop();
-    auto &resNode = m_resource_nodes[resId];
+  // -- Culling:
 
-    // process the create pass of unreferenced resource
-    auto &creator = m_pass_nodes[resNode.getCreator()];
-    creator.decreaseRef();
-    if (creator.getRefCount() == 0 && !creator.isCulled()) {
-      for (auto readResId : creator.getReads()) {
-        auto &readResNode = m_resource_nodes[readResId];
-        readResNode.decreaseRef();
-        if (readResNode.getRefCount() == 0 && readResNode.isTransient()) {
-          unrefResId.push(readResId);
-        }
+  std::stack<ResourceNode *> unreferencedResources;
+  for (auto &node : m_resource_nodes) {
+    if (node.m_refCount == 0) unreferencedResources.push(&node);
+  }
+  while (!unreferencedResources.empty()) {
+    auto *unreferencedResource = unreferencedResources.top();
+    unreferencedResources.pop();
+    PassNode *producer{unreferencedResource->m_producer};
+    if (producer == nullptr || producer->hasSideEffect()) continue;
+
+    assert(producer->m_refCount >= 1);
+    if (--producer->m_refCount == 0) {
+      for (const auto [id, _] : producer->m_reads) {
+        auto &node = m_resource_nodes[id];
+        if (--node.m_refCount == 0) unreferencedResources.push(&node);
       }
     }
+  }
 
-    // process all write passes of unreferenced resource
-    for (auto passId : resNode.getWriters()) {
-      auto &writer = m_pass_nodes[passId];
-      writer.decreaseRef();
-      if (writer.getRefCount() == 0 && !writer.isCulled()) {
-        for (auto readResId : writer.getReads()) {
-          auto &readResNode = m_resource_nodes[readResId];
-          readResNode.decreaseRef();
-          if (readResNode.getRefCount() == 0 && readResNode.isTransient()) {
-            unrefResId.push(readResId);
-          }
-        }
-      }
-    }
-  } // while(!unrefResources.empty())
+  // -- Calculate resources lifetime:
 
-  // Compute execution order via topological sort
-  m_execution_order.clear();
-  for (auto &passNode : m_pass_nodes) {
-    // TODO: check && or ||
-    if (passNode.getRefCount() == 0 && passNode.isCulled()) {
-      continue;
-    }
+  for (auto &pass : m_passNodes) {
+    if (pass.m_refCount == 0) continue;
 
-    PassExecution exec;
-    exec.passNode = &passNode;
-
-    // process created resources
-    for (auto resId : passNode.getCreates()) {
-      auto &resNode = m_resource_nodes[resId];
-      exec.created.push_back(&resNode);
-
-      if (resNode.getReaders().empty() && resNode.getWriters().empty()) {
-        exec.destroyed.push_back(&resNode);
-      }
-    }
-
-    // process destroyed resources
-    auto readWrites = passNode.getReads();
-    readWrites.insert(
-      readWrites.end(), passNode.getWrites().begin(), passNode.getWrites().end()
-    );
-    for (auto resId : readWrites) {
-      auto &resNode = m_resource_nodes[resId];
-      if (!resNode.isTransient()) {
-        continue;
-      }
-
-      bool valid = false;
-      std::size_t lastId;
-      if (!resNode.getReaders().empty()) {
-        auto lastReader = std::find_if(
-          m_pass_nodes.begin(), m_pass_nodes.end(),
-          [&](const PassNode &passNode) {
-            return passNode.getId() == resNode.getReaders().back();
-          }
-        );
-
-        if (lastReader != m_pass_nodes.end()) {
-          lastId = static_cast<std::size_t>(std::distance(
-            m_pass_nodes.begin(), lastReader
-          ));
-          valid = true;
-        }
-      }
-
-      if (!resNode.getWriters().empty()) {
-        auto lastWriter = std::find_if(
-          m_pass_nodes.begin(), m_pass_nodes.end(),
-          [&](const PassNode &passNode) {
-            return passNode.getId() == resNode.getWriters().back();
-          }
-        );
-
-        if (lastWriter != m_pass_nodes.end()) {
-          lastId = std::max(lastId, static_cast<std::size_t>(std::distance(
-            m_pass_nodes.begin(), lastWriter
-          )));
-          valid = true;
-        }
-      }
-
-      if (valid && m_pass_nodes[lastId].getId() == passNode.getId()) {
-        exec.destroyed.push_back(&resNode);     
-      }
-    }
-
-    m_execution_order.emplace_back(std::move(exec));
+    for (const auto id : pass.m_creates)
+      getResourceEntry(id).m_producer = &pass;
+    for (const auto [id, _] : pass.m_writes)
+      getResourceEntry(id).m_last = &pass;
+    for (const auto [id, _] : pass.m_reads)
+      getResourceEntry(id).m_last = &pass;
   }
 }
 
-void FrameGraph::execute(void *context) {
-  for (auto &exec : m_execution_order) {
-    for (auto *resNode : exec.created) {
-      resNode->create(context);
-    }
+void FrameGraph::execute(void *context, void *allocator) {
+  for (const auto &pass : m_pass_nodes) {
 
-    FrameGraphResources resources{*this, *exec.passNode};
-    exec.passNode->execute(resources, context);
+    for (const auto id : pass.getCreates())
+      getResourceEntry(id).create(allocator);
 
-    for (auto *resNode : exec.destroyed) {
-      resNode->destroy(context);
+    FrameGraphResources resources{*this, pass};
+    pass.execute(resources, context);
+
+    for (auto &entry : m_resource_entries) {
+      if (entry.getLast() == &pass && entry.isTransient())
+        entry.destroy(allocator);
     }
   }
 }

@@ -20,11 +20,11 @@ public:
 
   ~PassNode() override = default;
 
-  void create(NodeId resource);
+  NodeId create(NodeId resource);
 
-  void read(NodeId resource, uint32_t flags = 0);
+  NodeId read(NodeId resource, uint32_t flags = 0);
 
-  void write(NodeId resource, uint32_t flags = 0);
+  NodeId write(NodeId resource, uint32_t flags = 0);
 
   bool has_create(NodeId resource) const;
 
@@ -36,7 +36,7 @@ public:
   bool isCulled() const { return false; }
   void setCulled(bool culled) { m_culled = culled; }
 
-  void execute(FrameGraphResources &resources, void *context) {
+  void execute(FrameGraphResources &resources, void *context) const {
     m_pass->execute(resources, context);
   }
 

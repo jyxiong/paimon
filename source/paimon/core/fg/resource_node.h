@@ -10,14 +10,10 @@ namespace paimon {
 class ResourceNode : public GraphNode {
 public:
   ResourceNode(
-    const std::string &name, NodeId id,
-    std::unique_ptr<ResourceConcept> &&resource
-  );
-
-  ResourceNode(
-    const std::string &name, NodeId id,
-    std::unique_ptr<ResourceConcept> &&resource, NodeId creator
-  );
+    const std::string_view name, NodeId id, ResourceId resource, Version version
+  )
+    : GraphNode(name, id), m_resource_id(resource),
+      m_resource_version(version) {}
 
   ResourceNode(const ResourceNode &) = delete;
   ResourceNode(ResourceNode &&) noexcept = default;
@@ -27,34 +23,22 @@ public:
 
   ~ResourceNode() override = default;
 
-  template <class TResource>
-  TResource &get() {
-    return dynamic_cast<Resource<TResource>>(*m_resource).get();
-  }
+  ResourceId getResourceId() const { return m_resource_id; }
+  Version getResourceVersion() const { return m_resource_version; }
 
-  template <class TResource>
-  typename TResource::Descriptor &get_desc() {
-    return dynamic_cast<Resource<TResource>>(*m_resource).get_desc();
-  }
+  PassNode *getProducer() const { return m_producer; }
+  PassNode *getLastConsumer() const { return m_last; }
 
-  void create(void* allocator) { m_resource->create(allocator); }
-  void destroy(void* allocator) { m_resource->destroy(allocator); }
+  void setProducer(PassNode *node) { m_producer = node; }
 
-  void addReader(NodeId passId);
-  void addWriter(NodeId passId);
-  
-  const std::vector<NodeId>& getReaders() const { return m_readers; }
-  const std::vector<NodeId>& getWriters() const { return m_writers; }
-  NodeId getCreator() const { return m_creator; }
-
-  bool isTransient() const { return m_resource->isTransient(); }
+  void setLastConsumer(PassNode *node) { m_last = node; }
 
 private:
-  std::unique_ptr<ResourceConcept> m_resource;
+  ResourceId m_resource_id;
+  Version m_resource_version;
 
-  NodeId m_creator;
-  std::vector<NodeId> m_readers;
-  std::vector<NodeId> m_writers;
+  PassNode *m_producer{nullptr};
+  PassNode *m_last{nullptr};
 };
 
 } // namespace paimon

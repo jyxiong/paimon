@@ -1,5 +1,7 @@
 #include "paimon/core/fg/frame_graph.h"
 
+#include <iostream>
+
 using namespace paimon;
 
 int main() {
@@ -62,9 +64,9 @@ int main() {
   );
 
   // 检查资源的引用计数
-  std::cout << "Resource ref count: " << fg.getResourceNode(createData.res).getRefCount() << std::endl;
-  std::cout << "Resource readers count: " << fg.getResourceNode(createData.res).getReaders().size() << std::endl;
-  std::cout << "Resource writers count: " << fg.getResourceNode(createData.res).getWriters().size() << std::endl;
+  // std::cout << "Resource ref count: " << fg.getResourceNode(createData.res).getRefCount() << std::endl;
+  // std::cout << "Resource readers count: " << fg.getResourceNode(createData.res).getReaders().size() << std::endl;
+  // std::cout << "Resource writers count: " << fg.getResourceNode(createData.res).getWriters().size() << std::endl;
 
   return 0;
 }
