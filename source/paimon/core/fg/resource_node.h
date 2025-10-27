@@ -8,9 +8,7 @@ class ResourceNode : public GraphNode {
 public:
   ResourceNode(
     const std::string_view name, NodeId id, ResourceId resource, Version version
-  )
-    : GraphNode(name, id), m_resource_id(resource),
-      m_resource_version(version) {}
+  );
 
   ResourceNode(const ResourceNode &) = delete;
   ResourceNode(ResourceNode &&) noexcept = default;
@@ -20,15 +18,15 @@ public:
 
   ~ResourceNode() override = default;
 
-  ResourceId getResourceId() const { return m_resource_id; }
-  Version getResourceVersion() const { return m_resource_version; }
+  ResourceId getResourceId() const;
+  Version getResourceVersion() const;
 
-  PassNode *getProducer() const { return m_producer; }
-  PassNode *getLastConsumer() const { return m_last; }
+  PassNode *getProducer() const;
+  PassNode *getLastConsumer() const;
 
-  void setProducer(PassNode *node) { m_producer = node; }
+  void setProducer(PassNode *node);
 
-  void setLastConsumer(PassNode *node) { m_last = node; }
+  void setLastConsumer(PassNode *node);
 
 private:
   ResourceId m_resource_id;

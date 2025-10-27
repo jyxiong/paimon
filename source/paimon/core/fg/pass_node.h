@@ -19,6 +19,12 @@ public:
 
   ~PassNode() override = default;
 
+  const std::vector<NodeId> &getCreates() const;
+
+  const std::vector<NodeId> &getReads() const;
+
+  const std::vector<NodeId> &getWrites() const;
+
   NodeId create(NodeId resource);
 
   NodeId read(NodeId resource, uint32_t flags = 0);
@@ -32,16 +38,11 @@ public:
   bool has_write(NodeId resource) const;
 
   // TODO:
-  bool isCulled() const { return false; }
-  void setCulled(bool culled) { m_culled = culled; }
+  bool isCulled() const;
 
-  void execute(FrameGraphResources &resources, void *context) const {
-    m_pass->execute(resources, context);
-  }
+  void setCulled(bool culled);
 
-  const std::vector<NodeId> &getCreates() const { return m_creates; }
-  const std::vector<NodeId> &getReads() const { return m_reads; }
-  const std::vector<NodeId> &getWrites() const { return m_writes; }
+  void execute(FrameGraphResources &resources, void *context) const;
 
 private:
   std::unique_ptr<PassConcept> m_pass;

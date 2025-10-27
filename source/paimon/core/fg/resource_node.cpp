@@ -1,34 +1,21 @@
 #include "paimon/core/fg/resource_node.h"
 
-#include <algorithm>
-
 using namespace paimon;
 
-// ResourceNode::ResourceNode(
-//   const std::string &name, NodeId id,
-//   std::unique_ptr<ResourceConcept> &&resource
-// )
-//   : GraphNode(name, id), m_resource(std::move(resource)),
-//     m_creator(static_cast<NodeId>(-1)) {}
+ResourceNode::ResourceNode(
+  const std::string_view name, NodeId id, ResourceId resource, Version version
+)
+  : GraphNode(name, id), m_resource_id(resource),
+    m_resource_version(version) {}
 
-// ResourceNode::ResourceNode(
-//   const std::string &name, NodeId id,
-//   std::unique_ptr<ResourceConcept> &&resource, NodeId creator
-// )
-//   : GraphNode(name, id), m_resource(std::move(resource)), m_creator(creator) {}
+ResourceId ResourceNode::getResourceId() const { return m_resource_id; }
 
-// void ResourceNode::addReader(NodeId passId) {
-//   auto it = std::find(m_readers.begin(), m_readers.end(), passId);
-//   if (it == m_readers.end()) {
-//     m_readers.push_back(passId);
-//     increaseRef();
-//   }
-// }
+Version ResourceNode::getResourceVersion() const { return m_resource_version; }
 
-// void ResourceNode::addWriter(NodeId passId) {
-//   auto it = std::find(m_writers.begin(), m_writers.end(), passId);
-//   if (it == m_writers.end()) {
-//     m_writers.push_back(passId);
-//     increaseRef();
-//   }
-// }
+PassNode *ResourceNode::getProducer() const { return m_producer; }
+
+PassNode *ResourceNode::getLastConsumer() const { return m_last; }
+
+void ResourceNode::setProducer(PassNode *node) { m_producer = node; }
+
+void ResourceNode::setLastConsumer(PassNode *node) { m_last = node; }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <concepts>
+#include <functional>
 
 #include "paimon/core/fg/pass_node.h"
 #include "paimon/core/fg/resource_entry.h"
@@ -120,19 +121,13 @@ public:
       .get_desc<TResource>();
   }
 
-  ResourceNode &getResourceNode(NodeId id) { return m_resource_nodes[id]; }
+  ResourceNode &getResourceNode(NodeId id);
 
-  const ResourceNode &getResourceNode(NodeId id) const {
-    return m_resource_nodes[id];
-  }
+  const ResourceNode &getResourceNode(NodeId id) const;
 
-  ResourceEntry &getResourceEntry(ResourceId id) {
-    return m_resource_entries[id];
-  }
+  ResourceEntry &getResourceEntry(ResourceId id);
 
-  const ResourceEntry &getResourceEntry(ResourceId id) const {
-    return m_resource_entries[id];
-  }
+  const ResourceEntry &getResourceEntry(ResourceId id) const;
 
   void compile();
 

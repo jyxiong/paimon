@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <utility>
 
 namespace paimon {
@@ -26,7 +27,7 @@ public:
   ~Pass() override = default;
 
   void execute(FrameGraphResources &resources, void *context) const override {
-    m_executor(resources, context);
+    std::invoke(m_executor, resources, context);
   }
 
   TData &get_data() { return m_data; }
