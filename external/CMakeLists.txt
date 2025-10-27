@@ -1,4 +1,4 @@
-set(EXTERNAL_DIR "External")
+set(EXTERNAL_DIR "external")
 
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
