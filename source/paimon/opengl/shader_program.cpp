@@ -5,14 +5,23 @@
 
 using namespace paimon;
 
-ShaderProgram::ShaderProgram(GLenum type, const std::string &source) : NamedObject(GL_PROGRAM) {
-  const GLchar *sources = source.c_str();
-  m_name = glCreateShaderProgramv(type, 1, &sources);
+ShaderProgram::ShaderProgram(GLenum type, const std::string &source) : NamedObject(GL_PROGRAM)
+, m_type(type), m_source(source.c_str()) {
 }
 
 ShaderProgram::~ShaderProgram() {
+}
+
+void ShaderProgram::create() {
+  if (m_name == 0) {
+    m_name = glCreateShaderProgramv(m_type, 1, &m_source);
+  }
+}
+
+void ShaderProgram::destroy() {
   if (m_name != 0) {
     glDeleteProgram(m_name);
+    m_name = 0;
   }
 }
 

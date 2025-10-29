@@ -10,11 +10,22 @@ public:
 Buffer();
 ~Buffer() override;
 
+Buffer(const Buffer &other) = delete;
+Buffer &operator=(const Buffer &other) = delete;
+
+Buffer(Buffer &&other) = default;
+
+void create();
+
+void destroy();
+
 bool is_valid() const override;
+
+public:
 
 void set_storage(GLsizeiptr size, const void *data, GLbitfield flags = 0) const;
 
-void set_data(GLintptr offset, GLsizeiptr size, const void *data) const;
+void set_data(GLintptr offset, GLsizeiptr size, const void *data, GLenum usage) const;
 
 void set_sub_data(GLintptr offset, GLsizeiptr size, const void *data) const;
 

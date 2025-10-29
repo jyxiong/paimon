@@ -21,15 +21,24 @@ TextureAttachment::TextureAttachment(Framebuffer *framebuffer,
                                      GLenum attachment, Texture *texture,
                                      GLint level, GLint layer)
     : FramebufferAttachment(framebuffer, attachment),
-      m_texture(texture->get_name()), m_level(level), m_layer(layer) {}
+      m_texture(texture), m_level(level), m_layer(layer) {}
 
 Framebuffer::Framebuffer() : NamedObject(GL_FRAMEBUFFER) {
-  glCreateFramebuffers(1, &m_name);
 }
 
 Framebuffer::~Framebuffer() {
+}
+
+void Framebuffer::create() {
+  if (m_name == 0) {
+    glCreateFramebuffers(1, &m_name);
+  }
+}
+
+void Framebuffer::destroy() {
   if (m_name != 0) {
     glDeleteFramebuffers(1, &m_name);
+    m_name = 0;
   }
 }
 

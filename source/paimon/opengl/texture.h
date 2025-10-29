@@ -13,8 +13,13 @@ public:
 
   Texture(Texture &&other) = default;
 
+  void create();
+
+  void destroy();
+
   bool is_valid() const override final;
 
+public:
   void bind(GLuint unit) const;
 
   void set_buffer_data(GLenum internalformat, GLuint buffer);

@@ -13,9 +13,14 @@ public:
     ProgramPipeline(const ProgramPipeline&) = delete;
     ProgramPipeline& operator=(const ProgramPipeline&) = delete;
 
+    void create();
+
+    void destroy();
+
     bool is_valid() const override;
 
 public:
+
     void bind() const;
     static void unbind();
 

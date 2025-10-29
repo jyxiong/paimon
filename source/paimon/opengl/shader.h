@@ -12,7 +12,13 @@ public:
   Shader(const Shader &other) = delete;
   Shader &operator=(const Shader &other) = delete;
 
+  void create();
+
+  void destroy();
+
   bool is_valid() const override;
+
+public:
 
   void get(GLenum pname, GLint *params) const;
   GLint get(GLenum pname) const;
