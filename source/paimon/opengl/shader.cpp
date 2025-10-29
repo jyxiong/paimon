@@ -5,12 +5,21 @@
 using namespace paimon;
 
 Shader::Shader(GLenum type) : NamedObject(GL_SHADER), m_type(type) {
-  m_name = glCreateShader(m_type);
 }
 
 Shader::~Shader() {
+}
+
+void Shader::create() {
+  if (m_name == 0) {
+    m_name = glCreateShader(m_type);
+  }
+}
+
+void Shader::destroy() {
   if (m_name != 0) {
     glDeleteShader(m_name);
+    m_name = 0;
   }
 }
 

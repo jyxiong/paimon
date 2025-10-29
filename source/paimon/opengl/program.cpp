@@ -4,11 +4,21 @@
 
 using namespace paimon;
 
-Program::Program() : NamedObject(GL_PROGRAM) { m_name = glCreateProgram(); }
+Program::Program() : NamedObject(GL_PROGRAM) {}
 
 Program::~Program() {
+}
+
+void Program::create() {
+  if (m_name == 0) {
+    m_name = glCreateProgram();
+  }
+}
+
+void Program::destroy() {
   if (m_name != 0) {
     glDeleteProgram(m_name);
+    m_name = 0;
   }
 }
 

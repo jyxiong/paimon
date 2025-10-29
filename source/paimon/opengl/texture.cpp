@@ -5,12 +5,22 @@
 using namespace paimon;
 
 Texture::Texture(GLenum target) : NamedObject(GL_TEXTURE), m_target(target) {
-  glCreateTextures(target, 1, &m_name);
 }
 
 Texture::~Texture() {
+
+}
+
+void Texture::create() {
+  if (m_name == 0) {
+    glCreateTextures(m_target, 1, &m_name);
+  }
+}
+
+void Texture::destroy() {
   if (m_name != 0) {
     glDeleteTextures(1, &m_name);
+    m_name = 0;
   }
 }
 

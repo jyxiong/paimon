@@ -13,7 +13,13 @@ public:
 
   Renderbuffer(Renderbuffer &&other) = default;
 
+  void create();
+
+  void destroy();
+
   bool is_valid() const override;
+
+public:
 
   void bind() const;
 
