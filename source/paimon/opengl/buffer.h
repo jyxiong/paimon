@@ -10,6 +10,11 @@ public:
 Buffer();
 ~Buffer() override;
 
+Buffer(const Buffer &other) = delete;
+Buffer &operator=(const Buffer &other) = delete;
+
+Buffer(Buffer &&other) = default;
+
 bool is_valid() const override;
 
 void set_storage(GLsizeiptr size, const void *data, GLbitfield flags = 0) const;
