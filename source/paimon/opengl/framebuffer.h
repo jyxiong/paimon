@@ -37,12 +37,12 @@ public:
                     Texture *texture, GLint level, GLint layer = 0);
 
 private:
-  Texture *m_texture;
+  GLuint m_texture;
   GLint m_level;
   GLint m_layer;
 };
 
-class Framebuffer : public NamedObject {
+class Framebuffer : NamedObject {
 public:
   Framebuffer();
   ~Framebuffer();
@@ -51,10 +51,6 @@ public:
   Framebuffer &operator=(const Framebuffer &other) = delete;
 
   Framebuffer(Framebuffer &&other) = default;
-
-  void create();
-
-  void destroy();
 
   bool is_valid() const override;
 

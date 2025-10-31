@@ -14,10 +14,6 @@ public:
 
   Query(Query &&other) = default;
 
-  void create();
-
-  void destroy();
-
   bool is_valid() const override;
 
 public:

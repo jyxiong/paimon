@@ -3,21 +3,12 @@
 using namespace paimon;
 
 ProgramPipeline::ProgramPipeline() : NamedObject(GL_PROGRAM_PIPELINE) {
+  glCreateProgramPipelines(1, &m_name);
 }
 
 ProgramPipeline::~ProgramPipeline() {
-}
-
-void ProgramPipeline::create() {
-  if (m_name == 0) {
-    glCreateProgramPipelines(1, &m_name);
-  }
-}
-
-void ProgramPipeline::destroy() {
   if (m_name != 0) {
     glDeleteProgramPipelines(1, &m_name);
-    m_name = 0;
   }
 }
 

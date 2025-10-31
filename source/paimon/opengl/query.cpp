@@ -6,24 +6,15 @@
 using namespace paimon;
 
 Query::Query(GLenum type) : NamedObject(GL_QUERY), m_type(type) {
+  glCreateQueries(m_type, 1, &m_name);
 }
 
 Query::~Query() {
-}
-
-void Query::create() {
-  if (m_name == 0) {
-    glCreateQueries(m_type, 1, &m_name);
-  }
-}
-
-void Query::destroy() {
   if (m_name != 0) {
     glDeleteQueries(1, &m_name);
     m_name = 0;
   }
 }
-
 bool Query::is_valid() const { return glIsQuery(m_name) == GL_TRUE; }
 
 GLenum Query::get_type() const { return m_type; }

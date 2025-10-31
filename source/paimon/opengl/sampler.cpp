@@ -4,22 +4,12 @@
 using namespace paimon;
 
 Sampler::Sampler() : NamedObject(GL_SAMPLER) {
+  glCreateSamplers(1, &m_name);
 }
 
 Sampler::~Sampler() {
-
-}
-
-void Sampler::create() {
-  if (m_name == 0) {
-    glCreateSamplers(1, &m_name);
-  }
-}
-
-void Sampler::destroy() {
   if (m_name != 0) {
     glDeleteSamplers(1, &m_name);
-    m_name = 0;
   }
 }
 

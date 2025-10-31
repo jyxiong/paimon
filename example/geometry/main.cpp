@@ -278,13 +278,13 @@ int main() {
   // create UBOs and bind to binding points
   Buffer perFrameUBOBuffer, lightingUBOBuffer;
   // ------------------------------------------------------
-  perFrameUBOBuffer.set_sub_data(0, sizeof(PerFrameUBO), &perFrameData);
+  perFrameUBOBuffer.set_data(0, sizeof(PerFrameUBO), &perFrameData);
   if (!perFrameUBOBuffer.is_valid()) {
     LOG_ERROR("Failed to create per-frame UBO");
     return EXIT_FAILURE;
   }
 
-  lightingUBOBuffer.set_sub_data(0, sizeof(LightingUBO), &lightingData);
+  lightingUBOBuffer.set_data(0, sizeof(LightingUBO), &lightingData);
   if (!lightingUBOBuffer.is_valid()) {
     LOG_ERROR("Failed to create lighting UBO");
     return EXIT_FAILURE;

@@ -4,21 +4,12 @@
 using namespace paimon;
 
 Renderbuffer::Renderbuffer() : NamedObject(GL_RENDERBUFFER) {
+  glCreateRenderbuffers(1, &m_name);
 }
 
 Renderbuffer::~Renderbuffer() {
-}
-
-void Renderbuffer::create() {
-  if (m_name == 0) {
-    glCreateRenderbuffers(1, &m_name);
-  }
-}
-
-void Renderbuffer::destroy() {
   if (m_name != 0) {
     glDeleteRenderbuffers(1, &m_name);
-    m_name = 0;
   }
 }
 
