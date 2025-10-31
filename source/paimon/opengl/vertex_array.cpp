@@ -14,11 +14,11 @@ GLuint VertexArray::Binding::get_index() const {
 }
 
 void VertexArray::Binding::bind_buffer(const Buffer& buffer, GLintptr offset, GLsizei stride) const {
-  m_vao.set_vertex_buffer(m_index, buffer, offset, stride);
+  glVertexArrayVertexBuffer(m_vao.m_name, m_index, buffer.get_name(), offset, stride);
 }
 
 void VertexArray::Binding::set_divisor(GLuint divisor) const {
-  m_vao.set_binding_divisor(m_index, divisor);
+  glVertexArrayBindingDivisor(m_vao.m_name, m_index, divisor);
 }
 
 VertexArray::Attribute::Attribute(const VertexArray &vao, GLuint index)
@@ -29,37 +29,42 @@ GLuint VertexArray::Attribute::get_index() const {
 }
 
 void VertexArray::Attribute::enable() const {
-  m_vao.enable_attribute(m_index);
+  glEnableVertexArrayAttrib(m_vao.m_name, m_index);
 }
 
 void VertexArray::Attribute::disable() const {
-  m_vao.disable_attribute(m_index);
+  glDisableVertexArrayAttrib(m_vao.m_name, m_index);
 }
 
 void VertexArray::Attribute::set_format(GLint size, GLenum type, GLboolean normalized, GLuint relative_offset) const {
-  m_vao.set_attribute_format(m_index, size, type, normalized, relative_offset);
+  glVertexArrayAttribFormat(m_vao.m_name, m_index, size, type, normalized, relative_offset);
 }
 
 void VertexArray::Attribute::bind(const Binding &binding) const {
-  m_vao.set_attribute_binding(m_index, binding.get_index());
+  glVertexArrayAttribBinding(m_vao.m_name, m_index, binding.get_index());
 }
 
 VertexArray::VertexArray() : NamedObject(GL_VERTEX_ARRAY) {
-}
+  glCreateVertexArrays(1, &m_name);
 
-VertexArray::~VertexArray() {
-}
+  // TODO: get max counts from OpenGL context
+  auto max_binding_count = get<GLint>(GL_MAX_VERTEX_ATTRIB_BINDINGS);
+  m_bindings.reserve(max_binding_count);
+  for (GLuint i = 0; i < static_cast<GLuint>(max_binding_count); ++i) {
+    m_bindings.emplace_back(*this, i);
+  }
 
-void VertexArray::create() {
-  if (m_name == 0) {
-    glCreateVertexArrays(1, &m_name);
+  // TODO: get max counts from OpenGL context
+  auto max_attribute_count = get<GLint>(GL_MAX_VERTEX_ATTRIBS);
+  m_attributes.reserve(max_attribute_count);
+  for (GLuint i = 0; i < static_cast<GLuint>(max_attribute_count); ++i) {
+    m_attributes.emplace_back(*this, i);
   }
 }
 
-void VertexArray::destroy() {
+VertexArray::~VertexArray() {
   if (m_name != 0) {
     glDeleteVertexArrays(1, &m_name);
-    m_name = 0;
   }
 }
 
@@ -67,49 +72,18 @@ bool VertexArray::is_valid() const {
   return glIsVertexArray(m_name) == GL_TRUE;
 }
 
-void VertexArray::set_vertex_buffer(GLuint binding_index, const Buffer &buffer,
-                                   GLintptr offset, GLsizei stride) const {
-  glVertexArrayVertexBuffer(m_name, binding_index, buffer.get_name(), offset,
-                            stride);
-}
-
-void VertexArray::set_binding_divisor(GLuint binding_index,
-                                     GLuint divisor) const {
-  glVertexArrayBindingDivisor(m_name, binding_index, divisor);
-}
-
-void VertexArray::enable_attribute(GLuint attribute_index) const {
-  glEnableVertexArrayAttrib(m_name, attribute_index);
-}
-
-void VertexArray::disable_attribute(GLuint attribute_index) const {
-  glDisableVertexArrayAttrib(m_name, attribute_index);
-}
-
-void VertexArray::set_attribute_format(GLuint attribute_index, GLint size, GLenum type,
-                                      GLboolean normalized,
-                                      GLuint relative_offset) const {
-  glVertexArrayAttribFormat(m_name, attribute_index, size, type, normalized,
-                            relative_offset);
-}
-
-void VertexArray::set_attribute_binding(GLuint attribute_index,
-                                       GLuint binding_index) const {
-  glVertexArrayAttribBinding(m_name, attribute_index, binding_index);
-}
-
 void VertexArray::set_element_buffer(const Buffer &buffer) const {
   glVertexArrayElementBuffer(m_name, buffer.get_name());
 }
 
 VertexArray::Binding &VertexArray::get_binding(GLuint index) {
-  auto [it, _] = m_bindings.try_emplace(index, Binding(*this, index));
-  return it->second;
+  // TODO: assert index in range
+  return m_bindings[index];
 }
 
 VertexArray::Attribute &VertexArray::get_attribute(GLuint index) {
-  auto [it, _] = m_attributes.try_emplace(index, Attribute(*this, index));
-  return it->second;
+  // TODO: assert index in range
+  return m_attributes[index];
 }
 
 void VertexArray::bind() const { glBindVertexArray(m_name); }

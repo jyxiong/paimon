@@ -2,20 +2,14 @@
 
 using namespace paimon;
 
-Buffer::Buffer() : NamedObject(GL_BUFFER) {}
-
-Buffer::~Buffer() {}
-
-void Buffer::create() {
-  if (m_name == 0) {
-    glCreateBuffers(1, &m_name);
-  }
+Buffer::Buffer()
+    : NamedObject(GL_BUFFER) {
+  glCreateBuffers(1, &m_name);
 }
 
-void Buffer::destroy() {
+Buffer::~Buffer() {
   if (m_name != 0) {
     glDeleteBuffers(1, &m_name);
-    m_name = 0;
   }
 }
 
@@ -27,8 +21,8 @@ void Buffer::set_storage(GLsizeiptr size, const void *data, GLbitfield flags) co
   glNamedBufferStorage(m_name, size, data, flags);
 }
 
-void Buffer::set_data(GLintptr offset, GLsizeiptr size, const void *data, GLenum usage) const {
-  glNamedBufferData(m_name, size, data, usage);
+void Buffer::set_data(GLintptr offset, GLsizeiptr size, const void *data) const {
+  glNamedBufferData(m_name, size, data, GL_DYNAMIC_DRAW);
 }
 
 void Buffer::set_sub_data(GLintptr offset, GLsizeiptr size, const void *data) const {

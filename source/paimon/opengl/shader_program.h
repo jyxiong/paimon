@@ -12,10 +12,6 @@ public:
   ShaderProgram(const ShaderProgram &other) = delete;
   ShaderProgram &operator=(const ShaderProgram &other) = delete;
 
-  void create();
-
-  void destroy();
-
   bool is_valid() const override;
 
 public:
@@ -27,8 +23,6 @@ public:
   std::string get_info_log() const;
 
 private:
-  GLenum m_type;
-  const char* m_source;
 };
 
 } // namespace paimon
