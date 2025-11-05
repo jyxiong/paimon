@@ -27,6 +27,11 @@ if(NOT TARGET glm)
     set_target_properties(glm PROPERTIES FOLDER ${EXTERNAL_DIR}/glm)
 endif()
 
+if (NOT TARGET nlohmann_json)
+    add_subdirectory(json)
+    set_target_properties(nlohmann_json PROPERTIES FOLDER ${EXTERNAL_DIR}/json)
+endif()
+
 if(NOT TARGET spdlog)
     option(SPDLOG_BUILD_EXAMPLE "" OFF)
     option(SPDLOG_INSTALL "" OFF)
