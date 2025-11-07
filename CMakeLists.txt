@@ -13,6 +13,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_DEBUG_POSTFIX "d")
 
+add_subdirectory(asset)
 add_subdirectory(example)
 add_subdirectory(external)
 add_subdirectory(source)
