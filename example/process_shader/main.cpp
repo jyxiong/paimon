@@ -10,7 +10,7 @@
 #include "paimon/opengl/vertex_array.h"
 #include "paimon/platform/window.h"
 #include "paimon/rendering/shader_preprocessor.h"
-#include "paimon/rendering/shader_source.h"
+#include "paimon/asset/shader_source.h"
 
 using namespace paimon;
 

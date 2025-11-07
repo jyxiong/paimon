@@ -3,9 +3,9 @@
 #include <algorithm>
 #include <regex>
 
+#include "paimon/asset/shader_source.h"
 #include "paimon/core/io/file.h"
 #include "paimon/core/log_system.h"
-#include "paimon/rendering/shader_source.h"
 
 
 using namespace paimon;
