@@ -84,7 +84,7 @@ void ShaderPreprocessor::resolveIncludes(std::string &source) {
 
   // Regex to match #include "file" or #include <file>
   static const std::regex includePattern(
-    R"(^\s*#include\s+([<"])([^>"]+)([>"])\s*(?://.*)?$)"
+    R"(^\s*#include\s+([<"])([^>"]+)([>"])\s*(?://.*)?$)", std::regex_constants::multiline
   );
 
   // Process all includes
