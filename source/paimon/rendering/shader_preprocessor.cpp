@@ -5,6 +5,7 @@
 
 #include "paimon/core/io/file.h"
 #include "paimon/core/log_system.h"
+#include "paimon/core/macro.h"
 #include "paimon/rendering/shader_source.h"
 
 
@@ -83,9 +84,16 @@ void ShaderPreprocessor::resolveDefines(
 void ShaderPreprocessor::resolveIncludes(std::string &source) {
 
   // Regex to match #include "file" or #include <file>
+#ifdef PAIMON_OS_WINDOWS
+  // MSVC doesn't support std::regex_constants::multiline
+  static const std::regex includePattern(
+    R"(^\s*#include\s+([<"])([^>"]+)([>"])\s*(?://.*)?$)"
+  );
+#else
   static const std::regex includePattern(
     R"(^\s*#include\s+([<"])([^>"]+)([>"])\s*(?://.*)?$)", std::regex_constants::multiline
   );
+#endif
 
   // Process all includes
   std::smatch match;
