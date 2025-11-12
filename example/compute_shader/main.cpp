@@ -1,4 +1,7 @@
-#include "glad/gl.h"
+#include <cmath>
+
+#include <glad/gl.h>
+#include <stb_image_write.h>
 
 #include "paimon/core/log_system.h"
 #include "paimon/opengl/program_pipeline.h"
@@ -6,10 +9,6 @@
 #include "paimon/opengl/shader_program.h"
 #include "paimon/opengl/texture.h"
 #include "paimon/platform/context.h"
-
-// Implement stb_image_write in this translation unit
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb_image_write.h"
 
 using namespace paimon;
 

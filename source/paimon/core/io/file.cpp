@@ -32,3 +32,21 @@ std::vector<uint8_t> File::readBinary(const std::filesystem::path &path) {
   
   return buffer;
 }
+
+void File::writeText(const std::filesystem::path &path, const std::string &content) {
+  // Create parent directories if they don't exist
+  if (path.has_parent_path()) {
+    std::filesystem::create_directories(path.parent_path());
+  }
+
+  std::ofstream file(path, std::ios::out | std::ios::trunc);
+  if (!file) {
+    LOG_ERROR("Failed to write file: {}", path.string());
+    return;
+  }
+
+  file << content;
+  file.close();
+
+  LOG_INFO("File written successfully: {}", path.string());
+}

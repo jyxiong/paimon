@@ -51,6 +51,8 @@ public:
   VertexArray(const VertexArray &other) = delete;
   VertexArray &operator=(const VertexArray &other) = delete;
 
+  VertexArray(VertexArray &&other) = default;
+
   bool is_valid() const override;
 
   void set_element_buffer(const Buffer &buffer) const;
