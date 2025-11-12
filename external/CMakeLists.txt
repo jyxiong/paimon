@@ -2,6 +2,11 @@ set(EXTERNAL_DIR "external")
 
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
+if(NOT TARGET EnTT)
+    add_subdirectory(entt)
+    set_target_properties(EnTT PROPERTIES FOLDER ${EXTERNAL_DIR}/entt)
+endif()
+
 if(NOT TARGET glad)
     add_subdirectory(glad/cmake)
     if(WIN32)
