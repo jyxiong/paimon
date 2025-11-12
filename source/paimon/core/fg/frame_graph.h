@@ -25,9 +25,8 @@ public:
     Builder &operator=(Builder &&) noexcept = delete;
 
     template <class TResource>
-    NodeId create(
-      const std::string &name, const typename TResource::Descriptor &desc
-    ) {
+    NodeId create(const std::string &name,
+                  const typename TResource::Descriptor &desc) {
       auto id = m_frameGraph.create<TResource>(name, desc, m_passNode.getId());
       m_passNode.create(id);
       return id;
@@ -53,13 +52,12 @@ public:
   template <class TData, class TSetup, class TExecutor>
     requires std::invocable<TSetup, Builder &, TData &> &&
              std::invocable<TExecutor, FrameGraphResources &, void *>
-  const TData &
-  create_pass(std::string name, TSetup &&setup, TExecutor &&executor) {
+  const TData &create_pass(std::string name, TSetup &&setup,
+                           TExecutor &&executor) {
     auto id = m_pass_nodes.size();
     auto *pass = new Pass<TData, TExecutor>(std::forward<TExecutor>(executor));
     auto &passNode = m_pass_nodes.emplace_back(
-      std::move(name), id, std::unique_ptr<PassConcept>(pass)
-    );
+        std::move(name), id, std::unique_ptr<PassConcept>(pass));
 
     Builder builder(*this, passNode);
     std::invoke(setup, builder, pass->get_data());
@@ -67,14 +65,11 @@ public:
   }
 
   template <class TResource>
-  NodeId create(
-    const std::string &name, const typename TResource::Descriptor &desc,
-    NodeId creator
-  ) {
+  NodeId create(const std::string &name,
+                const typename TResource::Descriptor &desc, NodeId creator) {
     auto res_id = m_resource_entries.size();
     m_resource_entries.emplace_back(
-      res_id, std::make_unique<Resource<TResource>>(desc)
-    );
+        res_id, std::make_unique<Resource<TResource>>(desc));
 
     auto node_id = m_resource_nodes.size();
     m_resource_nodes.emplace_back(name, node_id, res_id, 0);
@@ -82,15 +77,13 @@ public:
   }
 
   template <class TResource>
-  NodeId import(
-    const std::string &name, const typename TResource::Descriptor &desc,
-    TResource &&resource
-  ) {
+  NodeId import(const std::string &name,
+                const typename TResource::Descriptor &desc,
+                TResource &&resource) {
     auto res_id = m_resource_entries.size();
     m_resource_entries.emplace_back(
-      res_id,
-      std::make_unique<ImportedResource<TResource>>(desc, std::move(resource))
-    );
+        res_id, std::make_unique<ImportedResource<TResource>>(
+                    desc, std::move(resource)));
 
     auto node_id = m_resource_nodes.size();
     m_resource_nodes.emplace_back(name, node_id, res_id, 0);
@@ -103,22 +96,21 @@ public:
     entry.incrementVersion();
 
     auto node_id = m_resource_nodes.size();
-    m_resource_nodes.emplace_back(
-      node.getName(), node_id, node.getResourceId(), entry.getVersion()
-    );
+    m_resource_nodes.emplace_back(node.getName(), node_id, node.getResourceId(),
+                                  entry.getVersion());
     return node_id;
   }
 
   template <class TResource>
   TResource &get(NodeId id) {
     return getResourceEntry(getResourceNode(id).getResourceId())
-      .get<TResource>();
+        .get<TResource>();
   }
 
   template <class TResource>
   typename TResource::Descriptor &get_desc(NodeId id) {
     return getResourceEntry(getResourceNode(id).getResourceId())
-      .get_desc<TResource>();
+        .get_desc<TResource>();
   }
 
   ResourceNode &getResourceNode(NodeId id);

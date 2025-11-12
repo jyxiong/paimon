@@ -27,11 +27,12 @@ void printSeparator(const std::string &title) {
   LOG_INFO("");
 }
 
-std::string processShader(const std::filesystem::path &shaderPath,
-                          const std::filesystem::path &commonDir,
-                          const std::vector<std::pair<std::string, std::string>> &defines = {}) {
+std::string processShader(
+    const std::filesystem::path &shaderPath,
+    const std::filesystem::path &commonDir,
+    const std::vector<std::pair<std::string, std::string>> &defines = {}) {
   ShaderSource shaderSource(shaderPath);
-  
+
   // Add defines
   for (const auto &[key, value] : defines) {
     if (value.empty()) {
@@ -44,7 +45,7 @@ std::string processShader(const std::filesystem::path &shaderPath,
   ShaderPreprocessor preprocessor;
   preprocessor.addIncludePath(commonDir);
   preprocessor.addIncludePath(shaderPath.parent_path());
-  
+
   return preprocessor.processShaderSource(shaderSource);
 }
 
@@ -123,20 +124,22 @@ int main() {
   // Scenario 1: Basic rendering (no transform, no post-processing)
   printSeparator("Scenario 1: Basic Triangle");
   LOG_INFO("Processing shaders with minimal defines...");
-  
+
   auto vertexSource1 = processShader(vertexShaderPath, commonDir, {});
   auto fragmentSource1 = processShader(fragmentShaderPath, commonDir, {});
-  
+
   Shader vertexShader1(GL_VERTEX_SHADER);
   Shader fragmentShader1(GL_FRAGMENT_SHADER);
   Program program1;
 
   if (!vertexShader1.compile(vertexSource1)) {
-    LOG_ERROR("Vertex shader compilation failed: {}", vertexShader1.get_info_log());
+    LOG_ERROR("Vertex shader compilation failed: {}",
+              vertexShader1.get_info_log());
     return 1;
   }
   if (!fragmentShader1.compile(fragmentSource1)) {
-    LOG_ERROR("Fragment shader compilation failed: {}", fragmentShader1.get_info_log());
+    LOG_ERROR("Fragment shader compilation failed: {}",
+              fragmentShader1.get_info_log());
     return 1;
   }
   program1.attach(vertexShader1);
@@ -149,22 +152,23 @@ int main() {
 
   // Scenario 2: With gamma correction
   printSeparator("Scenario 2: With Gamma Correction");
-  
+
   auto vertexSource2 = processShader(vertexShaderPath, commonDir, {});
-  auto fragmentSource2 = processShader(fragmentShaderPath, commonDir, {
-      {"ENABLE_GAMMA_CORRECTION", ""}
-  });
-  
+  auto fragmentSource2 = processShader(fragmentShaderPath, commonDir,
+                                       {{"ENABLE_GAMMA_CORRECTION", ""}});
+
   Shader vertexShader2(GL_VERTEX_SHADER);
   Shader fragmentShader2(GL_FRAGMENT_SHADER);
   Program program2;
 
   if (!vertexShader2.compile(vertexSource2)) {
-    LOG_ERROR("Vertex shader compilation failed: {}", vertexShader2.get_info_log());
+    LOG_ERROR("Vertex shader compilation failed: {}",
+              vertexShader2.get_info_log());
     return 1;
   }
   if (!fragmentShader2.compile(fragmentSource2)) {
-    LOG_ERROR("Fragment shader compilation failed: {}", fragmentShader2.get_info_log());
+    LOG_ERROR("Fragment shader compilation failed: {}",
+              fragmentShader2.get_info_log());
     return 1;
   }
   program2.attach(vertexShader2);
@@ -177,25 +181,25 @@ int main() {
 
   // Scenario 3: With transform and brightness
   printSeparator("Scenario 3: With Transform and Brightness");
-  
-  auto vertexSource3 = processShader(vertexShaderPath, commonDir, {
-      {"USE_TRANSFORM", ""}
-  });
-  auto fragmentSource3 = processShader(fragmentShaderPath, commonDir, {
-      {"ENABLE_BRIGHTNESS", ""},
-      {"BRIGHTNESS_FACTOR", "1.5"}
-  });
-  
+
+  auto vertexSource3 =
+      processShader(vertexShaderPath, commonDir, {{"USE_TRANSFORM", ""}});
+  auto fragmentSource3 =
+      processShader(fragmentShaderPath, commonDir,
+                    {{"ENABLE_BRIGHTNESS", ""}, {"BRIGHTNESS_FACTOR", "1.5"}});
+
   Shader vertexShader3(GL_VERTEX_SHADER);
   Shader fragmentShader3(GL_FRAGMENT_SHADER);
   Program program3;
 
   if (!vertexShader3.compile(vertexSource3)) {
-    LOG_ERROR("Vertex shader compilation failed: {}", vertexShader3.get_info_log());
+    LOG_ERROR("Vertex shader compilation failed: {}",
+              vertexShader3.get_info_log());
     return 1;
   }
   if (!fragmentShader3.compile(fragmentSource3)) {
-    LOG_ERROR("Fragment shader compilation failed: {}", fragmentShader3.get_info_log());
+    LOG_ERROR("Fragment shader compilation failed: {}",
+              fragmentShader3.get_info_log());
     return 1;
   }
   program3.attach(vertexShader3);
@@ -225,9 +229,11 @@ int main() {
     if (scenarioTime >= scenarioDuration) {
       scenarioTime = 0.0f;
       currentScenario = (currentScenario % 3) + 1;
-      
-      const char* scenarioNames[] = {"Basic", "Gamma Correction", "Transform + Brightness"};
-      LOG_INFO("Switched to Scenario {}: {}", currentScenario, scenarioNames[currentScenario - 1]);
+
+      const char *scenarioNames[] = {"Basic", "Gamma Correction",
+                                     "Transform + Brightness"};
+      LOG_INFO("Switched to Scenario {}: {}", currentScenario,
+               scenarioNames[currentScenario - 1]);
     }
 
     // Clear screen
@@ -250,7 +256,8 @@ int main() {
       // Apply rotation transform
       glm::mat4 transform = glm::mat4(1.0f);
       transform = glm::rotate(transform, time, glm::vec3(0.0f, 0.0f, 1.0f));
-      GLint transformLoc = glGetUniformLocation(program3.get_name(), "u_transform");
+      GLint transformLoc =
+          glGetUniformLocation(program3.get_name(), "u_transform");
       if (transformLoc != -1) {
         glUniformMatrix4fv(transformLoc, 1, GL_FALSE, &transform[0][0]);
       }

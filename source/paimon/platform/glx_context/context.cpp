@@ -86,9 +86,7 @@ bool NativeContext::valid() const {
   return m_context != nullptr && m_drawable != 0;
 }
 
-bool NativeContext::loadGLFunctions() const {
-  return gladLoaderLoadGL() != 0;
-}
+bool NativeContext::loadGLFunctions() const { return gladLoaderLoadGL() != 0; }
 
 bool NativeContext::makeCurrent() const {
   auto *display = GlxPlatform::instance()->display();
@@ -130,7 +128,7 @@ std::unique_ptr<Context> NativeContext::getCurrent() {
 }
 
 std::unique_ptr<Context> NativeContext::create(const Context &shared,
-                                            const ContextFormat &format) {
+                                               const ContextFormat &format) {
   auto context = std::make_unique<NativeContext>();
   context->createContext(reinterpret_cast<GLXContext>(shared.nativeHandle()),
                          format);
@@ -143,7 +141,8 @@ std::unique_ptr<Context> NativeContext::create(const ContextFormat &format) {
   return context;
 }
 
-void NativeContext::createContext(GLXContext shared, const ContextFormat &format) {
+void NativeContext::createContext(GLXContext shared,
+                                  const ContextFormat &format) {
   Display *display = GlxPlatform::instance()->display();
 
   int fbCount;

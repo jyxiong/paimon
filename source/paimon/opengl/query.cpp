@@ -23,41 +23,49 @@ void Query::begin() { glBeginQuery(m_type, m_name); }
 
 void Query::end() { glEndQuery(m_type); }
 
-template <> void Query::get<GLint>(GLenum property, GLint *rslt) {
+template <>
+void Query::get<GLint>(GLenum property, GLint *rslt) {
   glGetQueryObjectiv(m_name, property, rslt);
 }
 
-template <> void Query::get<GLuint>(GLenum property, GLuint *rslt) {
+template <>
+void Query::get<GLuint>(GLenum property, GLuint *rslt) {
   glGetQueryObjectuiv(m_name, property, rslt);
 }
 
-template <> void Query::get<GLint64>(GLenum property, GLint64 *rslt) {
+template <>
+void Query::get<GLint64>(GLenum property, GLint64 *rslt) {
   glGetQueryObjecti64v(m_name, property, rslt);
 }
 
-template <> void Query::get<GLuint64>(GLenum property, GLuint64 *rslt) {
+template <>
+void Query::get<GLuint64>(GLenum property, GLuint64 *rslt) {
   glGetQueryObjectui64v(m_name, property, rslt);
 }
 
-template <> GLint Query::get<GLint>(GLenum property) {
+template <>
+GLint Query::get<GLint>(GLenum property) {
   GLint rslt;
   glGetQueryObjectiv(m_name, property, &rslt);
   return rslt;
 }
 
-template <> GLuint Query::get<GLuint>(GLenum property) {
+template <>
+GLuint Query::get<GLuint>(GLenum property) {
   GLuint rslt;
   glGetQueryObjectuiv(m_name, property, &rslt);
   return rslt;
 }
 
-template <> GLint64 Query::get<GLint64>(GLenum property) {
+template <>
+GLint64 Query::get<GLint64>(GLenum property) {
   GLint64 rslt;
   glGetQueryObjecti64v(m_name, property, &rslt);
   return rslt;
 }
 
-template <> GLuint64 Query::get<GLuint64>(GLenum property) {
+template <>
+GLuint64 Query::get<GLuint64>(GLenum property) {
   GLuint64 rslt;
   glGetQueryObjectui64v(m_name, property, &rslt);
   return rslt;

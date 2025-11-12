@@ -18,7 +18,7 @@ DebugMessage::DebugMessage(const GLenum source, const GLenum type,
                            const std::string &message)
     : m_source(source), m_type(type), m_id(id), m_severity(severity),
       m_message(message), m_callback(s_callback) {
-  glDebugMessageCallback(debugMessageCallback, reinterpret_cast<void*>(this));
+  glDebugMessageCallback(debugMessageCallback, reinterpret_cast<void *>(this));
 }
 
 void DebugMessage::enable() { glEnable(GL_DEBUG_OUTPUT); }
@@ -35,9 +35,7 @@ bool DebugMessage::isSynchronous() {
   return glIsEnabled(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 }
 
-void DebugMessage::setCallback(Callback callback) {
-  m_callback = callback;
-}
+void DebugMessage::setCallback(Callback callback) { m_callback = callback; }
 
 void DebugMessage::insert(const DebugMessage &message) {
   glDebugMessageInsert(message.m_source, message.m_type, message.m_id,
@@ -119,6 +117,6 @@ void GLAPIENTRY DebugMessage::debugMessageCallback(GLenum source, GLenum type,
                                                    const void *userParam) {
   DebugMessage msg(source, type, id, severity, std::string(message, length));
 
-  const auto *debugMessage = reinterpret_cast<const DebugMessage*>(userParam);
+  const auto *debugMessage = reinterpret_cast<const DebugMessage *>(userParam);
   debugMessage->m_callback(msg);
 }

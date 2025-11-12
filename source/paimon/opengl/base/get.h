@@ -10,7 +10,8 @@
 
 namespace paimon {
 
-template <typename T> auto get(GLenum pname) {
+template <typename T>
+auto get(GLenum pname) {
   if constexpr (std::same_as<T, GLboolean>) {
     GLboolean value;
     glGetBooleanv(pname, &value);
@@ -36,7 +37,8 @@ template <typename T> auto get(GLenum pname) {
   }
 }
 
-template <typename T> auto get(GLenum pname, GLuint index) {
+template <typename T>
+auto get(GLenum pname, GLuint index) {
   if constexpr (std::same_as<T, GLboolean>) {
     GLboolean value;
     glGetBooleani_v(pname, index, &value);
@@ -62,7 +64,8 @@ template <typename T> auto get(GLenum pname, GLuint index) {
   }
 }
 
-template <int L, typename T> auto gets(GLenum pname) {
+template <int L, typename T>
+auto gets(GLenum pname) {
   if constexpr (std::same_as<T, GLboolean>) {
     glm::vec<L, GLboolean> value;
     glGetBooleanv(pname, glm::value_ptr(value));
@@ -88,7 +91,8 @@ template <int L, typename T> auto gets(GLenum pname) {
   }
 }
 
-template <int L, typename T> auto gets(GLenum pname, GLuint index) {
+template <int L, typename T>
+auto gets(GLenum pname, GLuint index) {
   if constexpr (std::same_as<T, GLboolean>) {
     glm::vec<L, GLboolean> value;
     glGetBooleani_v(pname, index, glm::value_ptr(value));

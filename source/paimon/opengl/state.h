@@ -12,8 +12,7 @@
 
 namespace paimon {
 
-class ColorBlendTracker
-{
+class ColorBlendTracker {
 public:
   ColorBlendTracker();
   ~ColorBlendTracker() = default;
@@ -24,13 +23,13 @@ private:
   ColorBlendState m_cache;
 };
 
-class DepthTracker
-{
+class DepthTracker {
 public:
   DepthTracker() = default;
   ~DepthTracker() = default;
 
   void apply(const DepthState &state);
+
 private:
   DepthState m_cache;
 };
@@ -41,6 +40,7 @@ public:
   ~InputAssemblyTracker() = default;
 
   void apply(const InputAssemblyState &state);
+
 private:
   InputAssemblyState m_cache;
 };
@@ -51,20 +51,21 @@ public:
   ~MultisampleTracker() = default;
 
   void apply(const MultisampleState &state);
+
 private:
   MultisampleState m_cache;
 };
 
 class RasterizationTracker {
 public:
-
   RasterizationTracker() = default;
   ~RasterizationTracker() = default;
 
   void apply(const RasterizationState &state);
+
 private:
   RasterizationState m_cache;
-};  
+};
 
 class ScissorTracker {
 public:
@@ -72,9 +73,10 @@ public:
   ~ScissorTracker() = default;
 
   void apply(const std::vector<ScissorState> &state);
+
 private:
   std::vector<ScissorState> m_cache;
-};  
+};
 
 class StencilTracker {
 public:
@@ -82,6 +84,7 @@ public:
   ~StencilTracker() = default;
 
   void apply(const StencilState &state);
+
 private:
   StencilState m_cache;
 };
@@ -103,6 +106,7 @@ public:
   ~ViewportTracker() = default;
 
   void apply(const std::vector<ViewportState> &state);
+
 private:
   std::vector<ViewportState> m_cache;
 };

@@ -51,9 +51,8 @@ private:
    * @param source Original shader source code (will be modified in place)
    * @param defines List of define directives to insert
    */
-  void resolveDefines(
-    std::string &source, const std::vector<std::string> &defines
-  ) const;
+  void resolveDefines(std::string &source,
+                      const std::vector<std::string> &defines) const;
 
   /**
    * @brief Resolve all #include directives in the source code

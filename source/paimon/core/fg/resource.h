@@ -73,7 +73,7 @@ public:
 
 public:
   ImportedResource(const Descriptor &descriptor, const TResource &resource)
-    : Resource<TResource>(descriptor) {
+      : Resource<TResource>(descriptor) {
     this->m_resource = resource;
   };
 

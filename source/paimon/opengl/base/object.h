@@ -61,5 +61,5 @@ public:
 private:
   GLsync m_sync;
 };
-  
+
 } // namespace paimon

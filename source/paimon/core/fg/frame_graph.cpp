@@ -8,7 +8,7 @@
 using namespace paimon;
 
 FrameGraph::Builder::Builder(FrameGraph &fg, PassNode &node)
-  : m_frameGraph{fg}, m_passNode{node} {}
+    : m_frameGraph{fg}, m_passNode{node} {}
 
 NodeId FrameGraph::Builder::read(NodeId id, uint32_t flags) {
   return m_passNode.read(id, flags);
@@ -210,7 +210,7 @@ void FrameGraph::exportExecutionOrderToDot(const std::string &filename) const {
       continue;
 
     std::string label =
-      std::to_string(executionIndex++) + ": " + std::string{pass.getName()};
+        std::to_string(executionIndex++) + ": " + std::string{pass.getName()};
     file << "  exec_" << pass.getId() << " [label=\"" << label << "\"];\n";
 
     // Connect to previous pass in execution order

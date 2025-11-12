@@ -4,14 +4,11 @@
 
 namespace paimon {
 
-  class RenderContext {
-  public:
+class RenderContext {
+public:
+  void bindGraphicsPipeline(const GraphicsPipeline &pipeline);
 
-    
-
-    void bindGraphicsPipeline(const GraphicsPipeline& pipeline);
-  private:
-
-    GraphicsPipeline m_currentPipeline;
-  };
-}  // namespace paimon
+private:
+  GraphicsPipeline m_currentPipeline;
+};
+} // namespace paimon

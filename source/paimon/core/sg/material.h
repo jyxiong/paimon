@@ -52,12 +52,13 @@ struct Material {
   bool double_sided = false;
 
   // Extensions (glTF 2.0 official extensions)
-  
+
   /// KHR_materials_anisotropy
   struct Anisotropy {
-    float anisotropyStrength = 0.0f;  // Strength of anisotropy [0.0, 1.0]
-    float anisotropyRotation = 0.0f;  // Rotation in radians [0.0, 2π]
-    std::shared_ptr<Texture> anisotropyTexture = nullptr;  // RG channels: strength (R) + rotation (G)
+    float anisotropyStrength = 0.0f; // Strength of anisotropy [0.0, 1.0]
+    float anisotropyRotation = 0.0f; // Rotation in radians [0.0, 2π]
+    std::shared_ptr<Texture> anisotropyTexture =
+        nullptr; // RG channels: strength (R) + rotation (G)
     int anisotropyTexCoord = 0;
 
     bool IsEnabled() const {
@@ -77,7 +78,6 @@ struct Material {
     int clearcoatRoughnessTexCoord;
     int clearcoatNormalTexCoord;
   };
-
 
   /// KHR_materials_dispersion
   /// KHR_materials_emissive_strength

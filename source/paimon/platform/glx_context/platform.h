@@ -9,7 +9,7 @@
 namespace paimon {
 class GlxPlatform {
 public:
-  static GlxPlatform* instance();
+  static GlxPlatform *instance();
 
   Display *display() const;
 

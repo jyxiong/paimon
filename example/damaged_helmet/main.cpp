@@ -3,12 +3,12 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include <map>
 #include <filesystem>
+#include <map>
 
-#include "paimon/core/log_system.h"
 #include "paimon/core/io/file.h"
 #include "paimon/core/io/gltf.h"
+#include "paimon/core/log_system.h"
 #include "paimon/opengl/buffer.h"
 #include "paimon/opengl/program.h"
 #include "paimon/opengl/sampler.h"
@@ -41,14 +41,15 @@ float g_deltaTime = 0.0f;
 float g_lastFrame = 0.0f;
 
 // Helper function to create OpenGL texture from sg::Image
-Texture createTextureFromImage(const std::shared_ptr<sg::Image>& image) {
+Texture createTextureFromImage(const std::shared_ptr<sg::Image> &image) {
   Texture texture(GL_TEXTURE_2D);
-  
+
   if (!image || image->data.empty()) {
     // Create a default 1x1 white texture
     std::vector<unsigned char> white = {255, 255, 255, 255};
     texture.set_storage_2d(1, GL_RGBA8, 1, 1);
-    texture.set_sub_image_2d(0, 0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, white.data());
+    texture.set_sub_image_2d(0, 0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE,
+                             white.data());
     return texture;
   }
 
@@ -67,7 +68,8 @@ Texture createTextureFromImage(const std::shared_ptr<sg::Image>& image) {
   }
 
   texture.set_storage_2d(1, internalFormat, image->width, image->height);
-  texture.set_sub_image_2d(0, 0, 0, image->width, image->height, format, GL_UNSIGNED_BYTE, image->data.data());
+  texture.set_sub_image_2d(0, 0, 0, image->width, image->height, format,
+                           GL_UNSIGNED_BYTE, image->data.data());
   texture.generate_mipmap();
 
   return texture;
@@ -102,27 +104,31 @@ int main() {
   // Setup shader preprocessor
   auto assetPath = std::filesystem::current_path().parent_path() / "asset";
   auto shaderPath = assetPath / "shader";
-  
+
   ShaderPreprocessor preprocessor;
   preprocessor.addIncludePath(shaderPath);
 
   // Load and process shaders
   ShaderSource vertexSource(shaderPath / "damaged_helmet.vert");
   ShaderSource fragmentSource(shaderPath / "damaged_helmet.frag");
-  
+
   std::string vertex_source = preprocessor.processShaderSource(vertexSource);
-  std::string fragment_source = preprocessor.processShaderSource(fragmentSource);
+  std::string fragment_source =
+      preprocessor.processShaderSource(fragmentSource);
 
   File::writeText(shaderPath / "damaged_helmet_processed.vert", vertex_source);
-  File::writeText(shaderPath / "damaged_helmet_processed.frag", fragment_source);
+  File::writeText(shaderPath / "damaged_helmet_processed.frag",
+                  fragment_source);
 
   // Load glTF model
   GltfLoader loader;
   sg::Scene scene;
 
-  auto assetPModelath = std::filesystem::current_path().parent_path() / "asset/model";
-  
-  std::string model_path = (assetPModelath / "DamagedHelmet/glTF/DamagedHelmet.gltf").string();
+  auto assetPModelath =
+      std::filesystem::current_path().parent_path() / "asset/model";
+
+  std::string model_path =
+      (assetPModelath / "DamagedHelmet/glTF/DamagedHelmet.gltf").string();
   if (!loader.LoadFromFile(model_path, scene)) {
     LOG_ERROR("Failed to load glTF model: {}", loader.GetError());
     return -1;
@@ -133,9 +139,9 @@ int main() {
   }
 
   LOG_INFO("Loaded glTF model successfully");
-  LOG_INFO("Meshes: {}, Materials: {}, Textures: {}, Images: {}", 
-           scene.meshes.size(), scene.materials.size(), 
-           scene.textures.size(), scene.images.size());
+  LOG_INFO("Meshes: {}, Materials: {}, Textures: {}, Images: {}",
+           scene.meshes.size(), scene.materials.size(), scene.textures.size(),
+           scene.images.size());
 
   // Compile shaders
   Shader vertex_shader(GL_VERTEX_SHADER);
@@ -143,12 +149,14 @@ int main() {
   Program program;
 
   if (!vertex_shader.compile(vertex_source)) {
-    LOG_ERROR("Vertex shader compilation failed: {}", vertex_shader.get_info_log());
+    LOG_ERROR("Vertex shader compilation failed: {}",
+              vertex_shader.get_info_log());
     return -1;
   }
 
   if (!fragment_shader.compile(fragment_source)) {
-    LOG_ERROR("Fragment shader compilation failed: {}", fragment_shader.get_info_log());
+    LOG_ERROR("Fragment shader compilation failed: {}",
+              fragment_shader.get_info_log());
     return -1;
   }
 
@@ -172,37 +180,33 @@ int main() {
 
   std::vector<MeshData> mesh_data_list;
 
-  for (const auto& mesh : scene.meshes) {
-    for (const auto& primitive : mesh->primitives) {
+  for (const auto &mesh : scene.meshes) {
+    for (const auto &primitive : mesh->primitives) {
       MeshData mesh_data;
-      
+
       // Setup buffers
       if (primitive.attributes.HasPositions()) {
         mesh_data.position_buffer.set_storage(
             sizeof(glm::vec3) * primitive.attributes.positions.size(),
-            primitive.attributes.positions.data(),
-            GL_DYNAMIC_STORAGE_BIT);
+            primitive.attributes.positions.data(), GL_DYNAMIC_STORAGE_BIT);
       }
 
       if (primitive.attributes.HasNormals()) {
         mesh_data.normal_buffer.set_storage(
             sizeof(glm::vec3) * primitive.attributes.normals.size(),
-            primitive.attributes.normals.data(),
-            GL_DYNAMIC_STORAGE_BIT);
+            primitive.attributes.normals.data(), GL_DYNAMIC_STORAGE_BIT);
       }
 
       if (primitive.attributes.HasTexCoords0()) {
         mesh_data.texcoord_buffer.set_storage(
             sizeof(glm::vec2) * primitive.attributes.texcoords_0.size(),
-            primitive.attributes.texcoords_0.data(),
-            GL_DYNAMIC_STORAGE_BIT);
+            primitive.attributes.texcoords_0.data(), GL_DYNAMIC_STORAGE_BIT);
       }
 
       if (primitive.HasIndices()) {
         mesh_data.index_buffer.set_storage(
             sizeof(uint32_t) * primitive.indices.size(),
-            primitive.indices.data(),
-            GL_DYNAMIC_STORAGE_BIT);
+            primitive.indices.data(), GL_DYNAMIC_STORAGE_BIT);
         mesh_data.index_count = primitive.indices.size();
       }
 
@@ -211,9 +215,10 @@ int main() {
 
       // Position attribute (location 0)
       if (primitive.attributes.HasPositions()) {
-        auto& binding_pos = mesh_data.vao.get_binding(0);
-        binding_pos.bind_buffer(mesh_data.position_buffer, 0, sizeof(glm::vec3));
-        auto& attr_pos = mesh_data.vao.get_attribute(0);
+        auto &binding_pos = mesh_data.vao.get_binding(0);
+        binding_pos.bind_buffer(mesh_data.position_buffer, 0,
+                                sizeof(glm::vec3));
+        auto &attr_pos = mesh_data.vao.get_attribute(0);
         attr_pos.set_format(3, GL_FLOAT, GL_FALSE, 0);
         attr_pos.bind(binding_pos);
         attr_pos.enable();
@@ -221,9 +226,10 @@ int main() {
 
       // Normal attribute (location 1)
       if (primitive.attributes.HasNormals()) {
-        auto& binding_normal = mesh_data.vao.get_binding(1);
-        binding_normal.bind_buffer(mesh_data.normal_buffer, 0, sizeof(glm::vec3));
-        auto& attr_normal = mesh_data.vao.get_attribute(1);
+        auto &binding_normal = mesh_data.vao.get_binding(1);
+        binding_normal.bind_buffer(mesh_data.normal_buffer, 0,
+                                   sizeof(glm::vec3));
+        auto &attr_normal = mesh_data.vao.get_attribute(1);
         attr_normal.set_format(3, GL_FLOAT, GL_FALSE, 0);
         attr_normal.bind(binding_normal);
         attr_normal.enable();
@@ -231,9 +237,10 @@ int main() {
 
       // Texcoord attribute (location 2)
       if (primitive.attributes.HasTexCoords0()) {
-        auto& binding_texcoord = mesh_data.vao.get_binding(2);
-        binding_texcoord.bind_buffer(mesh_data.texcoord_buffer, 0, sizeof(glm::vec2));
-        auto& attr_texcoord = mesh_data.vao.get_attribute(2);
+        auto &binding_texcoord = mesh_data.vao.get_binding(2);
+        binding_texcoord.bind_buffer(mesh_data.texcoord_buffer, 0,
+                                     sizeof(glm::vec2));
+        auto &attr_texcoord = mesh_data.vao.get_attribute(2);
         attr_texcoord.set_format(2, GL_FLOAT, GL_FALSE, 0);
         attr_texcoord.bind(binding_texcoord);
         attr_texcoord.enable();
@@ -251,29 +258,35 @@ int main() {
 
   // Create textures from materials
   std::map<std::shared_ptr<sg::Texture>, std::unique_ptr<Texture>> texture_map;
-  
-  for (const auto& tex_pair : scene.textures) {
+
+  for (const auto &tex_pair : scene.textures) {
     if (tex_pair && tex_pair->image) {
-      texture_map[tex_pair] = std::make_unique<Texture>(createTextureFromImage(tex_pair->image));
+      texture_map[tex_pair] =
+          std::make_unique<Texture>(createTextureFromImage(tex_pair->image));
     }
   }
 
   // Create default textures
   Texture default_white = createTextureFromImage(nullptr);
-  std::vector<unsigned char> normal_data = {128, 128, 255, 255}; // default normal (0, 0, 1)
+  std::vector<unsigned char> normal_data = {128, 128, 255,
+                                            255}; // default normal (0, 0, 1)
   Texture default_normal(GL_TEXTURE_2D);
   default_normal.set_storage_2d(1, GL_RGBA8, 1, 1);
-  default_normal.set_sub_image_2d(0, 0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, normal_data.data());
+  default_normal.set_sub_image_2d(0, 0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE,
+                                  normal_data.data());
 
-  std::vector<unsigned char> mr_data = {0, 255, 0, 255}; // default: no AO, full roughness, no metallic
+  std::vector<unsigned char> mr_data = {
+      0, 255, 0, 255}; // default: no AO, full roughness, no metallic
   Texture default_metallic_roughness(GL_TEXTURE_2D);
   default_metallic_roughness.set_storage_2d(1, GL_RGBA8, 1, 1);
-  default_metallic_roughness.set_sub_image_2d(0, 0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, mr_data.data());
+  default_metallic_roughness.set_sub_image_2d(0, 0, 0, 1, 1, GL_RGBA,
+                                              GL_UNSIGNED_BYTE, mr_data.data());
 
   std::vector<unsigned char> black_data = {0, 0, 0, 255};
   Texture default_black(GL_TEXTURE_2D);
   default_black.set_storage_2d(1, GL_RGBA8, 1, 1);
-  default_black.set_sub_image_2d(0, 0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, black_data.data());
+  default_black.set_sub_image_2d(0, 0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE,
+                                 black_data.data());
 
   // Create sampler
   Sampler sampler;
@@ -285,22 +298,31 @@ int main() {
   LOG_INFO("Setup complete, entering render loop");
 
   float rotation = 0.0f;
-  
+
   // Get uniform locations
   GLint u_model = glGetUniformLocation(program.get_name(), "u_model");
   GLint u_view = glGetUniformLocation(program.get_name(), "u_view");
   GLint u_projection = glGetUniformLocation(program.get_name(), "u_projection");
   GLint u_lightPos = glGetUniformLocation(program.get_name(), "u_lightPos");
   GLint u_viewPos = glGetUniformLocation(program.get_name(), "u_viewPos");
-  GLint u_baseColorTexture = glGetUniformLocation(program.get_name(), "u_baseColorTexture");
-  GLint u_metallicRoughnessTexture = glGetUniformLocation(program.get_name(), "u_metallicRoughnessTexture");
-  GLint u_normalTexture = glGetUniformLocation(program.get_name(), "u_normalTexture");
-  GLint u_emissiveTexture = glGetUniformLocation(program.get_name(), "u_emissiveTexture");
-  GLint u_occlusionTexture = glGetUniformLocation(program.get_name(), "u_occlusionTexture");
-  GLint u_baseColorFactor = glGetUniformLocation(program.get_name(), "u_baseColorFactor");
-  GLint u_metallicFactor = glGetUniformLocation(program.get_name(), "u_metallicFactor");
-  GLint u_roughnessFactor = glGetUniformLocation(program.get_name(), "u_roughnessFactor");
-  GLint u_emissiveFactor = glGetUniformLocation(program.get_name(), "u_emissiveFactor");
+  GLint u_baseColorTexture =
+      glGetUniformLocation(program.get_name(), "u_baseColorTexture");
+  GLint u_metallicRoughnessTexture =
+      glGetUniformLocation(program.get_name(), "u_metallicRoughnessTexture");
+  GLint u_normalTexture =
+      glGetUniformLocation(program.get_name(), "u_normalTexture");
+  GLint u_emissiveTexture =
+      glGetUniformLocation(program.get_name(), "u_emissiveTexture");
+  GLint u_occlusionTexture =
+      glGetUniformLocation(program.get_name(), "u_occlusionTexture");
+  GLint u_baseColorFactor =
+      glGetUniformLocation(program.get_name(), "u_baseColorFactor");
+  GLint u_metallicFactor =
+      glGetUniformLocation(program.get_name(), "u_metallicFactor");
+  GLint u_roughnessFactor =
+      glGetUniformLocation(program.get_name(), "u_roughnessFactor");
+  GLint u_emissiveFactor =
+      glGetUniformLocation(program.get_name(), "u_emissiveFactor");
 
   // Main render loop
   while (!window->shouldClose()) {
@@ -324,15 +346,14 @@ int main() {
 
     // Setup matrices
     glm::mat4 model = glm::mat4(1.0f);
-    model = glm::rotate(model, glm::radians(rotation), glm::vec3(0.0f, 1.0f, 0.0f));
-    
-    glm::mat4 view = glm::lookAt(g_camera.position, 
-                                  glm::vec3(0.0f, 0.0f, 0.0f), 
-                                  g_camera.up);
-    
-    glm::mat4 projection = glm::perspective(glm::radians(g_camera.fov), 
-                                             1280.0f / 720.0f, 
-                                             0.1f, 100.0f);
+    model =
+        glm::rotate(model, glm::radians(rotation), glm::vec3(0.0f, 1.0f, 0.0f));
+
+    glm::mat4 view = glm::lookAt(g_camera.position, glm::vec3(0.0f, 0.0f, 0.0f),
+                                 g_camera.up);
+
+    glm::mat4 projection = glm::perspective(glm::radians(g_camera.fov),
+                                            1280.0f / 720.0f, 0.1f, 100.0f);
 
     // Set uniforms
     glUniformMatrix4fv(u_model, 1, GL_FALSE, glm::value_ptr(model));
@@ -343,17 +364,19 @@ int main() {
     glUniform3fv(u_viewPos, 1, glm::value_ptr(g_camera.position));
 
     // Render each mesh
-    for (const auto& mesh_data : mesh_data_list) {
+    for (const auto &mesh_data : mesh_data_list) {
       mesh_data.vao.bind();
 
       // Bind textures and set material uniforms
       if (mesh_data.material) {
-        const auto& mat = mesh_data.material;
-        const auto& pbr = mat->pbr_metallic_roughness;
+        const auto &mat = mesh_data.material;
+        const auto &pbr = mat->pbr_metallic_roughness;
 
         // Base color
-        glUniform4fv(u_baseColorFactor, 1, glm::value_ptr(pbr.base_color_factor));
-        if (pbr.base_color_texture && texture_map.count(pbr.base_color_texture)) {
+        glUniform4fv(u_baseColorFactor, 1,
+                     glm::value_ptr(pbr.base_color_factor));
+        if (pbr.base_color_texture &&
+            texture_map.count(pbr.base_color_texture)) {
           texture_map.at(pbr.base_color_texture)->bind(0);
         } else {
           default_white.bind(0);
@@ -363,7 +386,8 @@ int main() {
         // Metallic roughness
         glUniform1f(u_metallicFactor, pbr.metallic_factor);
         glUniform1f(u_roughnessFactor, pbr.roughness_factor);
-        if (pbr.metallic_roughness_texture && texture_map.count(pbr.metallic_roughness_texture)) {
+        if (pbr.metallic_roughness_texture &&
+            texture_map.count(pbr.metallic_roughness_texture)) {
           texture_map.at(pbr.metallic_roughness_texture)->bind(1);
         } else {
           default_metallic_roughness.bind(1);
@@ -388,7 +412,8 @@ int main() {
         sampler.bind(3);
 
         // Occlusion
-        if (mat->occlusion_texture && texture_map.count(mat->occlusion_texture)) {
+        if (mat->occlusion_texture &&
+            texture_map.count(mat->occlusion_texture)) {
           texture_map.at(mat->occlusion_texture)->bind(4);
         } else {
           default_white.bind(4);
@@ -404,7 +429,9 @@ int main() {
 
       // Draw
       if (mesh_data.index_count > 0) {
-        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(mesh_data.index_count), GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES,
+                       static_cast<GLsizei>(mesh_data.index_count),
+                       GL_UNSIGNED_INT, 0);
       }
     }
 

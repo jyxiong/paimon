@@ -1,6 +1,5 @@
 #pragma once
 
-
 #ifdef PAIMON_PLATFORM_WIN32
 #include <windows.h>
 
@@ -23,11 +22,10 @@ private:
   void loadExtensions();
 
 private:
-  static const TCHAR* s_name;
+  static const TCHAR *s_name;
 
   HMODULE m_module;
   ATOM m_id;
-
 };
 
 } // namespace paimon

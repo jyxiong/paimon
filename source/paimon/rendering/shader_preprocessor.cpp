@@ -8,7 +8,6 @@
 #include "paimon/core/macro.h"
 #include "paimon/rendering/shader_source.h"
 
-
 using namespace paimon;
 
 ShaderPreprocessor::ShaderPreprocessor() {}
@@ -22,8 +21,7 @@ void ShaderPreprocessor::addIncludePath(const std::filesystem::path &path) {
 }
 
 void ShaderPreprocessor::setIncludePaths(
-  const std::vector<std::filesystem::path> &paths
-) {
+    const std::vector<std::filesystem::path> &paths) {
   m_includePaths.clear();
   for (const auto &path : paths) {
     addIncludePath(path);
@@ -50,8 +48,7 @@ void ShaderPreprocessor::clearCache() {
 }
 
 void ShaderPreprocessor::resolveDefines(
-  std::string &source, const std::vector<std::string> &defines
-) const {
+    std::string &source, const std::vector<std::string> &defines) const {
 
   if (defines.empty()) {
     return;
@@ -87,12 +84,11 @@ void ShaderPreprocessor::resolveIncludes(std::string &source) {
 #ifdef PAIMON_OS_WINDOWS
   // MSVC doesn't support std::regex_constants::multiline
   static const std::regex includePattern(
-    R"(^\s*#include\s+([<"])([^>"]+)([>"])\s*(?://.*)?$)"
-  );
+      R"(^\s*#include\s+([<"])([^>"]+)([>"])\s*(?://.*)?$)");
 #else
   static const std::regex includePattern(
-    R"(^\s*#include\s+([<"])([^>"]+)([>"])\s*(?://.*)?$)", std::regex_constants::multiline
-  );
+      R"(^\s*#include\s+([<"])([^>"]+)([>"])\s*(?://.*)?$)",
+      std::regex_constants::multiline);
 #endif
 
   // Process all includes
@@ -108,17 +104,16 @@ void ShaderPreprocessor::resolveIncludes(std::string &source) {
     std::filesystem::path resolvedPath;
 
     // Try include paths
-    auto found = std::find_if(
-      m_includePaths.begin(), m_includePaths.end(),
-      [&](const std::filesystem::path &searchPath) {
-        auto fullPath = searchPath / path;
-        if (std::filesystem::exists(fullPath)) {
-          resolvedPath = std::filesystem::canonical(fullPath);
-          return true;
-        }
-        return false;
-      }
-    );
+    auto found = std::find_if(m_includePaths.begin(), m_includePaths.end(),
+                              [&](const std::filesystem::path &searchPath) {
+                                auto fullPath = searchPath / path;
+                                if (std::filesystem::exists(fullPath)) {
+                                  resolvedPath =
+                                      std::filesystem::canonical(fullPath);
+                                  return true;
+                                }
+                                return false;
+                              });
 
     if (found == m_includePaths.end()) {
       LOG_ERROR("Included file not found: {}", includePath);
@@ -126,9 +121,8 @@ void ShaderPreprocessor::resolveIncludes(std::string &source) {
     }
 
     // Check for circular includes
-    if (std::find(
-          m_processingStack.begin(), m_processingStack.end(), resolvedPath
-        ) != m_processingStack.end()) {
+    if (std::find(m_processingStack.begin(), m_processingStack.end(),
+                  resolvedPath) != m_processingStack.end()) {
       LOG_ERROR("Circular include detected: {}", resolvedPath.string());
       return;
     }
@@ -137,7 +131,7 @@ void ShaderPreprocessor::resolveIncludes(std::string &source) {
     std::string replacement;
     if (m_includedFiles.find(resolvedPath) != m_includedFiles.end()) {
       replacement =
-        "// [Already included: " + resolvedPath.filename().string() + "]";
+          "// [Already included: " + resolvedPath.filename().string() + "]";
     } else {
       // Mark as included
       m_includedFiles.insert(resolvedPath);
@@ -156,7 +150,7 @@ void ShaderPreprocessor::resolveIncludes(std::string &source) {
 
       // Build replacement with comments
       replacement =
-        "// --- Begin include: " + includePath + " ---\n" + includeSource;
+          "// --- Begin include: " + includePath + " ---\n" + includeSource;
       if (!includeSource.empty() && includeSource.back() != '\n') {
         replacement += "\n";
       }

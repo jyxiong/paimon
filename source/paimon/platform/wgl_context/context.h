@@ -4,8 +4,8 @@
 
 #include "paimon/platform/context.h"
 
-#include <windows.h>
 #include <memory>
+#include <windows.h>
 
 namespace paimon {
 
@@ -28,7 +28,8 @@ public:
 
   static std::unique_ptr<Context> getCurrent();
 
-  static std::unique_ptr<Context> create(const Context& shared, const ContextFormat &format);
+  static std::unique_ptr<Context> create(const Context &shared,
+                                         const ContextFormat &format);
 
   static std::unique_ptr<Context> create(const ContextFormat &format);
 

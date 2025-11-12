@@ -1,11 +1,12 @@
 #include "paimon/opengl/shader_program.h"
 
-#include <vector>
 #include "glad/gl.h"
+#include <vector>
 
 using namespace paimon;
 
-ShaderProgram::ShaderProgram(GLenum type, const std::string &source) : NamedObject(GL_PROGRAM) {
+ShaderProgram::ShaderProgram(GLenum type, const std::string &source)
+    : NamedObject(GL_PROGRAM) {
   const GLchar *sources = source.c_str();
   m_name = glCreateShaderProgramv(type, 1, &sources);
 }
@@ -40,4 +41,3 @@ std::string ShaderProgram::get_info_log() const {
   glGetProgramInfoLog(m_name, length, 0, info_log.data());
   return std::string(info_log.data(), length);
 }
-

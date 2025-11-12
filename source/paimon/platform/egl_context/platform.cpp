@@ -24,14 +24,14 @@ EglPlatform::EglPlatform() : m_display(nullptr) {
     return;
   }
   m_devices.resize(num_devices);
-  if (!eglQueryDevicesEXT(num_devices, m_devices.data(), &num_devices)){
+  if (!eglQueryDevicesEXT(num_devices, m_devices.data(), &num_devices)) {
     LOG_ERROR("Failed to query EGL devices.");
     m_devices.clear();
     return;
   }
 
-  m_display = eglGetPlatformDisplayEXT(EGL_PLATFORM_DEVICE_EXT,
-                                     m_devices[0], nullptr);
+  m_display =
+      eglGetPlatformDisplayEXT(EGL_PLATFORM_DEVICE_EXT, m_devices[0], nullptr);
   if (m_display == EGL_NO_DISPLAY) {
     LOG_ERROR("Got no EGL display.");
     return;

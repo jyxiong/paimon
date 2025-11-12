@@ -88,8 +88,7 @@ void DepthTracker::apply(const DepthState &state) {
 }
 
 void InputAssemblyTracker::apply(const InputAssemblyState &state) {
-  if (m_cache.primitiveTopology != state.primitiveTopology)
-  {
+  if (m_cache.primitiveTopology != state.primitiveTopology) {
     m_cache.primitiveTopology = state.primitiveTopology;
   }
 

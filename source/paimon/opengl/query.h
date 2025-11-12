@@ -23,9 +23,11 @@ public:
 
   void end();
 
-  template <class T> void get(GLenum property, T *value);
+  template <class T>
+  void get(GLenum property, T *value);
 
-  template <class T> T get(GLenum property);
+  template <class T>
+  T get(GLenum property);
 
 private:
   const GLenum m_type;

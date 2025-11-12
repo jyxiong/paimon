@@ -3,7 +3,7 @@
 using namespace paimon;
 
 GraphNode::GraphNode(const std::string_view name, NodeId id)
-  : m_name{name}, m_id{id} {}
+    : m_name{name}, m_id{id} {}
 
 NodeId GraphNode::getId() const { return m_id; }
 

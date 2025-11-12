@@ -15,7 +15,7 @@ public:
   bool is_valid() const override;
 
 public:
-   void get(GLenum pname, GLint *params) const;
+  void get(GLenum pname, GLint *params) const;
   GLint get(GLenum pname) const;
 
   void set(GLenum pname, GLint param) const;

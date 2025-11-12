@@ -2,6 +2,4 @@
 
 using namespace paimon;
 
-void RenderContext::bindGraphicsPipeline(const GraphicsPipeline& pipeline) {
-
-}
+void RenderContext::bindGraphicsPipeline(const GraphicsPipeline &pipeline) {}

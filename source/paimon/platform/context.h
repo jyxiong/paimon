@@ -1,8 +1,8 @@
 #pragma once
 
+#include <memory>
 #include <mutex>
 #include <thread>
-#include <memory>
 
 namespace paimon {
 
@@ -36,10 +36,10 @@ public:
 
   static std::unique_ptr<Context> create(const ContextFormat &format = {});
 
-  static std::unique_ptr<Context> create(const Context& shared, const ContextFormat &format = {});
+  static std::unique_ptr<Context> create(const Context &shared,
+                                         const ContextFormat &format = {});
 
 private:
-
   void init();
 
 protected:
