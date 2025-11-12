@@ -4,7 +4,7 @@
 #include "paimon/core/log_system.h"
 #include "paimon/opengl/shader.h"
 
-const char * ScreenQuad::s_vertexShaderSource = R"(
+const char *ScreenQuad::s_vertexShaderSource = R"(
   #version 460 core
 
   out vec2 TexCoord;
@@ -35,13 +35,12 @@ const char *ScreenQuad::s_fragmentShaderSource = R"(
   }
   )";
 
-
 const float ScreenQuad::s_vertices[20] = {
     // positions        // texture coords
     -1.0f, -1.0f, 0.0f, 0.0f, 0.0f, // bottom left
-    1.0f, -1.0f, 0.0f, 1.0f, 0.0f,  // bottom right
-    -1.0f, 1.0f, 0.0f, 0.0f, 1.0f,  // top left
-    1.0f, 1.0f, 0.0f, 1.0f, 1.0f    // top right
+    1.0f,  -1.0f, 0.0f, 1.0f, 0.0f, // bottom right
+    -1.0f, 1.0f,  0.0f, 0.0f, 1.0f, // top left
+    1.0f,  1.0f,  0.0f, 1.0f, 1.0f  // top right
 };
 
 const unsigned int ScreenQuad::s_indices[6] = {
@@ -63,7 +62,7 @@ ScreenQuad::ScreenQuad() {
   m_vao = std::make_unique<VertexArray>();
   auto &binding = m_vao->get_binding(0);
   binding.bind_buffer(*m_vertex_buffer, 0, 5 * sizeof(float));
-  
+
   // 位置属性
   auto &attribute_pos = m_vao->get_attribute(0);
   attribute_pos.set_format(3, GL_FLOAT, GL_FALSE, 0);

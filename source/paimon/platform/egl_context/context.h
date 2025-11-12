@@ -23,7 +23,8 @@ public:
   bool doneCurrent() const override;
 
   static std::unique_ptr<Context> getCurrent();
-  static std::unique_ptr<Context> create(const Context& shared, const ContextFormat &format);
+  static std::unique_ptr<Context> create(const Context &shared,
+                                         const ContextFormat &format);
   static std::unique_ptr<Context> create(const ContextFormat &format);
 
 private:

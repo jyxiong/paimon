@@ -7,7 +7,7 @@
 
 namespace paimon {
 
-  class VertexArray : public NamedObject {
+class VertexArray : public NamedObject {
 public:
   class Binding {
   public:
@@ -15,15 +15,16 @@ public:
 
     GLuint get_index() const;
 
-    void bind_buffer(const Buffer& buffer, GLintptr offset, GLsizei stride) const;
+    void bind_buffer(const Buffer &buffer, GLintptr offset,
+                     GLsizei stride) const;
 
     void set_divisor(GLuint divisor) const;
+
   private:
     const VertexArray &m_vao;
     GLuint m_index;
   };
-  
-  
+
   class Attribute {
   public:
     Attribute(const VertexArray &vao, GLuint index);
@@ -34,14 +35,14 @@ public:
 
     void disable() const;
 
-    void set_format(GLint size, GLenum type, GLboolean normalized, GLuint relative_offset) const;
+    void set_format(GLint size, GLenum type, GLboolean normalized,
+                    GLuint relative_offset) const;
 
     void bind(const Binding &binding) const;
 
   private:
     const VertexArray &m_vao;
     GLuint m_index;
-
   };
 
 public:

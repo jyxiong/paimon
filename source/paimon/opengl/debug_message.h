@@ -47,10 +47,11 @@ public:
                       GLsizei count, const GLuint *ids, GLboolean enabled);
 
 private:
-  static void GLAPIENTRY debugMessageCallback(GLenum source, GLenum type, GLuint id,
-                                       GLenum severity, GLsizei length,
-                                       const GLchar *message,
-                                       const void *userParam);
+  static void GLAPIENTRY debugMessageCallback(GLenum source, GLenum type,
+                                              GLuint id, GLenum severity,
+                                              GLsizei length,
+                                              const GLchar *message,
+                                              const void *userParam);
 
 protected:
   GLenum m_source;

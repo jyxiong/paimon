@@ -3,8 +3,8 @@
 
 #ifdef PAIMON_PLATFORM_EGL
 
-#include <vector>
 #include "glad/egl.h"
+#include <vector>
 
 namespace paimon {
 class EglPlatform {

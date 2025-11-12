@@ -15,15 +15,15 @@ GlxPlatform *GlxPlatform::instance() {
 
 Display *GlxPlatform::display() const { return m_display; }
 
-GlxPlatform::GlxPlatform() { 
+GlxPlatform::GlxPlatform() {
   m_display = XOpenDisplay(nullptr);
   if (m_display == nullptr) {
-      LOG_ERROR("Cannot open display");
+    LOG_ERROR("Cannot open display");
   }
 
   int glx_version = gladLoaderLoadGLX(m_display, DefaultScreen(m_display));
   if (!glx_version) {
-      LOG_ERROR("Unable to load GLX.");
+    LOG_ERROR("Unable to load GLX.");
   }
 }
 

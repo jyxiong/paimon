@@ -136,63 +136,76 @@ void Texture::get_compressed_image(GLint level, GLsizei buf_size,
 
 GLenum Texture::get_target() const { return m_target; }
 
-template <> void Texture::get(GLenum property, GLint *value) {
+template <>
+void Texture::get(GLenum property, GLint *value) {
   glGetTextureParameteriv(m_name, property, value);
 }
 
-template <> void Texture::get(GLenum property, GLfloat *value) {
+template <>
+void Texture::get(GLenum property, GLfloat *value) {
   glGetTextureParameterfv(m_name, property, value);
 }
 
-template <> GLint Texture::get(GLenum property) {
+template <>
+GLint Texture::get(GLenum property) {
   GLint value;
   get(property, &value);
   return value;
 }
 
-template <> GLfloat Texture::get(GLenum property) {
+template <>
+GLfloat Texture::get(GLenum property) {
   GLfloat value;
   get(property, &value);
   return value;
 }
 
-template <> void Texture::get(GLint level, GLenum property, GLint *value) {
+template <>
+void Texture::get(GLint level, GLenum property, GLint *value) {
   glGetTextureLevelParameteriv(m_name, level, property, value);
 }
 
-template <> void Texture::get(GLint level, GLenum property, GLfloat *value) {
+template <>
+void Texture::get(GLint level, GLenum property, GLfloat *value) {
   glGetTextureLevelParameterfv(m_name, level, property, value);
 }
 
-template <> GLint Texture::get(GLint level, GLenum property) {
+template <>
+GLint Texture::get(GLint level, GLenum property) {
   GLint value;
   get(level, property, &value);
   return value;
 }
 
-template <> GLfloat Texture::get(GLint level, GLenum property) {
+template <>
+GLfloat Texture::get(GLint level, GLenum property) {
   GLfloat value;
   get(level, property, &value);
   return value;
 }
 
-template <> void Texture::set<GLint>(GLenum property, GLint value) {
+template <>
+void Texture::set<GLint>(GLenum property, GLint value) {
   glTextureParameteri(m_name, property, value);
 }
 
-template <> void Texture::set<GLenum>(GLenum property, GLenum value) {
+template <>
+void Texture::set<GLenum>(GLenum property, GLenum value) {
   glTextureParameteri(m_name, property, static_cast<GLint>(value));
 }
 
-template <> void Texture::set<GLfloat>(GLenum property, GLfloat value) {
+template <>
+void Texture::set<GLfloat>(GLenum property, GLfloat value) {
   glTextureParameterf(m_name, property, value);
 }
 
-template <> void Texture::set<GLint *>(GLenum property, GLint *value) {
+template <>
+void Texture::set<GLint *>(GLenum property, GLint *value) {
   glTextureParameteriv(m_name, property, value);
 }
 
-template <> void Texture::set<GLfloat *>(GLenum property, GLfloat *value) {
+template <>
+void Texture::set<GLfloat *>(GLenum property, GLfloat *value) {
   glTextureParameterfv(m_name, property, value);
 }
 

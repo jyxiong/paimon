@@ -1,8 +1,8 @@
 #include "paimon/core/fg/transient_resources.h"
 
 #include "paimon/core/hash.h"
-#include "paimon/rendering/render_context.h"
 #include "paimon/core/log_system.h"
+#include "paimon/rendering/render_context.h"
 #include <algorithm>
 
 using namespace paimon;
@@ -14,10 +14,8 @@ struct hash<FrameGraphTexture::Descriptor> {
   std::size_t
   operator()(const FrameGraphTexture::Descriptor &desc) const noexcept {
     std::size_t h{0};
-    hashCombine(
-      h, desc.target, desc.width, desc.height, desc.depth, desc.mipLevels,
-      desc.arrayLayers, desc.format
-    );
+    hashCombine(h, desc.target, desc.width, desc.height, desc.depth,
+                desc.mipLevels, desc.arrayLayers, desc.format);
     return h;
   }
 };
@@ -59,18 +57,15 @@ void heartbeat(auto &objects, auto &pools, float dt, auto &&deleter) {
       ++poolIt;
     }
   }
-  objects.erase(
-    std::remove_if(
-      objects.begin(), objects.end(), [](auto &object) { return object->is_valid(); }
-    ),
-    objects.end()
-  );
+  objects.erase(std::remove_if(objects.begin(), objects.end(),
+                               [](auto &object) { return object->is_valid(); }),
+                objects.end());
 }
 
 } // namespace
 
 TransientResources::TransientResources(RenderContext &rc)
-  : m_renderContext{rc} {}
+    : m_renderContext{rc} {}
 
 TransientResources::~TransientResources() {
   // for (auto &texture : m_textures)
@@ -80,7 +75,7 @@ TransientResources::~TransientResources() {
 }
 
 void TransientResources::update(float dt) {
-  const auto deleter = [&](auto &object) {  };
+  const auto deleter = [&](auto &object) {};
   heartbeat(m_textures, m_texturePools, dt, deleter);
   heartbeat(m_buffers, m_bufferPools, dt, deleter);
 }
@@ -91,9 +86,8 @@ TransientResources::acquireTexture(const FrameGraphTexture::Descriptor &desc) {
   auto &pool = m_texturePools[h];
   if (pool.empty()) {
     Texture texture(desc.target);
-    texture.set_storage_2d(
-      desc.mipLevels, desc.format, desc.width, desc.height
-    );
+    texture.set_storage_2d(desc.mipLevels, desc.format, desc.width,
+                           desc.height);
 
     m_textures.emplace_back(std::make_unique<Texture>(std::move(texture)));
     return m_textures.back().get();
@@ -105,8 +99,7 @@ TransientResources::acquireTexture(const FrameGraphTexture::Descriptor &desc) {
 }
 
 void TransientResources::releaseTexture(
-  const FrameGraphTexture::Descriptor &desc, Texture *texture
-) {
+    const FrameGraphTexture::Descriptor &desc, Texture *texture) {
   const auto h = std::hash<FrameGraphTexture::Descriptor>{}(desc);
   m_texturePools[h].emplace_back(texture, 0.0f);
 }
@@ -127,9 +120,8 @@ TransientResources::acquireBuffer(const FrameGraphBuffer::Descriptor &desc) {
   }
 }
 
-void TransientResources::releaseBuffer(
-  const FrameGraphBuffer::Descriptor &desc, Buffer *buffer
-) {
+void TransientResources::releaseBuffer(const FrameGraphBuffer::Descriptor &desc,
+                                       Buffer *buffer) {
   const auto h = std::hash<FrameGraphBuffer::Descriptor>{}(desc);
   m_bufferPools[h].emplace_back(buffer, 0.0f);
 }

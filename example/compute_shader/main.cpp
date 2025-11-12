@@ -40,12 +40,10 @@ void main() {
 int main() {
   LogSystem::init();
 
-  auto context = Context::create(
-    ContextFormat{
+  auto context = Context::create(ContextFormat{
       .majorVersion = 4,
       .minorVersion = 5,
-    }
-  );
+  });
   context->makeCurrent();
 
   // Volume and output dimensions
@@ -71,9 +69,8 @@ int main() {
   // Create and populate 3D texture using paimon wrapper
   Texture tex3D(GL_TEXTURE_3D);
   tex3D.set_storage_3d(1, GL_RGBA8, volW, volH, volD);
-  tex3D.set_sub_image_3d(
-    0, 0, 0, 0, volW, volH, volD, GL_RGBA, GL_UNSIGNED_BYTE, volData.data()
-  );
+  tex3D.set_sub_image_3d(0, 0, 0, 0, volW, volH, volD, GL_RGBA,
+                         GL_UNSIGNED_BYTE, volData.data());
 
   // Create sampler for 3D texture
   Sampler sampler3D;
@@ -98,9 +95,8 @@ int main() {
   // Bind texture to unit 0 and sampler to same unit
   tex3D.bind(0);
   sampler3D.bind(0);
-  glBindImageTexture(
-    1, outTex.get_name(), 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8
-  );
+  glBindImageTexture(1, outTex.get_name(), 0, GL_FALSE, 0, GL_WRITE_ONLY,
+                     GL_RGBA8);
 
   // Dispatch compute
   pipeline.bind();
@@ -109,17 +105,14 @@ int main() {
   int groupsX = (outW + localSizeX - 1) / localSizeX;
   int groupsY = (outH + localSizeY - 1) / localSizeY;
   glDispatchCompute(groupsX, groupsY, 1);
-  glMemoryBarrier(
-    GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_TEXTURE_FETCH_BARRIER_BIT
-  );
+  glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT |
+                  GL_TEXTURE_FETCH_BARRIER_BIT);
 
   // Read back pixels
-  std::vector<uint8_t> pixels(outW * outH * 4);  
-  outTex.get_image(
-    0, GL_RGBA, GL_UNSIGNED_BYTE, static_cast<GLsizei>(pixels.size()),
-    pixels.data()
-  );
-  
+  std::vector<uint8_t> pixels(outW * outH * 4);
+  outTex.get_image(0, GL_RGBA, GL_UNSIGNED_BYTE,
+                   static_cast<GLsizei>(pixels.size()), pixels.data());
+
   const char *outPath = "compute_output.png";
   if (!stbi_write_png(outPath, outW, outH, 4, pixels.data(), outW * 4)) {
     LOG_ERROR("Failed to write PNG");

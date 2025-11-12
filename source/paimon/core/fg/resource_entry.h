@@ -7,7 +7,7 @@ namespace paimon {
 class ResourceEntry {
 public:
   ResourceEntry(ResourceId id, std::unique_ptr<ResourceConcept> &&resource)
-    : m_id(id), m_version(0), m_concept(std::move(resource)) {}
+      : m_id(id), m_version(0), m_concept(std::move(resource)) {}
 
   ResourceEntry() = delete;
   ResourceEntry(const ResourceEntry &) = delete;
@@ -16,12 +16,8 @@ public:
   ResourceEntry &operator=(const ResourceEntry &) = delete;
   ResourceEntry &operator=(ResourceEntry &&) noexcept = delete;
 
-  void create(void *allocator) {
-    m_concept->create(allocator);
-  }
-  void destroy(void *allocator) {
-    m_concept->destroy(allocator);
-  }
+  void create(void *allocator) { m_concept->create(allocator); }
+  void destroy(void *allocator) { m_concept->destroy(allocator); }
 
   void preRead(uint32_t flags, void *context) {
     m_concept->preRead(flags, context);
@@ -61,4 +57,4 @@ private:
   PassNode *m_last{nullptr};
 };
 
-}
+} // namespace paimon

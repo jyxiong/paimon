@@ -11,15 +11,15 @@ struct Sampler;
 
 /// Texture combining image and sampler
 struct Texture {
-    std::string name;
-    
-    // References to image and sampler
-    std::shared_ptr<Image> image = nullptr;
-    std::shared_ptr<Sampler> sampler = nullptr;
-    
-    Texture() = default;
-    Texture(const std::string& name) : name(name) {}
+  std::string name;
+
+  // References to image and sampler
+  std::shared_ptr<Image> image = nullptr;
+  std::shared_ptr<Sampler> sampler = nullptr;
+
+  Texture() = default;
+  Texture(const std::string &name) : name(name) {}
 };
 
-}  // namespace sg
-}  // namespace paimon
+} // namespace sg
+} // namespace paimon

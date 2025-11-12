@@ -6,11 +6,10 @@ struct ScissorRect {
   int y = 0;
   int width = 800;
   int height = 600;
-  bool operator==(const ScissorRect& other) const = default;
+  bool operator==(const ScissorRect &other) const = default;
 };
 
-struct ScissorState
-{
+struct ScissorState {
   bool enable = false;
   ScissorRect scissor;
 };

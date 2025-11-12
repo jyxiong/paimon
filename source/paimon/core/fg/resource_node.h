@@ -6,9 +6,8 @@
 namespace paimon {
 class ResourceNode : public GraphNode {
 public:
-  ResourceNode(
-    const std::string_view name, NodeId id, ResourceId resource, Version version
-  );
+  ResourceNode(const std::string_view name, NodeId id, ResourceId resource,
+               Version version);
 
   ResourceNode(const ResourceNode &) = delete;
   ResourceNode(ResourceNode &&) noexcept = default;

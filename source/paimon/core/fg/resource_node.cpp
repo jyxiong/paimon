@@ -2,11 +2,10 @@
 
 using namespace paimon;
 
-ResourceNode::ResourceNode(
-  const std::string_view name, NodeId id, ResourceId resource, Version version
-)
-  : GraphNode(name, id), m_resource_id(resource),
-    m_resource_version(version) {}
+ResourceNode::ResourceNode(const std::string_view name, NodeId id,
+                           ResourceId resource, Version version)
+    : GraphNode(name, id), m_resource_id(resource),
+      m_resource_version(version) {}
 
 ResourceId ResourceNode::getResourceId() const { return m_resource_id; }
 

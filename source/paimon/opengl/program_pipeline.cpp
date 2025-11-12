@@ -16,15 +16,12 @@ bool ProgramPipeline::is_valid() const {
   return glIsProgramPipeline(m_name) == GL_TRUE;
 }
 
-void ProgramPipeline::bind() const {
-  glBindProgramPipeline(m_name);
-}
+void ProgramPipeline::bind() const { glBindProgramPipeline(m_name); }
 
-void ProgramPipeline::unbind() {
-  glBindProgramPipeline(0);
-}
+void ProgramPipeline::unbind() { glBindProgramPipeline(0); }
 
-void ProgramPipeline::use_program_stages(GLbitfield stages, GLuint program) const {
+void ProgramPipeline::use_program_stages(GLbitfield stages,
+                                         GLuint program) const {
   glUseProgramStages(m_name, stages, program);
 }
 

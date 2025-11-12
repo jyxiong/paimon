@@ -5,17 +5,17 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "paimon/platform/window.h"
 #include "paimon/core/fg/frame_graph.h"
 #include "paimon/core/fg/frame_graph_texture.h"
 #include "paimon/core/fg/transient_resources.h"
-#include "paimon/rendering/render_context.h"
 #include "paimon/opengl/buffer.h"
-#include "paimon/opengl/vertex_array.h"
-#include "paimon/opengl/shader.h"
-#include "paimon/opengl/program.h"
 #include "paimon/opengl/framebuffer.h"
+#include "paimon/opengl/program.h"
+#include "paimon/opengl/shader.h"
 #include "paimon/opengl/texture.h"
+#include "paimon/opengl/vertex_array.h"
+#include "paimon/platform/window.h"
+#include "paimon/rendering/render_context.h"
 
 using namespace paimon;
 
@@ -26,7 +26,7 @@ struct Vertex {
 };
 
 // Shadow map shader (depth only)
-const char* shadow_vertex_shader = R"(
+const char *shadow_vertex_shader = R"(
 #version 460 core
 layout(location = 0) in vec3 aPos;
 
@@ -38,7 +38,7 @@ void main() {
 }
 )";
 
-const char* shadow_fragment_shader = R"(
+const char *shadow_fragment_shader = R"(
 #version 460 core
 void main() {
   // Depth is automatically written
@@ -46,7 +46,7 @@ void main() {
 )";
 
 // Scene rendering shader
-const char* scene_vertex_shader = R"(
+const char *scene_vertex_shader = R"(
 #version 460 core
 layout(location = 0) in vec3 aPos;
 layout(location = 1) in vec3 aNormal;
@@ -68,7 +68,7 @@ void main() {
 }
 )";
 
-const char* scene_fragment_shader = R"(
+const char *scene_fragment_shader = R"(
 #version 460 core
 out vec4 FragColor;
 
@@ -138,48 +138,72 @@ void main() {
 // Generate cube vertices
 std::vector<Vertex> generateCubeVertices() {
   std::vector<Vertex> vertices;
-  
+
   // Cube vertices with normals
   glm::vec3 positions[] = {
-    // Front face
-    {-0.5f, -0.5f,  0.5f}, { 0.5f, -0.5f,  0.5f}, { 0.5f,  0.5f,  0.5f},
-    { 0.5f,  0.5f,  0.5f}, {-0.5f,  0.5f,  0.5f}, {-0.5f, -0.5f,  0.5f},
-    // Back face
-    { 0.5f, -0.5f, -0.5f}, {-0.5f, -0.5f, -0.5f}, {-0.5f,  0.5f, -0.5f},
-    {-0.5f,  0.5f, -0.5f}, { 0.5f,  0.5f, -0.5f}, { 0.5f, -0.5f, -0.5f},
-    // Top face
-    {-0.5f,  0.5f,  0.5f}, { 0.5f,  0.5f,  0.5f}, { 0.5f,  0.5f, -0.5f},
-    { 0.5f,  0.5f, -0.5f}, {-0.5f,  0.5f, -0.5f}, {-0.5f,  0.5f,  0.5f},
-    // Bottom face
-    {-0.5f, -0.5f, -0.5f}, { 0.5f, -0.5f, -0.5f}, { 0.5f, -0.5f,  0.5f},
-    { 0.5f, -0.5f,  0.5f}, {-0.5f, -0.5f,  0.5f}, {-0.5f, -0.5f, -0.5f},
-    // Right face
-    { 0.5f, -0.5f,  0.5f}, { 0.5f, -0.5f, -0.5f}, { 0.5f,  0.5f, -0.5f},
-    { 0.5f,  0.5f, -0.5f}, { 0.5f,  0.5f,  0.5f}, { 0.5f, -0.5f,  0.5f},
-    // Left face
-    {-0.5f, -0.5f, -0.5f}, {-0.5f, -0.5f,  0.5f}, {-0.5f,  0.5f,  0.5f},
-    {-0.5f,  0.5f,  0.5f}, {-0.5f,  0.5f, -0.5f}, {-0.5f, -0.5f, -0.5f},
+      // Front face
+      {-0.5f, -0.5f, 0.5f},
+      {0.5f, -0.5f, 0.5f},
+      {0.5f, 0.5f, 0.5f},
+      {0.5f, 0.5f, 0.5f},
+      {-0.5f, 0.5f, 0.5f},
+      {-0.5f, -0.5f, 0.5f},
+      // Back face
+      {0.5f, -0.5f, -0.5f},
+      {-0.5f, -0.5f, -0.5f},
+      {-0.5f, 0.5f, -0.5f},
+      {-0.5f, 0.5f, -0.5f},
+      {0.5f, 0.5f, -0.5f},
+      {0.5f, -0.5f, -0.5f},
+      // Top face
+      {-0.5f, 0.5f, 0.5f},
+      {0.5f, 0.5f, 0.5f},
+      {0.5f, 0.5f, -0.5f},
+      {0.5f, 0.5f, -0.5f},
+      {-0.5f, 0.5f, -0.5f},
+      {-0.5f, 0.5f, 0.5f},
+      // Bottom face
+      {-0.5f, -0.5f, -0.5f},
+      {0.5f, -0.5f, -0.5f},
+      {0.5f, -0.5f, 0.5f},
+      {0.5f, -0.5f, 0.5f},
+      {-0.5f, -0.5f, 0.5f},
+      {-0.5f, -0.5f, -0.5f},
+      // Right face
+      {0.5f, -0.5f, 0.5f},
+      {0.5f, -0.5f, -0.5f},
+      {0.5f, 0.5f, -0.5f},
+      {0.5f, 0.5f, -0.5f},
+      {0.5f, 0.5f, 0.5f},
+      {0.5f, -0.5f, 0.5f},
+      // Left face
+      {-0.5f, -0.5f, -0.5f},
+      {-0.5f, -0.5f, 0.5f},
+      {-0.5f, 0.5f, 0.5f},
+      {-0.5f, 0.5f, 0.5f},
+      {-0.5f, 0.5f, -0.5f},
+      {-0.5f, -0.5f, -0.5f},
   };
-  
+
   glm::vec3 normals[] = {
-    { 0.0f,  0.0f,  1.0f}, { 0.0f,  0.0f,  1.0f}, { 0.0f,  0.0f,  1.0f},
-    { 0.0f,  0.0f,  1.0f}, { 0.0f,  0.0f,  1.0f}, { 0.0f,  0.0f,  1.0f},
-    { 0.0f,  0.0f, -1.0f}, { 0.0f,  0.0f, -1.0f}, { 0.0f,  0.0f, -1.0f},
-    { 0.0f,  0.0f, -1.0f}, { 0.0f,  0.0f, -1.0f}, { 0.0f,  0.0f, -1.0f},
-    { 0.0f,  1.0f,  0.0f}, { 0.0f,  1.0f,  0.0f}, { 0.0f,  1.0f,  0.0f},
-    { 0.0f,  1.0f,  0.0f}, { 0.0f,  1.0f,  0.0f}, { 0.0f,  1.0f,  0.0f},
-    { 0.0f, -1.0f,  0.0f}, { 0.0f, -1.0f,  0.0f}, { 0.0f, -1.0f,  0.0f},
-    { 0.0f, -1.0f,  0.0f}, { 0.0f, -1.0f,  0.0f}, { 0.0f, -1.0f,  0.0f},
-    { 1.0f,  0.0f,  0.0f}, { 1.0f,  0.0f,  0.0f}, { 1.0f,  0.0f,  0.0f},
-    { 1.0f,  0.0f,  0.0f}, { 1.0f,  0.0f,  0.0f}, { 1.0f,  0.0f,  0.0f},
-    {-1.0f,  0.0f,  0.0f}, {-1.0f,  0.0f,  0.0f}, {-1.0f,  0.0f,  0.0f},
-    {-1.0f,  0.0f,  0.0f}, {-1.0f,  0.0f,  0.0f}, {-1.0f,  0.0f,  0.0f},
+      {0.0f, 0.0f, 1.0f},  {0.0f, 0.0f, 1.0f},  {0.0f, 0.0f, 1.0f},
+      {0.0f, 0.0f, 1.0f},  {0.0f, 0.0f, 1.0f},  {0.0f, 0.0f, 1.0f},
+      {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f, -1.0f},
+      {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f, -1.0f},
+      {0.0f, 1.0f, 0.0f},  {0.0f, 1.0f, 0.0f},  {0.0f, 1.0f, 0.0f},
+      {0.0f, 1.0f, 0.0f},  {0.0f, 1.0f, 0.0f},  {0.0f, 1.0f, 0.0f},
+      {0.0f, -1.0f, 0.0f}, {0.0f, -1.0f, 0.0f}, {0.0f, -1.0f, 0.0f},
+      {0.0f, -1.0f, 0.0f}, {0.0f, -1.0f, 0.0f}, {0.0f, -1.0f, 0.0f},
+      {1.0f, 0.0f, 0.0f},  {1.0f, 0.0f, 0.0f},  {1.0f, 0.0f, 0.0f},
+      {1.0f, 0.0f, 0.0f},  {1.0f, 0.0f, 0.0f},  {1.0f, 0.0f, 0.0f},
+      {-1.0f, 0.0f, 0.0f}, {-1.0f, 0.0f, 0.0f}, {-1.0f, 0.0f, 0.0f},
+      {-1.0f, 0.0f, 0.0f}, {-1.0f, 0.0f, 0.0f}, {-1.0f, 0.0f, 0.0f},
   };
-  
+
   for (int i = 0; i < 36; ++i) {
     vertices.push_back({positions[i], normals[i]});
   }
-  
+
   return vertices;
 }
 
@@ -188,13 +212,13 @@ std::vector<Vertex> generatePlaneVertices() {
   // Make sure the winding order is counter-clockwise when viewed from above
   // Using a slightly higher position and smaller size for better visibility
   return {
-    {{-3.0f, -0.5f,  3.0f}, {0.0f, 1.0f, 0.0f}},
-    {{ 3.0f, -0.5f,  3.0f}, {0.0f, 1.0f, 0.0f}},
-    {{ 3.0f, -0.5f, -3.0f}, {0.0f, 1.0f, 0.0f}},
-    
-    {{ 3.0f, -0.5f, -3.0f}, {0.0f, 1.0f, 0.0f}},
-    {{-3.0f, -0.5f, -3.0f}, {0.0f, 1.0f, 0.0f}},
-    {{-3.0f, -0.5f,  3.0f}, {0.0f, 1.0f, 0.0f}},
+      {{-3.0f, -0.5f, 3.0f}, {0.0f, 1.0f, 0.0f}},
+      {{3.0f, -0.5f, 3.0f}, {0.0f, 1.0f, 0.0f}},
+      {{3.0f, -0.5f, -3.0f}, {0.0f, 1.0f, 0.0f}},
+
+      {{3.0f, -0.5f, -3.0f}, {0.0f, 1.0f, 0.0f}},
+      {{-3.0f, -0.5f, -3.0f}, {0.0f, 1.0f, 0.0f}},
+      {{-3.0f, -0.5f, 3.0f}, {0.0f, 1.0f, 0.0f}},
   };
 }
 
@@ -205,156 +229,166 @@ struct RenderData {
   Buffer planeVBO;
   VertexArray cubeVAO;
   VertexArray planeVAO;
-  
+
   // Shaders
   Program shadowProgram;
   Program sceneProgram;
-  
+
   // Shadow map
   Framebuffer shadowFBO;
   Texture shadowMap;
-  
+
   // Scene parameters
   glm::vec3 lightPos = glm::vec3(3.0f, 4.0f, 2.0f);
   glm::vec3 cameraPos = glm::vec3(0.0f, 2.0f, 5.0f);
   glm::mat4 lightSpaceMatrix;
   glm::mat4 view;
   glm::mat4 projection;
-  
+
   int shadowMapSize = 2048;
   int screenWidth = 800;
   int screenHeight = 600;
-  
+
   // Constructor to initialize Texture with target
   RenderData() : shadowMap(GL_TEXTURE_2D) {}
 };
 
-void setupGeometry(RenderData& rd) {
+void setupGeometry(RenderData &rd) {
   // Generate vertex data
   auto cubeVertices = generateCubeVertices();
   auto planeVertices = generatePlaneVertices();
-  
+
   std::cout << "Cube vertices: " << cubeVertices.size() << std::endl;
   std::cout << "Plane vertices: " << planeVertices.size() << std::endl;
-  std::cout << "Plane vertex 0: (" << planeVertices[0].position.x << ", " 
-            << planeVertices[0].position.y << ", " << planeVertices[0].position.z << ")" << std::endl;
-  
+  std::cout << "Plane vertex 0: (" << planeVertices[0].position.x << ", "
+            << planeVertices[0].position.y << ", "
+            << planeVertices[0].position.z << ")" << std::endl;
+
   // Setup cube VBO and VAO
-  rd.cubeVBO.set_storage(cubeVertices.size() * sizeof(Vertex), cubeVertices.data(), 0);
-  
-  auto& cubeBinding = rd.cubeVAO.get_binding(0);
+  rd.cubeVBO.set_storage(cubeVertices.size() * sizeof(Vertex),
+                         cubeVertices.data(), 0);
+
+  auto &cubeBinding = rd.cubeVAO.get_binding(0);
   cubeBinding.bind_buffer(rd.cubeVBO, 0, sizeof(Vertex));
-  
-  auto& cubePos = rd.cubeVAO.get_attribute(0);
+
+  auto &cubePos = rd.cubeVAO.get_attribute(0);
   cubePos.set_format(3, GL_FLOAT, GL_FALSE, offsetof(Vertex, position));
   cubePos.bind(cubeBinding);
   cubePos.enable();
-  
-  auto& cubeNormal = rd.cubeVAO.get_attribute(1);
+
+  auto &cubeNormal = rd.cubeVAO.get_attribute(1);
   cubeNormal.set_format(3, GL_FLOAT, GL_FALSE, offsetof(Vertex, normal));
   cubeNormal.bind(cubeBinding);
   cubeNormal.enable();
-  
+
   // Setup plane VBO and VAO
-  rd.planeVBO.set_storage(planeVertices.size() * sizeof(Vertex), planeVertices.data(), 0);
-  
-  auto& planeBinding = rd.planeVAO.get_binding(0);
+  rd.planeVBO.set_storage(planeVertices.size() * sizeof(Vertex),
+                          planeVertices.data(), 0);
+
+  auto &planeBinding = rd.planeVAO.get_binding(0);
   planeBinding.bind_buffer(rd.planeVBO, 0, sizeof(Vertex));
-  
-  auto& planePos = rd.planeVAO.get_attribute(0);
+
+  auto &planePos = rd.planeVAO.get_attribute(0);
   planePos.set_format(3, GL_FLOAT, GL_FALSE, offsetof(Vertex, position));
   planePos.bind(planeBinding);
   planePos.enable();
-  
-  auto& planeNormal = rd.planeVAO.get_attribute(1);
+
+  auto &planeNormal = rd.planeVAO.get_attribute(1);
   planeNormal.set_format(3, GL_FLOAT, GL_FALSE, offsetof(Vertex, normal));
   planeNormal.bind(planeBinding);
   planeNormal.enable();
 }
 
-void setupShaders(RenderData& rd) {
+void setupShaders(RenderData &rd) {
   // Compile shadow shaders
   Shader shadowVS(GL_VERTEX_SHADER);
   Shader shadowFS(GL_FRAGMENT_SHADER);
-  
+
   if (!shadowVS.compile(shadow_vertex_shader)) {
-    std::cerr << "Shadow vertex shader error: " << shadowVS.get_info_log() << std::endl;
+    std::cerr << "Shadow vertex shader error: " << shadowVS.get_info_log()
+              << std::endl;
   }
   if (!shadowFS.compile(shadow_fragment_shader)) {
-    std::cerr << "Shadow fragment shader error: " << shadowFS.get_info_log() << std::endl;
+    std::cerr << "Shadow fragment shader error: " << shadowFS.get_info_log()
+              << std::endl;
   }
-  
+
   rd.shadowProgram.attach(shadowVS);
   rd.shadowProgram.attach(shadowFS);
   if (!rd.shadowProgram.link()) {
-    std::cerr << "Shadow program link error: " << rd.shadowProgram.get_info_log() << std::endl;
+    std::cerr << "Shadow program link error: "
+              << rd.shadowProgram.get_info_log() << std::endl;
   }
-  
+
   // Compile scene shaders
   Shader sceneVS(GL_VERTEX_SHADER);
   Shader sceneFS(GL_FRAGMENT_SHADER);
-  
+
   if (!sceneVS.compile(scene_vertex_shader)) {
-    std::cerr << "Scene vertex shader error: " << sceneVS.get_info_log() << std::endl;
+    std::cerr << "Scene vertex shader error: " << sceneVS.get_info_log()
+              << std::endl;
   }
   if (!sceneFS.compile(scene_fragment_shader)) {
-    std::cerr << "Scene fragment shader error: " << sceneFS.get_info_log() << std::endl;
+    std::cerr << "Scene fragment shader error: " << sceneFS.get_info_log()
+              << std::endl;
   }
-  
+
   rd.sceneProgram.attach(sceneVS);
   rd.sceneProgram.attach(sceneFS);
   if (!rd.sceneProgram.link()) {
-    std::cerr << "Scene program link error: " << rd.sceneProgram.get_info_log() << std::endl;
+    std::cerr << "Scene program link error: " << rd.sceneProgram.get_info_log()
+              << std::endl;
   }
 }
 
-void setupShadowMap(RenderData& rd) {
+void setupShadowMap(RenderData &rd) {
   // Create shadow map texture
-  rd.shadowMap.set_storage_2d(1, GL_DEPTH_COMPONENT24, rd.shadowMapSize, rd.shadowMapSize);
+  rd.shadowMap.set_storage_2d(1, GL_DEPTH_COMPONENT24, rd.shadowMapSize,
+                              rd.shadowMapSize);
   rd.shadowMap.set(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   rd.shadowMap.set(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   rd.shadowMap.set(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
   rd.shadowMap.set(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
   float borderColor[] = {1.0f, 1.0f, 1.0f, 1.0f};
   glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
-  
+
   // Setup framebuffer
   rd.shadowFBO.attachTexture(GL_DEPTH_ATTACHMENT, &rd.shadowMap, 0);
   rd.shadowFBO.setReadBuffer(GL_NONE);
   GLenum drawBuffers[] = {GL_NONE};
   rd.shadowFBO.setDrawBuffers(1, drawBuffers);
-  
+
   if (!rd.shadowFBO.isComplete(GL_FRAMEBUFFER)) {
     std::cerr << "Shadow framebuffer is not complete!" << std::endl;
   }
 }
 
-void renderScene(RenderData& rd, Program& program, bool isShadowPass) {
+void renderScene(RenderData &rd, Program &program, bool isShadowPass) {
   // Render cube
   glm::mat4 model = glm::mat4(1.0f);
   model = glm::translate(model, glm::vec3(0.0f, 0.5f, 0.0f));
-  
+
   GLint modelLoc = glGetUniformLocation(program.get_name(), "uModel");
   glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-  
+
   if (!isShadowPass) {
     GLint colorLoc = glGetUniformLocation(program.get_name(), "uObjectColor");
     glUniform3f(colorLoc, 1.0f, 0.0f, 0.0f);
   }
-  
+
   rd.cubeVAO.bind();
   glDrawArrays(GL_TRIANGLES, 0, 36);
-  
+
   // Render plane
   model = glm::mat4(1.0f);
   glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-  
+
   if (!isShadowPass) {
     GLint colorLoc = glGetUniformLocation(program.get_name(), "uObjectColor");
     glUniform3f(colorLoc, 0.5f, 0.5f, 0.5f);
     std::cout << "Drawing plane with " << 6 << " vertices" << std::endl;
   }
-  
+
   rd.planeVAO.bind();
   glDrawArrays(GL_TRIANGLES, 0, 6);
 }
@@ -362,12 +396,13 @@ void renderScene(RenderData& rd, Program& program, bool isShadowPass) {
 int main() {
   auto window = Window::create(WindowConfig{
       .title = "Frame Graph Shadow Mapping Example",
-      .format = ContextFormat{
-          .majorVersion = 4,
-          .minorVersion = 6,
-          .profile = ContextProfile::Core,
-          .debug = false,
-      },
+      .format =
+          ContextFormat{
+              .majorVersion = 4,
+              .minorVersion = 6,
+              .profile = ContextProfile::Core,
+              .debug = false,
+          },
       .width = 800,
       .height = 600,
       .resizable = false,
@@ -376,20 +411,26 @@ int main() {
   });
 
   RenderData renderData;
-  
+
   // Setup geometry and shaders
   setupGeometry(renderData);
   setupShaders(renderData);
   setupShadowMap(renderData);
-  
+
   // Setup matrices
-  renderData.projection = glm::perspective(glm::radians(45.0f), 
-    (float)renderData.screenWidth / (float)renderData.screenHeight, 0.1f, 100.0f);
-  renderData.view = glm::lookAt(renderData.cameraPos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-  
+  renderData.projection = glm::perspective(glm::radians(45.0f),
+                                           (float)renderData.screenWidth /
+                                               (float)renderData.screenHeight,
+                                           0.1f, 100.0f);
+  renderData.view =
+      glm::lookAt(renderData.cameraPos, glm::vec3(0.0f, 0.0f, 0.0f),
+                  glm::vec3(0.0f, 1.0f, 0.0f));
+
   // Light space matrix for shadow mapping
-  glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 15.0f);
-  glm::mat4 lightView = glm::lookAt(renderData.lightPos, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+  glm::mat4 lightProjection =
+      glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 15.0f);
+  glm::mat4 lightView = glm::lookAt(renderData.lightPos, glm::vec3(0.0f),
+                                    glm::vec3(0.0f, 1.0f, 0.0f));
   renderData.lightSpaceMatrix = lightProjection * lightView;
 
   // Enable depth testing
@@ -397,10 +438,12 @@ int main() {
   // Temporarily disable culling to debug plane rendering
   // glEnable(GL_CULL_FACE);
 
-  std::cout << "Camera position: " << renderData.cameraPos.x << ", " 
-            << renderData.cameraPos.y << ", " << renderData.cameraPos.z << std::endl;
-  std::cout << "Light position: " << renderData.lightPos.x << ", " 
-            << renderData.lightPos.y << ", " << renderData.lightPos.z << std::endl;
+  std::cout << "Camera position: " << renderData.cameraPos.x << ", "
+            << renderData.cameraPos.y << ", " << renderData.cameraPos.z
+            << std::endl;
+  std::cout << "Light position: " << renderData.lightPos.x << ", "
+            << renderData.lightPos.y << ", " << renderData.lightPos.z
+            << std::endl;
 
   FrameGraph fg;
 
@@ -414,78 +457,89 @@ int main() {
   };
 
   // Shadow map pass
-  const auto& shadow_pass = fg.create_pass<ShadowPassData>(
-    "Shadow Pass",
-    [&](FrameGraph::Builder& builder, ShadowPassData& data) {
-      data.shadow_map = builder.create<FrameGraphTexture>("ShadowMap", {
-        .width = static_cast<uint32_t>(renderData.shadowMapSize),
-        .height = static_cast<uint32_t>(renderData.shadowMapSize),
-        .format = GL_DEPTH_COMPONENT24,
+  const auto &shadow_pass = fg.create_pass<ShadowPassData>(
+      "Shadow Pass",
+      [&](FrameGraph::Builder &builder, ShadowPassData &data) {
+        data.shadow_map = builder.create<FrameGraphTexture>(
+            "ShadowMap",
+            {
+                .width = static_cast<uint32_t>(renderData.shadowMapSize),
+                .height = static_cast<uint32_t>(renderData.shadowMapSize),
+                .format = GL_DEPTH_COMPONENT24,
+            });
+        data.shadow_map = builder.write(data.shadow_map);
+      },
+      [&renderData](FrameGraphResources &resources, void *context) {
+        std::cout << "Executing Shadow Pass\n";
+
+        // Bind shadow framebuffer
+        renderData.shadowFBO.bind();
+        glViewport(0, 0, renderData.shadowMapSize, renderData.shadowMapSize);
+        glClear(GL_DEPTH_BUFFER_BIT);
+
+        // Use shadow shader
+        renderData.shadowProgram.use();
+
+        GLint lightSpaceLoc = glGetUniformLocation(
+            renderData.shadowProgram.get_name(), "uLightSpaceMatrix");
+        glUniformMatrix4fv(lightSpaceLoc, 1, GL_FALSE,
+                           glm::value_ptr(renderData.lightSpaceMatrix));
+
+        // Render scene from light's perspective
+        glCullFace(GL_FRONT);
+        renderScene(renderData, renderData.shadowProgram, true);
+        glCullFace(GL_BACK);
+
+        Framebuffer::unbind();
       });
-      data.shadow_map = builder.write(data.shadow_map);
-    },
-    [&renderData](FrameGraphResources& resources, void* context) {
-      std::cout << "Executing Shadow Pass\n";
-      
-      // Bind shadow framebuffer
-      renderData.shadowFBO.bind();
-      glViewport(0, 0, renderData.shadowMapSize, renderData.shadowMapSize);
-      glClear(GL_DEPTH_BUFFER_BIT);
-      
-      // Use shadow shader
-      renderData.shadowProgram.use();
-      
-      GLint lightSpaceLoc = glGetUniformLocation(renderData.shadowProgram.get_name(), "uLightSpaceMatrix");
-      glUniformMatrix4fv(lightSpaceLoc, 1, GL_FALSE, glm::value_ptr(renderData.lightSpaceMatrix));
-      
-      // Render scene from light's perspective
-      glCullFace(GL_FRONT);
-      renderScene(renderData, renderData.shadowProgram, true);
-      glCullFace(GL_BACK);
-      
-      Framebuffer::unbind();
-    }
-  );
 
   // Scene rendering pass
-  const auto& scene_pass = fg.create_pass<ScenePassData>(
-    "Scene Pass",
-    [&](FrameGraph::Builder& builder, ScenePassData& data) {
-      data.shadow_input = builder.read(shadow_pass.shadow_map);
-    },
-    [&renderData](FrameGraphResources& resources, void* context) {
-      std::cout << "Executing Scene Pass\n";
-      
-      // Render to default framebuffer
-      glViewport(0, 0, renderData.screenWidth, renderData.screenHeight);
-      glClearColor(0.1f, 0.1f, 0.15f, 1.0f);
-      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-      
-      // Use scene shader
-      renderData.sceneProgram.use();
-      
-      // Set uniforms
-      GLint viewLoc = glGetUniformLocation(renderData.sceneProgram.get_name(), "uView");
-      GLint projLoc = glGetUniformLocation(renderData.sceneProgram.get_name(), "uProjection");
-      GLint lightSpaceLoc = glGetUniformLocation(renderData.sceneProgram.get_name(), "uLightSpaceMatrix");
-      GLint lightPosLoc = glGetUniformLocation(renderData.sceneProgram.get_name(), "uLightPos");
-      GLint viewPosLoc = glGetUniformLocation(renderData.sceneProgram.get_name(), "uViewPos");
-      GLint shadowMapLoc = glGetUniformLocation(renderData.sceneProgram.get_name(), "uShadowMap");
-      
-      glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(renderData.view));
-      glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(renderData.projection));
-      glUniformMatrix4fv(lightSpaceLoc, 1, GL_FALSE, glm::value_ptr(renderData.lightSpaceMatrix));
-      glUniform3fv(lightPosLoc, 1, glm::value_ptr(renderData.lightPos));
-      glUniform3fv(viewPosLoc, 1, glm::value_ptr(renderData.cameraPos));
-      glUniform1i(shadowMapLoc, 0);
-      
-      // Bind shadow map
-      renderData.shadowMap.bind(0);
-      
-      // Render scene with shadows
-      renderScene(renderData, renderData.sceneProgram, false);
-    }
-  );
+  const auto &scene_pass = fg.create_pass<ScenePassData>(
+      "Scene Pass",
+      [&](FrameGraph::Builder &builder, ScenePassData &data) {
+        data.shadow_input = builder.read(shadow_pass.shadow_map);
+      },
+      [&renderData](FrameGraphResources &resources, void *context) {
+        std::cout << "Executing Scene Pass\n";
+
+        // Render to default framebuffer
+        glViewport(0, 0, renderData.screenWidth, renderData.screenHeight);
+        glClearColor(0.1f, 0.1f, 0.15f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        // Use scene shader
+        renderData.sceneProgram.use();
+
+        // Set uniforms
+        GLint viewLoc =
+            glGetUniformLocation(renderData.sceneProgram.get_name(), "uView");
+        GLint projLoc = glGetUniformLocation(renderData.sceneProgram.get_name(),
+                                             "uProjection");
+        GLint lightSpaceLoc = glGetUniformLocation(
+            renderData.sceneProgram.get_name(), "uLightSpaceMatrix");
+        GLint lightPosLoc = glGetUniformLocation(
+            renderData.sceneProgram.get_name(), "uLightPos");
+        GLint viewPosLoc = glGetUniformLocation(
+            renderData.sceneProgram.get_name(), "uViewPos");
+        GLint shadowMapLoc = glGetUniformLocation(
+            renderData.sceneProgram.get_name(), "uShadowMap");
+
+        glUniformMatrix4fv(viewLoc, 1, GL_FALSE,
+                           glm::value_ptr(renderData.view));
+        glUniformMatrix4fv(projLoc, 1, GL_FALSE,
+                           glm::value_ptr(renderData.projection));
+        glUniformMatrix4fv(lightSpaceLoc, 1, GL_FALSE,
+                           glm::value_ptr(renderData.lightSpaceMatrix));
+        glUniform3fv(lightPosLoc, 1, glm::value_ptr(renderData.lightPos));
+        glUniform3fv(viewPosLoc, 1, glm::value_ptr(renderData.cameraPos));
+        glUniform1i(shadowMapLoc, 0);
+
+        // Bind shadow map
+        renderData.shadowMap.bind(0);
+
+        // Render scene with shadows
+        renderScene(renderData, renderData.sceneProgram, false);
+      });
 
   std::cout << "\n=== Compiling Frame Graph ===\n";
   fg.compile();

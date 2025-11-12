@@ -60,7 +60,7 @@ class SpotLight : public PunctualLight {
 public:
   float inner_cone_angle = 0.0f; // Inner cone angle in radians
   float outer_cone_angle =
-    glm::radians(45.0f); // Outer cone angle in radians (default π/4)
+      glm::radians(45.0f); // Outer cone angle in radians (default π/4)
 
   SpotLight() = default;
   SpotLight(const std::string &name) : PunctualLight(name) {}

@@ -8,10 +8,9 @@ bool hasId(const std::vector<NodeId> &ids, NodeId id) {
 }
 } // namespace
 
-PassNode::PassNode(
-  std::string name, NodeId id, std::unique_ptr<PassConcept> &&pass
-)
-  : GraphNode(std::move(name), id), m_pass(std::move(pass)) {}
+PassNode::PassNode(std::string name, NodeId id,
+                   std::unique_ptr<PassConcept> &&pass)
+    : GraphNode(std::move(name), id), m_pass(std::move(pass)) {}
 
 const std::vector<NodeId> &PassNode::getCreates() const { return m_creates; }
 

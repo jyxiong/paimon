@@ -1,16 +1,15 @@
 #pragma once
 
-#include "paimon/core/fg/pass_node.h"
 #include "paimon/core/fg/frame_graph.h"
+#include "paimon/core/fg/pass_node.h"
 #include "paimon/core/log_system.h"
 
 namespace paimon {
 
 class FrameGraphResources {
 public:
-  FrameGraphResources(const FrameGraph &fg, const PassNode &node) 
-    : m_frameGraph{fg}, m_passNode{node} {
-  }
+  FrameGraphResources(const FrameGraph &fg, const PassNode &node)
+      : m_frameGraph{fg}, m_passNode{node} {}
 
   FrameGraphResources() = delete;
   FrameGraphResources(const FrameGraphResources &) = delete;

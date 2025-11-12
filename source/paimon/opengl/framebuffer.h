@@ -58,8 +58,9 @@ public:
   void bind() const;
   static void unbind();
 
-  void attachTexture(GLenum attachment, Texture *texture, GLint level=0);
-  void attachTextureLayer(GLenum attachment, Texture *texture, GLint level=0, GLint layer=0);
+  void attachTexture(GLenum attachment, Texture *texture, GLint level = 0);
+  void attachTextureLayer(GLenum attachment, Texture *texture, GLint level = 0,
+                          GLint layer = 0);
   void attachRenderbuffer(GLenum attachment, Renderbuffer *renderbuffer);
 
   void setDrawBuffers(GLsizei n, const GLenum *bufs) const;

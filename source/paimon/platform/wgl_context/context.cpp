@@ -4,8 +4,8 @@
 
 #include <map>
 
-#include "glad/wgl.h"
 #include "glad/gl.h"
+#include "glad/wgl.h"
 
 #include "paimon/core/log_system.h"
 #include "paimon/platform/wgl_context/platform.h"
@@ -76,9 +76,7 @@ bool NativeContext::valid() const {
   return m_context != nullptr && m_hdc != nullptr;
 }
 
-bool NativeContext::loadGLFunctions() const {
-  return gladLoaderLoadGL() != 0;
-}
+bool NativeContext::loadGLFunctions() const { return gladLoaderLoadGL() != 0; }
 
 bool NativeContext::makeCurrent() const {
   auto success = wglMakeCurrent(m_hdc, m_context);
@@ -119,7 +117,7 @@ std::unique_ptr<Context> NativeContext::getCurrent() {
 }
 
 std::unique_ptr<Context> NativeContext::create(const Context &shared,
-                                            const ContextFormat &format) {
+                                               const ContextFormat &format) {
   if (!shared.valid()) {
     LOG_ERROR("Shared context is not a NativeContext");
     return nullptr;

@@ -21,7 +21,6 @@ public:
 
   std::string get_source() const;
 
-
   GLenum get_type() const;
 
   bool compile(const std::string &source);

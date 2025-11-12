@@ -19,11 +19,14 @@ public:
 public:
   void bind(GLuint unit);
 
-  template <class T> void get(GLenum property, T *value);
+  template <class T>
+  void get(GLenum property, T *value);
 
-  template <class T> T get(GLenum property);
+  template <class T>
+  T get(GLenum property);
 
-  template <class T> void set(GLenum property, T value);
+  template <class T>
+  void set(GLenum property, T value);
 };
 
 } // namespace paimon

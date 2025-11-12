@@ -120,9 +120,7 @@ long long NativeContext::nativeHandle() const {
 
 bool NativeContext::valid() const { return m_context != EGL_NO_CONTEXT; }
 
-bool NativeContext::loadGLFunctions() const {
-  return gladLoaderLoadGL() != 0;
-}
+bool NativeContext::loadGLFunctions() const { return gladLoaderLoadGL() != 0; }
 
 bool NativeContext::makeCurrent() const {
   auto success = eglMakeCurrent(EglPlatform::instance()->display(), m_surface,
@@ -161,7 +159,7 @@ std::unique_ptr<Context> NativeContext::getCurrent() {
 }
 
 std::unique_ptr<Context> NativeContext::create(const Context &shared,
-                                            const ContextFormat &format) {
+                                               const ContextFormat &format) {
   auto context = std::make_unique<NativeContext>();
 
   context->createContext(reinterpret_cast<EGLContext>(shared.nativeHandle()),
@@ -175,17 +173,18 @@ std::unique_ptr<Context> NativeContext::create(const ContextFormat &format) {
   return context;
 }
 
-void NativeContext::createContext(EGLContext shared, const ContextFormat &format) {
+void NativeContext::createContext(EGLContext shared,
+                                  const ContextFormat &format) {
   auto display = EglPlatform::instance()->display();
 
-  // IMPORTANT: eglBindAPI is thread-local and must be called in each thread before creating an OpenGL context.
+  // IMPORTANT: eglBindAPI is thread-local and must be called in each thread
+  // before creating an OpenGL context.
   if (eglQueryAPI() != EGL_OPENGL_API) {
     eglBindAPI(EGL_OPENGL_API);
   }
 
-  static EGLint configAttributes[] = {EGL_SURFACE_TYPE, 0,
-                                      EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
-                                      EGL_NONE};
+  static EGLint configAttributes[] = {EGL_SURFACE_TYPE, 0, EGL_RENDERABLE_TYPE,
+                                      EGL_OPENGL_BIT, EGL_NONE};
   EGLint numConfigs;
   EGLConfig config;
   if (!eglChooseConfig(display, configAttributes, &config, 1, &numConfigs)) {

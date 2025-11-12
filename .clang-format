@@ -1,12 +1,7 @@
 ---
-# .clang-format
-# This file is used to configure the formatting style for clang-format.
-# It is based on the LLVM style with some modifications for personal preferences.
-# The style requrires clang-format version 21.1.0
-BasedOnStyle:   LLVM
 Language:        Cpp
+AlignAfterOpenBracket: true
 AccessModifierOffset: -2
-AlignAfterOpenBracket: BlockIndent
 AlignArrayOfStructures: None
 AlignConsecutiveAssignments:
   Enabled:         false
@@ -73,11 +68,13 @@ AlignConsecutiveTableGenDefinitionColons:
 AlignEscapedNewlines: Right
 AlignOperands:   Align
 AlignTrailingComments:
+  AlignPPAndNotPP: true
   Kind:            Always
   OverEmptyLines:  0
 AllowAllArgumentsOnNextLine: true
 AllowAllParametersOfDeclarationOnNextLine: true
 AllowBreakBeforeNoexceptSpecifier: Never
+AllowBreakBeforeQtProperty: false
 AllowShortBlocksOnASingleLine: Never
 AllowShortCaseExpressionOnASingleLine: true
 AllowShortCaseLabelsOnASingleLine: false
@@ -119,9 +116,19 @@ BraceWrapping:
 BreakAdjacentStringLiterals: true
 BreakAfterAttributes: Leave
 BreakAfterJavaFieldAnnotations: false
+BreakAfterOpenBracketBracedList: false
+BreakAfterOpenBracketFunction: false
+BreakAfterOpenBracketIf: false
+BreakAfterOpenBracketLoop: false
+BreakAfterOpenBracketSwitch: false
 BreakAfterReturnType: None
 BreakArrays:     true
 BreakBeforeBinaryOperators: None
+BreakBeforeCloseBracketBracedList: false
+BreakBeforeCloseBracketFunction: false
+BreakBeforeCloseBracketIf: false
+BreakBeforeCloseBracketLoop: false
+BreakBeforeCloseBracketSwitch: false
 BreakBeforeConceptDeclarations: Always
 BreakBeforeBraces: Attach
 BreakBeforeInlineASMColon: OnlyMultiline
@@ -132,13 +139,13 @@ BreakConstructorInitializers: BeforeColon
 BreakFunctionDefinitionParameters: false
 BreakInheritanceList: BeforeColon
 BreakStringLiterals: true
-BreakTemplateDeclarations: true
+BreakTemplateDeclarations: true # changed line
 ColumnLimit:     80
 CommentPragmas:  '^ IWYU pragma:'
 CompactNamespaces: false
-ConstructorInitializerIndentWidth: 2
-ContinuationIndentWidth: 2
-Cpp11BracedListStyle: true
+ConstructorInitializerIndentWidth: 4
+ContinuationIndentWidth: 4
+Cpp11BracedListStyle: AlignFirstComment
 DerivePointerAlignment: false
 DisableFormat:   false
 EmptyLineAfterAccessModifier: Never
@@ -202,6 +209,11 @@ MacroBlockEnd:   ''
 MainIncludeChar: Quote
 MaxEmptyLinesToKeep: 1
 NamespaceIndentation: None
+NumericLiteralCase:
+  ExponentLetter:  Leave
+  HexDigit:        Leave
+  Prefix:          Leave
+  Suffix:          Leave
 ObjCBinPackProtocolList: Auto
 ObjCBlockIndentWidth: 2
 ObjCBreakBeforeNestedBlockParam: true
@@ -238,6 +250,7 @@ SkipMacroDefinitionBody: false
 SortIncludes:
   Enabled:         true
   IgnoreCase:      false
+  IgnoreExtension: false
 SortJavaStaticImport: Before
 SortUsingDeclarations: LexicographicNumeric
 SpaceAfterCStyleCast: false
@@ -266,7 +279,7 @@ SpaceBeforeParensOptions:
   BeforeNonEmptyParentheses: false
 SpaceBeforeRangeBasedForLoopColon: true
 SpaceBeforeSquareBrackets: false
-SpaceInEmptyBlock: false
+SpaceInEmptyBraces: Never
 SpacesBeforeTrailingComments: 1
 SpacesInAngles:  Never
 SpacesInContainerLiterals: true
@@ -299,3 +312,4 @@ WhitespaceSensitiveMacros:
   - STRINGIZE
 WrapNamespaceBodyWithEmptyLines: Leave
 ...
+

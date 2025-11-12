@@ -9,12 +9,12 @@ using namespace paimon;
 VertexArray::Binding::Binding(const VertexArray &vao, GLuint index)
     : m_vao(vao), m_index(index) {}
 
-GLuint VertexArray::Binding::get_index() const {
-  return m_index;
-}
+GLuint VertexArray::Binding::get_index() const { return m_index; }
 
-void VertexArray::Binding::bind_buffer(const Buffer& buffer, GLintptr offset, GLsizei stride) const {
-  glVertexArrayVertexBuffer(m_vao.m_name, m_index, buffer.get_name(), offset, stride);
+void VertexArray::Binding::bind_buffer(const Buffer &buffer, GLintptr offset,
+                                       GLsizei stride) const {
+  glVertexArrayVertexBuffer(m_vao.m_name, m_index, buffer.get_name(), offset,
+                            stride);
 }
 
 void VertexArray::Binding::set_divisor(GLuint divisor) const {
@@ -24,9 +24,7 @@ void VertexArray::Binding::set_divisor(GLuint divisor) const {
 VertexArray::Attribute::Attribute(const VertexArray &vao, GLuint index)
     : m_vao(vao), m_index(index) {}
 
-GLuint VertexArray::Attribute::get_index() const {
-  return m_index;
-}
+GLuint VertexArray::Attribute::get_index() const { return m_index; }
 
 void VertexArray::Attribute::enable() const {
   glEnableVertexArrayAttrib(m_vao.m_name, m_index);
@@ -36,8 +34,11 @@ void VertexArray::Attribute::disable() const {
   glDisableVertexArrayAttrib(m_vao.m_name, m_index);
 }
 
-void VertexArray::Attribute::set_format(GLint size, GLenum type, GLboolean normalized, GLuint relative_offset) const {
-  glVertexArrayAttribFormat(m_vao.m_name, m_index, size, type, normalized, relative_offset);
+void VertexArray::Attribute::set_format(GLint size, GLenum type,
+                                        GLboolean normalized,
+                                        GLuint relative_offset) const {
+  glVertexArrayAttribFormat(m_vao.m_name, m_index, size, type, normalized,
+                            relative_offset);
 }
 
 void VertexArray::Attribute::bind(const Binding &binding) const {

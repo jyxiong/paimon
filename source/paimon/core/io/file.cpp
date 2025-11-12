@@ -26,14 +26,15 @@ std::vector<uint8_t> File::readBinary(const std::filesystem::path &path) {
 
   const auto size = file.tellg();
   file.seekg(0, std::ios::beg);
-  
+
   std::vector<uint8_t> buffer(static_cast<size_t>(size));
-  file.read(reinterpret_cast<char*>(buffer.data()), size);
-  
+  file.read(reinterpret_cast<char *>(buffer.data()), size);
+
   return buffer;
 }
 
-void File::writeText(const std::filesystem::path &path, const std::string &content) {
+void File::writeText(const std::filesystem::path &path,
+                     const std::string &content) {
   // Create parent directories if they don't exist
   if (path.has_parent_path()) {
     std::filesystem::create_directories(path.parent_path());
