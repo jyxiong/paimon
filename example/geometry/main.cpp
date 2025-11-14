@@ -5,12 +5,12 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include "paimon/app/window.h"
 #include "paimon/core/log_system.h"
 #include "paimon/opengl/buffer.h"
 #include "paimon/opengl/program_pipeline.h"
 #include "paimon/opengl/shader_program.h"
 #include "paimon/opengl/vertex_array.h"
-#include "paimon/platform/window.h"
 
 using namespace paimon;
 

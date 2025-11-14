@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <map>
 
+#include "paimon/app/window.h"
 #include "paimon/core/io/file.h"
 #include "paimon/core/io/gltf.h"
 #include "paimon/core/log_system.h"
@@ -15,7 +16,6 @@
 #include "paimon/opengl/shader.h"
 #include "paimon/opengl/texture.h"
 #include "paimon/opengl/vertex_array.h"
-#include "paimon/platform/window.h"
 #include "paimon/rendering/shader_preprocessor.h"
 #include "paimon/rendering/shader_source.h"
 

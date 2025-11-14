@@ -2,6 +2,7 @@
 find_package(OpenGL REQUIRED)
 find_package(X11 REQUIRED)
 
+file(GLOB_RECURSE APP_SOURCES paimon/app/*.cpp)
 file(GLOB_RECURSE CORE_SOURCES paimon/core/*.cpp)
 file(GLOB_RECURSE OPENGL_SOURCES paimon/opengl/*.cpp)
 file(GLOB_RECURSE PLATFORM_SOURCES paimon/platform/*.cpp)
@@ -11,7 +12,7 @@ set(TARGET_NAME paimon)
 
 add_library(${TARGET_NAME})
 
-target_sources(${TARGET_NAME} PUBLIC ${CORE_SOURCES} ${OPENGL_SOURCES} ${PLATFORM_SOURCES} ${RENDERING_SOURCES})
+target_sources(${TARGET_NAME} PUBLIC ${APP_SOURCES} ${CORE_SOURCES} ${OPENGL_SOURCES} ${PLATFORM_SOURCES} ${RENDERING_SOURCES})
 
 target_include_directories(${TARGET_NAME} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
 
