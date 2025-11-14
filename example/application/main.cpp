@@ -100,7 +100,7 @@ private:
 
 int main() {
   LogSystem::init();
-  Application app;
+  auto& app = Application::getInstance();
   app.pushLayer(std::make_unique<TriangleLayer>());
   app.run();
   return 0;

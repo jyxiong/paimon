@@ -1,0 +1,61 @@
+#pragma once
+
+#include <functional>
+#include <memory>
+#include <string>
+#include <utility>
+
+#include <GLFW/glfw3.h>
+
+#include "paimon/app/event/event.h"
+#include "paimon/app/key_code.h"
+#include "paimon/app/mouse_code.h"
+#include "paimon/platform/context.h"
+
+namespace paimon {
+
+struct WindowConfig {
+  std::string title = "Paimon Window";
+  ContextFormat format;
+  uint32_t width = 800;
+  uint32_t height = 600;
+  bool resizable = false;
+  bool visible = true;
+  bool fullscreen = false;
+  bool vsync = true;
+  bool headless = false;
+};
+
+class Window {
+public:
+  Window();
+
+  ~Window();
+
+  void resize(uint32_t width, uint32_t height);
+
+  void pollEvents();
+
+  void swapBuffers();
+
+  bool shouldClose() const;
+
+  void destroy();
+
+  static std::unique_ptr<Window> create(const WindowConfig &config);
+
+  // Input functions
+  bool isKeyPressed(KeyCode key) const;
+  bool isMouseButtonPressed(MouseCode button) const;
+  std::pair<double, double> getMousePosition() const;
+
+  void setEventCallback(const std::function<void(Event&)>& callback) { m_eventCallback = callback; }
+
+private:
+  GLFWwindow *m_window = nullptr;
+
+public:
+  std::function<void(Event&)> m_eventCallback;
+};
+
+} // namespace paimon

@@ -1,8 +1,8 @@
 #include <glm/glm.hpp>
 
+#include "paimon/app/window.h"
 #include "paimon/core/log_system.h"
 #include "paimon/opengl/query.h"
-#include "paimon/platform/window.h"
 
 using namespace paimon;
 

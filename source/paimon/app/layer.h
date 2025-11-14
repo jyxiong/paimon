@@ -2,6 +2,8 @@
 
 #include <string>
 
+#include "paimon/app/event/event.h"
+
 namespace paimon {
 class Layer {
 public:
@@ -11,8 +13,7 @@ public:
   virtual void onAttach() = 0;
   virtual void onDetach() = 0;
   virtual void onUpdate() = 0;
-  // virtual void onImGuiRender() {}
-  // virtual void onEvent(Event &event) {}
+  virtual void onEvent(Event &event) {}
 
   const std::string &getName() const;
 

@@ -1,6 +1,6 @@
+#include "paimon/app/window.h"
 #include "paimon/core/log_system.h"
 #include "paimon/opengl/state.h"
-#include "paimon/platform/window.h"
 #include <array>
 
 using namespace paimon;

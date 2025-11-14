@@ -5,6 +5,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "paimon/app/window.h"
 #include "paimon/core/fg/frame_graph.h"
 #include "paimon/core/fg/frame_graph_texture.h"
 #include "paimon/core/fg/transient_resources.h"
@@ -14,7 +15,6 @@
 #include "paimon/opengl/shader.h"
 #include "paimon/opengl/texture.h"
 #include "paimon/opengl/vertex_array.h"
-#include "paimon/platform/window.h"
 #include "paimon/rendering/render_context.h"
 
 using namespace paimon;
