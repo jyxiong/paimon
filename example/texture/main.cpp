@@ -3,13 +3,13 @@
 
 #include "paimon/core/log_system.h"
 
+#include "paimon/app/window.h"
 #include "paimon/opengl/buffer.h"
 #include "paimon/opengl/program.h"
 #include "paimon/opengl/sampler.h"
 #include "paimon/opengl/shader.h"
 #include "paimon/opengl/texture.h"
 #include "paimon/opengl/vertex_array.h"
-#include "paimon/platform/window.h"
 
 using namespace paimon;
 

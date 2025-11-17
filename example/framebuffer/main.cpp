@@ -1,9 +1,9 @@
 #include <glm/glm.hpp>
 
+#include "paimon/app/window.h"
 #include "paimon/core/log_system.h"
 #include "paimon/opengl/framebuffer.h"
 #include "paimon/opengl/texture.h"
-#include "paimon/platform/window.h"
 
 #include "screen_quad.h"
 

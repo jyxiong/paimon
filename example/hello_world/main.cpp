@@ -1,11 +1,11 @@
 #include <glm/glm.hpp>
 
+#include "paimon/app/window.h"
 #include "paimon/core/log_system.h"
 #include "paimon/opengl/buffer.h"
 #include "paimon/opengl/program.h"
 #include "paimon/opengl/shader.h"
 #include "paimon/opengl/vertex_array.h"
-#include "paimon/platform/window.h"
 
 using namespace paimon;
 
