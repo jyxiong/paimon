@@ -90,6 +90,10 @@ public:
     // Cleanup resources (RAII handles most cleanup automatically)
   }
 
+  void onEvent(Event &event) override {
+    LOG_INFO("{}", event.toString());
+  }
+
 private:
   Shader m_vertexShader{GL_VERTEX_SHADER};
   Shader m_fragmentShader{GL_FRAGMENT_SHADER};
