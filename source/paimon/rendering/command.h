@@ -1,0 +1,78 @@
+#pragma once
+
+#include "glad/gl.h"
+
+#include "paimon/opengl/state.h"
+#include "paimon/rendering/rendering_info.h"
+
+namespace paimon {
+
+class Program;
+class VertexArray;
+class Buffer;
+class GraphicsPipeline;
+
+// Command for Vulkan-style rendering commands
+class Command {
+public:
+  Command() = default;
+  ~Command() = default;
+
+  // Delete copy constructor and assignment
+  Command(const Command&) = delete;
+  Command& operator=(const Command&) = delete;
+
+  // Begin rendering pass
+  void beginRendering(const RenderingInfo& info);
+
+  // End rendering pass
+  void endRendering();
+
+  // Bind graphics pipeline (applies all pipeline states)
+  void bindPipeline(const GraphicsPipeline& pipeline);
+
+  // Bind shader program
+  void bindProgram(const Program& program);
+
+  // Bind vertex array
+  void bindVertexArray(const VertexArray& vao);
+
+  // Bind vertex buffers
+  void bindVertexBuffer(uint32_t binding, const Buffer& buffer, 
+                       GLintptr offset, GLsizei stride);
+
+  // Bind index buffer
+  void bindIndexBuffer(const Buffer& buffer);
+
+  // Set viewport
+  void setViewport(float x, float y, float width, float height);
+  void setViewport(uint32_t index, float x, float y, float width, float height);
+
+  // Set scissor
+  void setScissor(int x, int y, int width, int height);
+  void setScissor(uint32_t index, int x, int y, int width, int height);
+
+  // Draw commands
+  void draw(uint32_t vertexCount, uint32_t instanceCount = 1, 
+            uint32_t firstVertex = 0, uint32_t firstInstance = 0);
+
+  void drawIndexed(uint32_t indexCount, uint32_t instanceCount = 1,
+                  uint32_t firstIndex = 0, int32_t vertexOffset = 0,
+                  uint32_t firstInstance = 0);
+
+  // Clear commands (can be called within a render pass)
+  void clearColorAttachment(uint32_t attachmentIndex, const float* clearColor);
+  void clearDepthAttachment(float depth);
+  void clearStencilAttachment(uint32_t stencil);
+  void clearDepthStencilAttachment(float depth, uint32_t stencil);
+
+private:
+  bool m_insideRenderPass = false;
+  RenderingInfo m_currentRenderingInfo;
+  PipelineTracker m_pipelineTracker;
+
+  // Apply clear operations
+  void applyClearOperations(const RenderingInfo& info);
+};
+
+} // namespace paimon
