@@ -39,18 +39,15 @@ void Command::endRendering() {
 void Command::bindPipeline(const GraphicsPipeline& pipeline) {
   // Apply all pipeline states using trackers
   m_pipelineTracker.colorBlend.apply(pipeline.colorBlendState);
-  m_pipelineTracker.depth.apply(pipeline.depthState);
+  m_pipelineTracker.depthStencil.apply(pipeline.depthStencilState);
   m_pipelineTracker.inputAssembly.apply(pipeline.inputAssemblyState);
   m_pipelineTracker.multisample.apply(pipeline.multisampleState);
   m_pipelineTracker.rasterization.apply(pipeline.rasterizationState);
-  m_pipelineTracker.stencil.apply(pipeline.stencilState);
   m_pipelineTracker.tessellation.apply(pipeline.tessellationState);
+  m_pipelineTracker.vertexInput.apply(pipeline.vertexInputState);
 
-  // Apply viewport states
-  m_pipelineTracker.viewport.apply(pipeline.viewportStates);
-
-  // Apply scissor states
-  m_pipelineTracker.scissor.apply(pipeline.scissorStates);
+  // Apply viewport state (contains both viewports and scissors)
+  m_pipelineTracker.viewport.apply(pipeline.viewportState);
 }
 
 void Command::bindProgram(const Program& program) {
@@ -64,7 +61,6 @@ void Command::bindVertexArray(const VertexArray& vao) {
 void Command::bindVertexBuffer(uint32_t binding, const Buffer& buffer,
                                     GLintptr offset, GLsizei stride) {
   buffer.bind(GL_ARRAY_BUFFER);
-  // This is a simplified version, actual implementation might need more details
   glBindVertexBuffer(binding, static_cast<GLuint>(buffer.get_name()), offset, stride);
 }
 
@@ -102,7 +98,6 @@ void Command::draw(uint32_t vertexCount, uint32_t instanceCount,
 void Command::drawIndexed(uint32_t indexCount, uint32_t instanceCount,
                                 uint32_t firstIndex, int32_t vertexOffset,
                                 uint32_t firstInstance) {
-  // Calculate byte offset for indices
   const void* indices = reinterpret_cast<const void*>(
       static_cast<uintptr_t>(firstIndex * sizeof(uint32_t)));
 
@@ -167,20 +162,6 @@ void Command::applyClearOperations(const RenderingInfo& info) {
     const auto& attachment = info.stencilAttachment.value();
     if (attachment.loadOp == AttachmentLoadOp::Clear) {
       clearStencilAttachment(attachment.clearValue.depthStencil.stencil);
-    }
-  }
-
-  // Clear both depth and stencil if both are present and need clearing
-  if (info.depthAttachment.has_value() && info.stencilAttachment.has_value()) {
-    const auto& depthAtt = info.depthAttachment.value();
-    const auto& stencilAtt = info.stencilAttachment.value();
-    if (depthAtt.loadOp == AttachmentLoadOp::Clear && 
-        stencilAtt.loadOp == AttachmentLoadOp::Clear) {
-      // Use combined clear for efficiency
-      clearDepthStencilAttachment(
-        depthAtt.clearValue.depthStencil.depth,
-        stencilAtt.clearValue.depthStencil.stencil
-      );
     }
   }
 }

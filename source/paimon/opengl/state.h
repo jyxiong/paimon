@@ -1,13 +1,12 @@
 #pragma once
 
 #include "paimon/opengl/state/color_blend.h"
-#include "paimon/opengl/state/depth.h"
+#include "paimon/opengl/state/depth_stencil.h"
 #include "paimon/opengl/state/input_assembly.h"
 #include "paimon/opengl/state/multisample.h"
 #include "paimon/opengl/state/rasterization.h"
-#include "paimon/opengl/state/scissor.h"
-#include "paimon/opengl/state/stencil.h"
 #include "paimon/opengl/state/tessellation.h"
+#include "paimon/opengl/state/vertex_input.h"
 #include "paimon/opengl/state/viewport.h"
 
 namespace paimon {
@@ -23,15 +22,15 @@ private:
   ColorBlendState m_cache;
 };
 
-class DepthTracker {
+class DepthStencilTracker {
 public:
-  DepthTracker() = default;
-  ~DepthTracker() = default;
+  DepthStencilTracker() = default;
+  ~DepthStencilTracker() = default;
 
-  void apply(const DepthState &state);
+  void apply(const DepthStencilState &state);
 
 private:
-  DepthState m_cache;
+  DepthStencilState m_cache;
 };
 
 class InputAssemblyTracker {
@@ -67,28 +66,6 @@ private:
   RasterizationState m_cache;
 };
 
-class ScissorTracker {
-public:
-  ScissorTracker();
-  ~ScissorTracker() = default;
-
-  void apply(const std::vector<ScissorState> &state);
-
-private:
-  std::vector<ScissorState> m_cache;
-};
-
-class StencilTracker {
-public:
-  StencilTracker();
-  ~StencilTracker() = default;
-
-  void apply(const StencilState &state);
-
-private:
-  StencilState m_cache;
-};
-
 class TessellationTracker {
 public:
   TessellationTracker() = default;
@@ -100,15 +77,26 @@ private:
   TessellationState m_cache;
 };
 
+class VertexInputTracker {
+public:
+  VertexInputTracker() = default;
+  ~VertexInputTracker() = default;
+
+  void apply(const VertexInputState &state);
+
+private:
+  VertexInputState m_cache;
+};
+
 class ViewportTracker {
 public:
   ViewportTracker();
   ~ViewportTracker() = default;
 
-  void apply(const std::vector<ViewportState> &state);
+  void apply(const ViewportState &state);
 
 private:
-  std::vector<ViewportState> m_cache;
+  ViewportState m_cache;
 };
 
 class PipelineTracker {
@@ -116,15 +104,18 @@ public:
   PipelineTracker() = default;
   ~PipelineTracker() = default;
 
-  // TODO: track program pipeline
   ColorBlendTracker colorBlend;
-  DepthTracker depth;
+  DepthStencilTracker depthStencil;
   InputAssemblyTracker inputAssembly;
   MultisampleTracker multisample;
   RasterizationTracker rasterization;
-  ScissorTracker scissor;
-  StencilTracker stencil;
   TessellationTracker tessellation;
+  VertexInputTracker vertexInput;
   ViewportTracker viewport;
+  
+  // Backward compatibility aliases
+  DepthStencilTracker& depth = depthStencil;
+  DepthStencilTracker& stencil = depthStencil;
 };
+
 } // namespace paimon

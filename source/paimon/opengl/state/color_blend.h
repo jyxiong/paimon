@@ -5,53 +5,42 @@
 #include "glad/gl.h"
 
 namespace paimon {
-struct BlendFactor {
-  GLenum srcRGBFactor = GL_ONE;
-  GLenum dstRGBFactor = GL_ZERO;
-  GLenum srcAlphaFactor = GL_ONE;
-  GLenum dstAlphaFactor = GL_ZERO;
 
-  bool operator==(const BlendFactor &other) const = default;
-};
-
-struct BlendEquation {
-  GLenum rgbBlendOp = GL_FUNC_ADD;
+// Similar to VkPipelineColorBlendAttachmentState
+struct ColorBlendAttachmentState {
+  bool blendEnable = false;
+  
+  // Color blend factors
+  GLenum srcColorBlendFactor = GL_ONE;
+  GLenum dstColorBlendFactor = GL_ZERO;
+  GLenum colorBlendOp = GL_FUNC_ADD;
+  
+  // Alpha blend factors
+  GLenum srcAlphaBlendFactor = GL_ONE;
+  GLenum dstAlphaBlendFactor = GL_ZERO;
   GLenum alphaBlendOp = GL_FUNC_ADD;
+  
+  // Color write mask (RGBA)
+  bool colorWriteMask[4] = {true, true, true, true}; // R, G, B, A
 
-  bool operator==(const BlendEquation &other) const = default;
+  bool operator==(const ColorBlendAttachmentState &other) const = default;
 };
 
-struct ColorWriteMask {
-  bool red = true;
-  bool green = true;
-  bool blue = true;
-  bool alpha = true;
-
-  bool operator==(const ColorWriteMask &other) const = default;
-};
-
-struct ColorBlendAttachment {
-  bool blendEnabled = false;
-  BlendFactor blendFactor;
-  BlendEquation blendEquation;
-  ColorWriteMask colorWriteMask;
-};
-
-struct BlendConstants {
-  float red = 0.0f;
-  float green = 0.0f;
-  float blue = 0.0f;
-  float alpha = 0.0f;
-
-  bool operator==(const BlendConstants &other) const = default;
-};
-
+// Similar to VkPipelineColorBlendStateCreateInfo
 struct ColorBlendState {
-
   bool logicOpEnable = false;
   GLenum logicOp = GL_COPY;
-  BlendConstants blendConstants;
-  std::vector<ColorBlendAttachment> attachments;
+  
+  // Attachment states
+  std::vector<ColorBlendAttachmentState> attachments;
+  
+  // Blend constants
+  float blendConstants[4] = {0.0f, 0.0f, 0.0f, 0.0f}; // R, G, B, A
+
+  bool operator==(const ColorBlendState &other) const = default;
 };
+
+// Type aliases for backward compatibility
+using ColorBlendAttachment = ColorBlendAttachmentState;
 
 } // namespace paimon
