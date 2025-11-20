@@ -87,7 +87,7 @@ int main() {
   // Create compute shader program using paimon wrapper
   ShaderProgram computeProgram(GL_COMPUTE_SHADER, compSrc);
   ProgramPipeline pipeline;
-  pipeline.use_program_stages(GL_COMPUTE_SHADER_BIT, computeProgram.get_name());
+  pipeline.use_program_stages(GL_COMPUTE_SHADER_BIT, computeProgram);
   if (!pipeline.validate()) {
     LOG_ERROR("Program pipeline validation failed");
   }

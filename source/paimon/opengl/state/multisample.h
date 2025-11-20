@@ -24,6 +24,12 @@ struct MultisampleState {
   // Alpha to one
   bool alphaToOneEnable = false;
 
+  MultisampleState() {
+    int maxSampleMaskWords = 0;
+    glGetIntegerv(GL_MAX_SAMPLE_MASK_WORDS, &maxSampleMaskWords);
+    sampleMask.resize(static_cast<size_t>(maxSampleMaskWords));
+  }
+
   bool operator==(const MultisampleState &other) const = default;
 };
 

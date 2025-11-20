@@ -58,9 +58,9 @@ int main() {
   ShaderProgram fragment_shader(GL_FRAGMENT_SHADER, fragment_source);
 
   ProgramPipeline pipeline;
-  pipeline.use_program_stages(GL_VERTEX_SHADER_BIT, vertex_shader.get_name());
+  pipeline.use_program_stages(GL_VERTEX_SHADER_BIT, vertex_shader);
   pipeline.use_program_stages(GL_FRAGMENT_SHADER_BIT,
-                              fragment_shader.get_name());
+                              fragment_shader);
   if (!pipeline.validate()) {
     LOG_ERROR("Program pipeline validation failed");
   }
