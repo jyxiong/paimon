@@ -3,11 +3,10 @@
 #include "paimon/app/window.h"
 #include "paimon/core/log_system.h"
 #include "paimon/opengl/buffer.h"
-#include "paimon/opengl/program.h"
-#include "paimon/opengl/shader.h"
 #include "paimon/opengl/vertex_array.h"
-#include "paimon/rendering/command.h"
+#include "paimon/opengl/shader_program.h"
 #include "paimon/rendering/graphics_pipeline.h"
+#include "paimon/rendering/render_context.h"
 #include "paimon/rendering/rendering_info.h"
 
 using namespace paimon;
@@ -48,19 +47,15 @@ glm::ivec2 g_size = {800, 600};
 int main() {
   LogSystem::init();
   
-  LOG_INFO("=== Command Buffer Example ===");
-  LOG_INFO("This example demonstrates Vulkan-style rendering commands:");
-  LOG_INFO("  - cmd.beginRendering(renderingInfo)");
-  LOG_INFO("  - cmd.bindPipeline(pipeline)");
-  LOG_INFO("  - cmd.bindProgram(program)");
-  LOG_INFO("  - cmd.bindVertexArray(vao)");
-  LOG_INFO("  - cmd.draw(...)");
-  LOG_INFO("  - cmd.endRendering()");
+  LOG_INFO("=== RenderContext + PipelineManager Example ===");
+  LOG_INFO("Workflow:");
+  LOG_INFO("  - PipelineManager::create(...) builds a separable pipeline");
+  LOG_INFO("  - RenderContext drives beginRendering/bind/draw/end");
   LOG_INFO("");
 
   // Create window
   auto window = Window::create(WindowConfig{
-      .title = "Command Buffer Example",
+      .title = "RenderContext Buffer Example",
       .format =
           ContextFormat{
               .majorVersion = 4,
@@ -75,29 +70,39 @@ int main() {
       .vsync = true,
   });
 
-  // Compile shaders
-  Shader vertex_shader(GL_VERTEX_SHADER);
-  Shader fragment_shader(GL_FRAGMENT_SHADER);
-  Program program;
+  // Compile separable shader programs for the pipeline
+  ShaderProgram vertex_program(GL_VERTEX_SHADER, vertex_source);
+  ShaderProgram fragment_program(GL_FRAGMENT_SHADER, fragment_source);
 
-  if (!vertex_shader.compile(vertex_source)) {
-    LOG_ERROR("Vertex shader compilation failed: {}",
-              vertex_shader.get_info_log());
+  auto validate_shader_program = [](const ShaderProgram &shader,
+                                    const char *label) {
+    GLint linkStatus = shader.get(GL_LINK_STATUS);
+    if (linkStatus != GL_TRUE) {
+      LOG_ERROR("{} shader program compilation failed: {}", label,
+                shader.get_info_log());
+      return false;
+    }
+    return true;
+  };
+
+  if (!validate_shader_program(vertex_program, "Vertex")) {
     return 1;
   }
 
-  if (!fragment_shader.compile(fragment_source)) {
-    LOG_ERROR("Fragment shader compilation failed: {}",
-              fragment_shader.get_info_log());
+  if (!validate_shader_program(fragment_program, "Fragment")) {
     return 1;
   }
 
-  program.attach(vertex_shader);
-  program.attach(fragment_shader);
-  if (!program.link()) {
-    LOG_ERROR("Shader program linking failed: {}", program.get_info_log());
-    return 1;
-  }
+  GraphicsPipelineCreateInfo pipelineInfo{
+      .shaderStages = {
+          {GL_VERTEX_SHADER, &vertex_program},
+          {GL_FRAGMENT_SHADER, &fragment_program},
+      },
+      .state = {
+      },
+  };
+
+  auto pipeline = GraphicsPipeline(pipelineInfo);
 
   // Define triangle vertices (position + color)
   struct Vertex {
@@ -138,25 +143,13 @@ int main() {
   color_attr.bind(binding1);
   color_attr.enable();
 
-  // Create graphics pipeline (similar to Vulkan)
-  GraphicsPipeline pipeline;
-  
-  // Configure depth testing
-  pipeline.depthState.depthTestEnable = false;
-  
-  // Configure rasterization
-  pipeline.rasterizationState.cullMode = GL_BACK;
-  pipeline.rasterizationState.frontFace = GL_CCW;
-  pipeline.rasterizationState.polygonMode = GL_FILL;
   
   // Configure viewport
-  ViewportState viewportState;
-  viewportState.viewport = {0, 0, 800, 600};
-  viewportState.depthRange = {0.0f, 1.0f};
-  pipeline.viewportStates.push_back(viewportState);
+  // Viewport viewport = {0, 0, 800, 600, 0.0f, 1.0f};
+  // pipeline.viewportState.viewports.push_back(viewport);
 
-  // Create command buffer
-  Command cmd;
+  // Create crender context
+  RenderContext ctx;
 
   LOG_INFO("Starting render loop...");
 
@@ -177,29 +170,26 @@ int main() {
     colorAttachment.clearValue = ClearValue::Color(0.2f, 0.3f, 0.3f, 1.0f);
     renderingInfo.colorAttachments[0] = colorAttachment;
 
-    // Update viewport size
-    pipeline.viewportStates[0].viewport.width = g_size.x;
-    pipeline.viewportStates[0].viewport.height = g_size.y;
-
     // === Vulkan-style rendering commands ===
     
     // Begin rendering pass
-    cmd.beginRendering(renderingInfo);
+    ctx.beginRendering(renderingInfo);
 
-    // Bind graphics pipeline
-    cmd.bindPipeline(pipeline);
+    // Bind graphics pipeline (sets shader stages + pipeline state)
+    ctx.bindPipeline(pipeline);
 
-    // Bind shader program
-    cmd.bindProgram(program);
+    // Set viewport
+    // Note: setViewport like Vulkan with dynamic state
+    ctx.setViewport(0, 0, g_size.x, g_size.y);
 
     // Bind vertex array
-    cmd.bindVertexArray(vao);
+    ctx.bindVertexArray(vao);
 
     // Draw the triangle
-    cmd.draw(3); // 3 vertices
+    ctx.draw(3); // 3 vertices
 
     // End rendering pass
-    cmd.endRendering();
+    ctx.endRendering();
 
     // Swap buffers
     window->swapBuffers();

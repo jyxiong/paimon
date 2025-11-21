@@ -217,11 +217,11 @@ int main() {
   }
 
   ProgramPipeline pipeline;
-  pipeline.use_program_stages(GL_VERTEX_SHADER_BIT, vertex_program.get_name());
+  pipeline.use_program_stages(GL_VERTEX_SHADER_BIT, vertex_program);
   pipeline.use_program_stages(GL_GEOMETRY_SHADER_BIT,
-                              geometry_program.get_name());
+                              geometry_program);
   pipeline.use_program_stages(GL_FRAGMENT_SHADER_BIT,
-                              fragment_program.get_name());
+                              fragment_program);
   if (!pipeline.is_valid()) {
     LOG_ERROR("Failed to create program pipeline");
     return EXIT_FAILURE;

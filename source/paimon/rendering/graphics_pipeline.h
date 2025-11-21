@@ -1,26 +1,30 @@
 #pragma once
 
-#include "paimon/opengl/state/color_blend.h"
-#include "paimon/opengl/state/depth.h"
-#include "paimon/opengl/state/input_assembly.h"
-#include "paimon/opengl/state/multisample.h"
-#include "paimon/opengl/state/rasterization.h"
-#include "paimon/opengl/state/scissor.h"
-#include "paimon/opengl/state/stencil.h"
-#include "paimon/opengl/state/tessellation.h"
-#include "paimon/opengl/state/viewport.h"
+#include <unordered_map>
+
+#include <glad/gl.h>
+
+#include "paimon/opengl/state.h"
+#include "paimon/opengl/program_pipeline.h"
+#include "paimon/opengl/shader_program.h"
 
 namespace paimon {
 
-struct GraphicsPipeline {
-  ColorBlendState colorBlendState;
-  DepthState depthState;
-  InputAssemblyState inputAssemblyState;
-  MultisampleState multisampleState;
-  RasterizationState rasterizationState;
-  std::vector<ScissorState> scissorStates;
-  StencilState stencilState;
-  TessellationState tessellationState;
-  std::vector<ViewportState> viewportStates;
+struct GraphicsPipelineCreateInfo {
+  // shader stages (optional)
+  std::unordered_map<GLbitfield, ShaderProgram*> shaderStages;
+
+  // pipeline state
+  PipelineState state;
+};
+
+class GraphicsPipeline : public ProgramPipeline {
+public:
+  GraphicsPipeline(const GraphicsPipelineCreateInfo &ci);
+
+  const PipelineState& getState() const;
+
+private:
+  PipelineState m_state;
 };
 } // namespace paimon

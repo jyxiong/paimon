@@ -1,4 +1,5 @@
 #include "paimon/opengl/program_pipeline.h"
+#include "paimon/opengl/shader_program.h"
 
 using namespace paimon;
 
@@ -21,12 +22,17 @@ void ProgramPipeline::bind() const { glBindProgramPipeline(m_name); }
 void ProgramPipeline::unbind() { glBindProgramPipeline(0); }
 
 void ProgramPipeline::use_program_stages(GLbitfield stages,
-                                         GLuint program) const {
-  glUseProgramStages(m_name, stages, program);
+                                         const Program &program) const {
+  glUseProgramStages(m_name, stages, program.get_name());
 }
 
-void ProgramPipeline::active_shader_program(GLuint program) const {
-  glActiveShaderProgram(m_name, program);
+void ProgramPipeline::use_program_stages(GLbitfield stages,
+                                         const ShaderProgram &program) const {
+  glUseProgramStages(m_name, stages, program.get_name());
+}
+
+void ProgramPipeline::active_shader_program(const Program &program) const {
+  glActiveShaderProgram(m_name, program.get_name());
 }
 
 bool ProgramPipeline::validate() const {

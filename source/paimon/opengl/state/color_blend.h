@@ -5,53 +5,45 @@
 #include "glad/gl.h"
 
 namespace paimon {
-struct BlendFactor {
-  GLenum srcRGBFactor = GL_ONE;
-  GLenum dstRGBFactor = GL_ZERO;
-  GLenum srcAlphaFactor = GL_ONE;
-  GLenum dstAlphaFactor = GL_ZERO;
 
-  bool operator==(const BlendFactor &other) const = default;
-};
-
-struct BlendEquation {
-  GLenum rgbBlendOp = GL_FUNC_ADD;
-  GLenum alphaBlendOp = GL_FUNC_ADD;
-
-  bool operator==(const BlendEquation &other) const = default;
-};
-
-struct ColorWriteMask {
-  bool red = true;
-  bool green = true;
-  bool blue = true;
-  bool alpha = true;
-
-  bool operator==(const ColorWriteMask &other) const = default;
-};
-
-struct ColorBlendAttachment {
-  bool blendEnabled = false;
-  BlendFactor blendFactor;
-  BlendEquation blendEquation;
-  ColorWriteMask colorWriteMask;
-};
-
-struct BlendConstants {
-  float red = 0.0f;
-  float green = 0.0f;
-  float blue = 0.0f;
-  float alpha = 0.0f;
-
-  bool operator==(const BlendConstants &other) const = default;
-};
-
+// Similar to VkPipelineColorBlendStateCreateInfo
 struct ColorBlendState {
-
   bool logicOpEnable = false;
   GLenum logicOp = GL_COPY;
-  BlendConstants blendConstants;
-  std::vector<ColorBlendAttachment> attachments;
+
+  // Similar to VkPipelineColorBlendAttachmentState
+  struct AttachmentState {
+    bool blendEnable = false;
+
+    // Color blend factors
+    GLenum srcColorBlendFactor = GL_ONE;
+    GLenum dstColorBlendFactor = GL_ZERO;
+    GLenum colorBlendOp = GL_FUNC_ADD;
+
+    // Alpha blend factors
+    GLenum srcAlphaBlendFactor = GL_ONE;
+    GLenum dstAlphaBlendFactor = GL_ZERO;
+    GLenum alphaBlendOp = GL_FUNC_ADD;
+
+    // Color write mask (RGBA)
+    bool colorWriteMask[4] = {true, true, true, true}; // R, G, B, A
+
+    bool operator==(const AttachmentState &other) const = default;
+  };
+
+  // Attachment states
+  std::vector<AttachmentState> attachments;
+
+  // Blend constants
+  float blendConstants[4] = {0.0f, 0.0f, 0.0f, 0.0f}; // R, G, B, A
+
+  ColorBlendState() {
+    int maxColorAttachments = 0;
+    glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS, &maxColorAttachments);
+    attachments.resize(static_cast<size_t>(maxColorAttachments));
+  }
+
+  bool operator==(const ColorBlendState &other) const = default;
 };
 
 } // namespace paimon
