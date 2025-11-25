@@ -6,22 +6,53 @@
 #include <filesystem>
 #include <map>
 
+#include "glad/gl.h"
 #include "paimon/app/window.h"
 #include "paimon/core/io/file.h"
 #include "paimon/core/io/gltf.h"
 #include "paimon/core/log_system.h"
 #include "paimon/opengl/buffer.h"
+#include "paimon/opengl/framebuffer.h"
 #include "paimon/opengl/program.h"
+#include "paimon/opengl/render_buffer.h"
 #include "paimon/opengl/sampler.h"
 #include "paimon/opengl/shader.h"
+#include "paimon/opengl/shader_program.h"
 #include "paimon/opengl/texture.h"
 #include "paimon/opengl/vertex_array.h"
+#include "paimon/rendering/graphics_pipeline.h"
+#include "paimon/rendering/render_context.h"
+#include "paimon/rendering/rendering_info.h"
 #include "paimon/rendering/shader_preprocessor.h"
 #include "paimon/rendering/shader_source.h"
+
+#include "screen_quad.h"
 
 using namespace paimon;
 
 namespace {
+
+// UBO structures matching shader layout
+struct TransformUBO {
+  alignas(16) glm::mat4 model;
+  alignas(16) glm::mat4 view;
+  alignas(16) glm::mat4 projection;
+};
+
+struct MaterialUBO {
+  alignas(16) glm::vec4 baseColorFactor;
+  alignas(16) glm::vec3 emissiveFactor;
+  alignas(4) float metallicFactor;
+  alignas(4) float roughnessFactor;
+  alignas(4) float _padding[3]; // alignment
+};
+
+struct LightingUBO {
+  alignas(16) glm::vec3 lightPos;
+  alignas(4) float _padding1;
+  alignas(16) glm::vec3 viewPos;
+  alignas(4) float _padding2;
+};
 
 // Camera state
 struct Camera {
@@ -34,11 +65,7 @@ struct Camera {
 };
 
 Camera g_camera;
-float g_lastX = 400.0f;
-float g_lastY = 300.0f;
-bool g_firstMouse = true;
-float g_deltaTime = 0.0f;
-float g_lastFrame = 0.0f;
+glm::ivec2 g_size = {1280, 720};
 
 // Helper function to create OpenGL texture from sg::Image
 Texture createTextureFromImage(const std::shared_ptr<sg::Image> &image) {
@@ -79,11 +106,16 @@ Texture createTextureFromImage(const std::shared_ptr<sg::Image> &image) {
 
 int main() {
   LogSystem::init();
-  LOG_INFO("Starting DamagedHelmet Example");
+  LOG_INFO("=== DamagedHelmet PBR Example ===");
+  LOG_INFO("Workflow:");
+  LOG_INFO("  - Load glTF model with PBR materials");
+  LOG_INFO("  - Use UBOs for uniforms (Transform, Material, Lighting)");
+  LOG_INFO("  - Use GraphicsPipeline + RenderContext for rendering");
+  LOG_INFO("");
 
   // Create window
   auto window = Window::create(WindowConfig{
-      .title = "Paimon - DamagedHelmet",
+      .title = "Paimon - DamagedHelmet PBR",
       .format =
           ContextFormat{
               .majorVersion = 4,
@@ -91,41 +123,41 @@ int main() {
               .profile = ContextProfile::Core,
               .debug = false,
           },
-      .width = 1280,
-      .height = 720,
+      .width = static_cast<uint32_t>(g_size.x),
+      .height = static_cast<uint32_t>(g_size.y),
       .resizable = true,
       .visible = true,
       .vsync = true,
   });
 
-  // Enable depth testing
-  glEnable(GL_DEPTH_TEST);
-
   // Setup shader preprocessor
-  auto assetPath = std::filesystem::current_path().parent_path() / "asset";
+  auto assetPath = std::filesystem::current_path().parent_path().parent_path()/ "asset";
   auto shaderPath = assetPath / "shader";
 
   ShaderPreprocessor preprocessor;
-  preprocessor.addIncludePath(shaderPath);
+  preprocessor.addSearchPath(shaderPath);
 
   // Load and process shaders
   ShaderSource vertexSource(shaderPath / "damaged_helmet.vert");
   ShaderSource fragmentSource(shaderPath / "damaged_helmet.frag");
 
-  std::string vertex_source = preprocessor.processShaderSource(vertexSource);
+  std::string vertex_source = preprocessor.process(vertexSource);
   std::string fragment_source =
-      preprocessor.processShaderSource(fragmentSource);
+      preprocessor.process(fragmentSource);
 
-  File::writeText(shaderPath / "damaged_helmet_processed.vert", vertex_source);
-  File::writeText(shaderPath / "damaged_helmet_processed.frag",
-                  fragment_source);
+  // Load screen quad shaders
+  ShaderSource screenVertSource(shaderPath / "screen_quad.vert");
+  ShaderSource screenFragSource(shaderPath / "screen_quad.frag");
+  std::string screen_vert_source =
+      preprocessor.process(screenVertSource);
+  std::string screen_frag_source =
+      preprocessor.process(screenFragSource);
 
   // Load glTF model
   GltfLoader loader;
   sg::Scene scene;
 
-  auto assetPModelath =
-      std::filesystem::current_path().parent_path() / "asset/model";
+  auto assetPModelath = assetPath / "model";
 
   std::string model_path =
       (assetPModelath / "DamagedHelmet/glTF/DamagedHelmet.gltf").string();
@@ -138,34 +170,50 @@ int main() {
     LOG_WARN("glTF warnings: {}", loader.GetWarning());
   }
 
-  LOG_INFO("Loaded glTF model successfully");
-  LOG_INFO("Meshes: {}, Materials: {}, Textures: {}, Images: {}",
-           scene.meshes.size(), scene.materials.size(), scene.textures.size(),
-           scene.images.size());
+  // Compile separable shader programs for the pipeline
+  ShaderProgram vertex_program(GL_VERTEX_SHADER, vertex_source);
+  ShaderProgram fragment_program(GL_FRAGMENT_SHADER, fragment_source);
 
-  // Compile shaders
-  Shader vertex_shader(GL_VERTEX_SHADER);
-  Shader fragment_shader(GL_FRAGMENT_SHADER);
-  Program program;
-
-  if (!vertex_shader.compile(vertex_source)) {
-    LOG_ERROR("Vertex shader compilation failed: {}",
-              vertex_shader.get_info_log());
+  // Compile screen quad shader program
+  Shader screen_vert_shader(GL_VERTEX_SHADER);
+  Shader screen_frag_shader(GL_FRAGMENT_SHADER);
+  if (!screen_vert_shader.compile(screen_vert_source)) {
+    LOG_ERROR("Screen vertex shader compilation failed: {}",
+              screen_vert_shader.get_info_log());
+    return -1;
+  }
+  if (!screen_frag_shader.compile(screen_frag_source)) {
+    LOG_ERROR("Screen fragment shader compilation failed: {}",
+              screen_frag_shader.get_info_log());
     return -1;
   }
 
-  if (!fragment_shader.compile(fragment_source)) {
-    LOG_ERROR("Fragment shader compilation failed: {}",
-              fragment_shader.get_info_log());
+  Program screen_program;
+  screen_program.attach(screen_vert_shader);
+  screen_program.attach(screen_frag_shader);
+  if (!screen_program.link()) {
+    LOG_ERROR("Screen shader program linking failed: {}",
+              screen_program.get_info_log());
     return -1;
   }
 
-  program.attach(vertex_shader);
-  program.attach(fragment_shader);
-  if (!program.link()) {
-    LOG_ERROR("Program linking failed: {}", program.get_info_log());
-    return -1;
-  }
+  // Create graphics pipeline
+  GraphicsPipelineCreateInfo pipelineInfo;
+  pipelineInfo.shaderStages = {
+      {GL_VERTEX_SHADER_BIT, &vertex_program},
+      {GL_FRAGMENT_SHADER_BIT, &fragment_program},
+  };
+  
+  // Configure depth testing
+  pipelineInfo.state.depthStencil.depthTestEnable = true;
+  // pipelineInfo.state.depthStencil.depthWriteEnable = true;
+  // pipelineInfo.state.depthStencil.depthCompareOp = GL_LESS;
+  
+  // Disable face culling for debugging
+  // pipelineInfo.state.rasterization.cullMode = GL_NONE;
+
+  auto pipeline = GraphicsPipeline(pipelineInfo);
+
 
   // Process all meshes in the scene
   struct MeshData {
@@ -295,86 +343,146 @@ int main() {
   sampler.set(GL_TEXTURE_WRAP_S, GL_REPEAT);
   sampler.set(GL_TEXTURE_WRAP_T, GL_REPEAT);
 
+  // Create UBOs
+  Buffer transform_ubo;
+  transform_ubo.set_storage(sizeof(TransformUBO), nullptr, GL_DYNAMIC_STORAGE_BIT);
+  transform_ubo.bind_base(GL_UNIFORM_BUFFER, 0);
+
+  Buffer material_ubo;
+  material_ubo.set_storage(sizeof(MaterialUBO), nullptr, GL_DYNAMIC_STORAGE_BIT);
+  material_ubo.bind_base(GL_UNIFORM_BUFFER, 1);
+
+  Buffer lighting_ubo;
+  lighting_ubo.set_storage(sizeof(LightingUBO), nullptr, GL_DYNAMIC_STORAGE_BIT);
+  lighting_ubo.bind_base(GL_UNIFORM_BUFFER, 2);
+
+  // Create FBO with color and depth attachments
+  Texture fbo_color_texture(GL_TEXTURE_2D);
+  fbo_color_texture.set_storage_2d(1, GL_RGBA8, g_size.x, g_size.y);
+
+  Renderbuffer fbo_depth_buffer;
+  fbo_depth_buffer.storage(GL_DEPTH24_STENCIL8, g_size.x, g_size.y);
+
+  Framebuffer fbo;
+  fbo.attachTexture(GL_COLOR_ATTACHMENT0, &fbo_color_texture, 0);
+  fbo.attachRenderbuffer(GL_DEPTH_STENCIL_ATTACHMENT, &fbo_depth_buffer);
+  GLenum drawBuffers[] = {GL_COLOR_ATTACHMENT0};
+  fbo.setDrawBuffers(1, drawBuffers);
+  // fbo.setReadBuffer(GL_COLOR_ATTACHMENT0);
+
+  if (!fbo.isComplete(GL_DRAW_FRAMEBUFFER)) {
+    LOG_ERROR("Framebuffer is not complete!");
+    return -1;
+  }
+
+  // Create screen quad
+  ScreenQuad screen_quad;
+  screen_quad.setProgram(&screen_program);
+
+  // Create render context
+  RenderContext ctx;
+
   LOG_INFO("Setup complete, entering render loop");
 
   float rotation = 0.0f;
-
-  // Get uniform locations
-  GLint u_model = glGetUniformLocation(program.get_name(), "u_model");
-  GLint u_view = glGetUniformLocation(program.get_name(), "u_view");
-  GLint u_projection = glGetUniformLocation(program.get_name(), "u_projection");
-  GLint u_lightPos = glGetUniformLocation(program.get_name(), "u_lightPos");
-  GLint u_viewPos = glGetUniformLocation(program.get_name(), "u_viewPos");
-  GLint u_baseColorTexture =
-      glGetUniformLocation(program.get_name(), "u_baseColorTexture");
-  GLint u_metallicRoughnessTexture =
-      glGetUniformLocation(program.get_name(), "u_metallicRoughnessTexture");
-  GLint u_normalTexture =
-      glGetUniformLocation(program.get_name(), "u_normalTexture");
-  GLint u_emissiveTexture =
-      glGetUniformLocation(program.get_name(), "u_emissiveTexture");
-  GLint u_occlusionTexture =
-      glGetUniformLocation(program.get_name(), "u_occlusionTexture");
-  GLint u_baseColorFactor =
-      glGetUniformLocation(program.get_name(), "u_baseColorFactor");
-  GLint u_metallicFactor =
-      glGetUniformLocation(program.get_name(), "u_metallicFactor");
-  GLint u_roughnessFactor =
-      glGetUniformLocation(program.get_name(), "u_roughnessFactor");
-  GLint u_emissiveFactor =
-      glGetUniformLocation(program.get_name(), "u_emissiveFactor");
+  float lastFrame = 0.0f;
 
   // Main render loop
   while (!window->shouldClose()) {
     // Time
     float currentFrame = static_cast<float>(glfwGetTime());
-    g_deltaTime = currentFrame - g_lastFrame;
-    g_lastFrame = currentFrame;
+    float deltaTime = currentFrame - lastFrame;
+    lastFrame = currentFrame;
 
     // Input
     window->pollEvents();
 
     // Auto-rotate the model
-    rotation += g_deltaTime * 30.0f; // 30 degrees per second
+    rotation += deltaTime * 30.0f; // 30 degrees per second
 
-    // Clear
-    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // Setup transformation matrices
+    TransformUBO transformData;
+    transformData.model = glm::mat4(1.0f);
+    transformData.model = glm::rotate(transformData.model, 
+                                     glm::radians(rotation), 
+                                     glm::vec3(0.0f, 1.0f, 0.0f));
+    transformData.view = glm::lookAt(g_camera.position, 
+                                    glm::vec3(0.0f, 0.0f, 0.0f),
+                                    g_camera.up);
+    transformData.projection = glm::perspective(glm::radians(g_camera.fov),
+                                               static_cast<float>(g_size.x) / g_size.y, 
+                                               0.1f, 100.0f);
 
-    // Use program
-    program.use();
+    // Update transform UBO
+    transform_ubo.set_sub_data(0, sizeof(TransformUBO), &transformData);
 
-    // Setup matrices
-    glm::mat4 model = glm::mat4(1.0f);
-    model =
-        glm::rotate(model, glm::radians(rotation), glm::vec3(0.0f, 1.0f, 0.0f));
+    // Setup lighting
+    LightingUBO lightingData;
+    lightingData.lightPos = glm::vec3(5.0f, 5.0f, 5.0f);
+    lightingData.viewPos = g_camera.position;
 
-    glm::mat4 view = glm::lookAt(g_camera.position, glm::vec3(0.0f, 0.0f, 0.0f),
-                                 g_camera.up);
+    // Update lighting UBO
+    lighting_ubo.set_sub_data(0, sizeof(LightingUBO), &lightingData);
 
-    glm::mat4 projection = glm::perspective(glm::radians(g_camera.fov),
-                                            1280.0f / 720.0f, 0.1f, 100.0f);
+    // ===== First Pass: Render to FBO =====
+    fbo.bind();
+    // glViewport(0, 0, g_size.x, g_size.y);
+    // glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // glEnable(GL_DEPTH_TEST);
 
-    // Set uniforms
-    glUniformMatrix4fv(u_model, 1, GL_FALSE, glm::value_ptr(model));
-    glUniformMatrix4fv(u_view, 1, GL_FALSE, glm::value_ptr(view));
-    glUniformMatrix4fv(u_projection, 1, GL_FALSE, glm::value_ptr(projection));
-    glm::vec3 lightPos(5.0f, 5.0f, 5.0f);
-    glUniform3fv(u_lightPos, 1, glm::value_ptr(lightPos));
-    glUniform3fv(u_viewPos, 1, glm::value_ptr(g_camera.position));
+    // Setup rendering info for FBO
+    RenderingInfo renderingInfo;
+    renderingInfo.framebuffer = &fbo;
+    renderingInfo.renderAreaOffset = {0, 0};
+    renderingInfo.renderAreaExtent = {g_size.x, g_size.y};
+
+    // Setup color attachment
+    RenderingAttachmentInfo colorAttachment;
+    colorAttachment.loadOp = AttachmentLoadOp::Clear;
+    colorAttachment.storeOp = AttachmentStoreOp::Store;
+    colorAttachment.clearValue = ClearValue::Color(0.1f, 0.1f, 0.1f, 1.0f);
+    renderingInfo.colorAttachments[0] = colorAttachment;
+
+    // Setup depth attachment
+    RenderingAttachmentInfo depthAttachment;
+    depthAttachment.loadOp = AttachmentLoadOp::Clear;
+    depthAttachment.storeOp = AttachmentStoreOp::Store;
+    depthAttachment.clearValue = ClearValue::DepthStencil(1.0f, 0);
+    renderingInfo.depthAttachment = depthAttachment;
+
+    // Begin rendering to FBO
+    ctx.beginRendering(renderingInfo);
+
+    // Bind pipeline
+    ctx.bindPipeline(pipeline);
+
+    // Set viewport
+    ctx.setViewport(0, 0, g_size.x, g_size.y);
 
     // Render each mesh
+    int meshCount = 0;
     for (const auto &mesh_data : mesh_data_list) {
-      mesh_data.vao.bind();
+      // Bind vertex array
+      ctx.bindVertexArray(mesh_data.vao);
 
-      // Bind textures and set material uniforms
+      // Update material UBO and bind textures
       if (mesh_data.material) {
         const auto &mat = mesh_data.material;
         const auto &pbr = mat->pbr_metallic_roughness;
 
-        // Base color
-        glUniform4fv(u_baseColorFactor, 1,
-                     glm::value_ptr(pbr.base_color_factor));
+        // Prepare material data
+        MaterialUBO materialData;
+        materialData.baseColorFactor = pbr.base_color_factor;
+        materialData.emissiveFactor = mat->emissive_factor;
+        materialData.metallicFactor = pbr.metallic_factor;
+        materialData.roughnessFactor = pbr.roughness_factor;
+
+        // Update material UBO
+        material_ubo.set_sub_data(0, sizeof(MaterialUBO), &materialData);
+
+        // Bind textures with sampler
+        // Base color (unit 0)
         if (pbr.base_color_texture &&
             texture_map.count(pbr.base_color_texture)) {
           texture_map.at(pbr.base_color_texture)->bind(0);
@@ -383,9 +491,7 @@ int main() {
         }
         sampler.bind(0);
 
-        // Metallic roughness
-        glUniform1f(u_metallicFactor, pbr.metallic_factor);
-        glUniform1f(u_roughnessFactor, pbr.roughness_factor);
+        // Metallic roughness (unit 1)
         if (pbr.metallic_roughness_texture &&
             texture_map.count(pbr.metallic_roughness_texture)) {
           texture_map.at(pbr.metallic_roughness_texture)->bind(1);
@@ -394,7 +500,7 @@ int main() {
         }
         sampler.bind(1);
 
-        // Normal
+        // Normal (unit 2)
         if (mat->normal_texture && texture_map.count(mat->normal_texture)) {
           texture_map.at(mat->normal_texture)->bind(2);
         } else {
@@ -402,8 +508,7 @@ int main() {
         }
         sampler.bind(2);
 
-        // Emissive
-        glUniform3fv(u_emissiveFactor, 1, glm::value_ptr(mat->emissive_factor));
+        // Emissive (unit 3)
         if (mat->emissive_texture && texture_map.count(mat->emissive_texture)) {
           texture_map.at(mat->emissive_texture)->bind(3);
         } else {
@@ -411,7 +516,7 @@ int main() {
         }
         sampler.bind(3);
 
-        // Occlusion
+        // Occlusion (unit 4)
         if (mat->occlusion_texture &&
             texture_map.count(mat->occlusion_texture)) {
           texture_map.at(mat->occlusion_texture)->bind(4);
@@ -419,27 +524,32 @@ int main() {
           default_white.bind(4);
         }
         sampler.bind(4);
-
-        glUniform1i(u_baseColorTexture, 0);
-        glUniform1i(u_metallicRoughnessTexture, 1);
-        glUniform1i(u_normalTexture, 2);
-        glUniform1i(u_emissiveTexture, 3);
-        glUniform1i(u_occlusionTexture, 4);
       }
 
-      // Draw
+      // Draw indexed
       if (mesh_data.index_count > 0) {
-        glDrawElements(GL_TRIANGLES,
-                       static_cast<GLsizei>(mesh_data.index_count),
-                       GL_UNSIGNED_INT, 0);
+        ctx.drawIndexed(static_cast<uint32_t>(mesh_data.index_count));
+        meshCount++;
       }
     }
+  
+    // End rendering to FBO
+    ctx.endRendering();
+
+    // ===== Second Pass: Render FBO texture to screen =====
+    Framebuffer::unbind();
+    glViewport(0, 0, g_size.x, g_size.y);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glDisable(GL_DEPTH_TEST);
+
+    fbo_color_texture.bind(6);
+    screen_quad.draw(fbo_color_texture);
 
     // Swap buffers
     window->swapBuffers();
   }
 
   LOG_INFO("Shutting down");
-  window->destroy();
   return 0;
 }

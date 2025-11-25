@@ -12,7 +12,7 @@ namespace sg {
 
 struct Mesh;
 struct Camera;
-class PunctualLight;
+struct PunctualLight;
 
 /// Scene graph node supporting hierarchical transformations
 class Node {

@@ -22,8 +22,7 @@ public:
   void storage_multisample(GLsizei samples, GLenum internalformat,
                            GLsizei width, GLsizei height);
 
-  void get(GLint value) const;
-
+  void get(GLint &value) const;
   GLint get() const;
 };
 } // namespace paimon

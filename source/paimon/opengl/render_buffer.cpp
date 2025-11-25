@@ -19,17 +19,17 @@ void Renderbuffer::bind() const { glBindRenderbuffer(GL_RENDERBUFFER, m_name); }
 
 void Renderbuffer::storage(GLenum internalformat, GLsizei width,
                            GLsizei height) {
-  glRenderbufferStorage(GL_RENDERBUFFER, internalformat, width, height);
+  glNamedRenderbufferStorage(m_name, internalformat, width, height);
 }
 
 void Renderbuffer::storage_multisample(GLsizei samples, GLenum internalformat,
                                        GLsizei width, GLsizei height) {
-  glRenderbufferStorageMultisample(GL_RENDERBUFFER, samples, internalformat,
-                                   width, height);
+  glNamedRenderbufferStorageMultisample(m_name, samples, internalformat,
+                                       width, height);
 }
 
-void Renderbuffer::get(GLint value) const {
-  glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_WIDTH, &value);
+void Renderbuffer::get(GLint &value) const {
+  glGetNamedRenderbufferParameteriv(m_name, GL_RENDERBUFFER_WIDTH, &value);
 }
 
 GLint Renderbuffer::get() const {
