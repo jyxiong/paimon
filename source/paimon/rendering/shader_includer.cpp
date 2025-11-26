@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <regex>
 
+#include "paimon/core/macro.h"
 #include "paimon/core/io/file.h"
 #include "paimon/core/log_system.h"
 
@@ -32,7 +33,8 @@ void ShaderIncluder::resolveIncludes(std::string &source) {
   // MSVC doesn't support std::regex_constants::multiline
   static const std::regex includePattern(
       R"(^\s*#include\s+([<"])([^>"]+)([>"])\s*(?://.*)?$)");
-#else
+#endif
+#ifdef PAIMON_OS_UNIX
   static const std::regex includePattern(
       R"(^\s*#include\s+([<"])([^>"]+)([>"])\s*(?://.*)?$)",
       std::regex_constants::multiline);
