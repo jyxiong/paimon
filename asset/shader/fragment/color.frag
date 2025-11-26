@@ -1,6 +1,6 @@
 #version 460 core
 
-#include <utils.glsl>
+#include <common/utils.glsl>
 
 in vec3 v_color;
 out vec4 FragColor;

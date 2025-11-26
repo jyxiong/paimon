@@ -1,6 +1,8 @@
 #include "screen_quad.h"
 
 #include "glad/gl.h"
+#include "paimon/core/log_system.h"
+#include "paimon/rendering/shader_manager.h"
 
 ScreenQuad::ScreenQuad() {
   // Create a minimal VAO (no vertex data needed, vertices are in shader)
@@ -12,17 +14,33 @@ ScreenQuad::ScreenQuad() {
   m_sampler->set(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   m_sampler->set(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   m_sampler->set(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-}
 
-void ScreenQuad::setProgram(Program *program) { m_program = program; }
+  // Load shaders from ShaderManager singleton
+  auto& shaderManager = ShaderManager::getInstance();
+  auto vert_program = shaderManager.getShaderProgram("screen_quad.vert", GL_VERTEX_SHADER);
+  auto frag_program = shaderManager.getShaderProgram("screen_quad.frag", GL_FRAGMENT_SHADER);
+
+  if (!vert_program || !frag_program) {
+    LOG_ERROR("Failed to load screen quad shaders");
+    return;
+  }
+
+  // Create graphics pipeline
+  GraphicsPipelineCreateInfo pipelineInfo;
+  pipelineInfo.shaderStages = {
+      {GL_VERTEX_SHADER_BIT, vert_program.get()},
+      {GL_FRAGMENT_SHADER_BIT, frag_program.get()},
+  };
+  pipelineInfo.state.depthStencil.depthTestEnable = false;
+  
+  m_pipeline = std::make_unique<GraphicsPipeline>(pipelineInfo);
+}
 
 void ScreenQuad::draw(const Texture &texture) {
   m_vao->bind();
-  if (m_program) {
-    m_program->use();
-  }
-  texture.bind(6);
-  m_sampler->bind(6);
-  // Draw a single triangle that covers the entire screen
-  glDrawArrays(GL_TRIANGLES, 0, 3);
+  m_pipeline->bind();
+  texture.bind(0);
+  m_sampler->bind(0);
+  // Draw full-screen quad with 6 vertices (2 triangles)
+  glDrawArrays(GL_TRIANGLES, 0, 6);
 }
