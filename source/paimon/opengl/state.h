@@ -11,13 +11,13 @@
 namespace paimon {
 
 struct PipelineState {
-  ColorBlendState colorBlendState;
-  DepthStencilState depthStencilState;
-  InputAssemblyState inputAssemblyState;
-  MultisampleState multisampleState;
-  RasterizationState rasterizationState;
-  TessellationState tessellationState;
-  ViewportState viewportState;
+  ColorBlendState colorBlend;
+  DepthStencilState depthStencil;
+  InputAssemblyState inputAssembly;
+  MultisampleState multisample;
+  RasterizationState rasterization;
+  TessellationState tessellation;
+  ViewportState viewport;
 
   void apply(const PipelineState &state);
 

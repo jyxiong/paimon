@@ -43,10 +43,10 @@ std::string processShader(
   }
 
   ShaderPreprocessor preprocessor;
-  preprocessor.addIncludePath(commonDir);
-  preprocessor.addIncludePath(shaderPath.parent_path());
+  preprocessor.addSearchPath(commonDir);
+  preprocessor.addSearchPath(shaderPath.parent_path());
 
-  return preprocessor.processShaderSource(shaderSource);
+  return preprocessor.process(shaderSource);
 }
 
 int main() {

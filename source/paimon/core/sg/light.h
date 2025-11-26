@@ -7,12 +7,11 @@
 namespace paimon {
 namespace sg {
 
-/// Base punctual light class (KHR_lights_punctual)
+/// Base punctual light struct (KHR_lights_punctual)
 /// All lights emit light in a cone (or hemisphere for point lights)
-class PunctualLight {
-public:
+struct PunctualLight {
   /// Light types based on KHR_lights_punctual
-  enum class Type {
+  enum struct Type {
     Directional, // Directional light (sun-like)
     Point,       // Point light (omni-directional)
     Spot         // Spot light (cone-shaped)
@@ -34,8 +33,7 @@ public:
 };
 
 /// Directional light (infinite distance, parallel rays)
-class DirectionalLight : public PunctualLight {
-public:
+struct DirectionalLight : public PunctualLight {
   DirectionalLight() = default;
   DirectionalLight(const std::string &name) : PunctualLight(name) {}
 
@@ -45,8 +43,7 @@ public:
 };
 
 /// Point light (omni-directional, radiates in all directions)
-class PointLight : public PunctualLight {
-public:
+struct PointLight : public PunctualLight {
   PointLight() = default;
   PointLight(const std::string &name) : PunctualLight(name) {}
 
@@ -56,8 +53,7 @@ public:
 };
 
 /// Spot light (cone-shaped, directional with falloff)
-class SpotLight : public PunctualLight {
-public:
+struct SpotLight : public PunctualLight {
   float inner_cone_angle = 0.0f; // Inner cone angle in radians
   float outer_cone_angle =
       glm::radians(45.0f); // Outer cone angle in radians (default π/4)

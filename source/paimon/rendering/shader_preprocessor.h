@@ -24,26 +24,14 @@ public:
    * @brief Add an include search path
    * @param path Directory to search for included files
    */
-  void addIncludePath(const std::filesystem::path &path);
-
-  /**
-   * @brief Set multiple include search paths
-   * @param paths Vector of directories to search
-   */
-  void setIncludePaths(const std::vector<std::filesystem::path> &paths);
+  void addSearchPath(const std::filesystem::path &path);
 
   /**
    * @brief Process a ShaderSource object with defines and includes
    * @param shaderSource ShaderSource object containing source and defines
    * @return Processed shader source with defines and includes resolved
    */
-  std::string processShaderSource(const ShaderSource &shaderSource);
-
-  /**
-   * @brief Clear the processed files cache (for include guards)
-   * Call this between processing different shader programs
-   */
-  void clearCache();
+  std::string process(const ShaderSource &shaderSource);
 
 private:
   /**
@@ -62,7 +50,7 @@ private:
 
 private:
   /// Search paths for #include <> directives
-  std::vector<std::filesystem::path> m_includePaths;
+  std::vector<std::filesystem::path> m_searchPaths;
 
   /// Set of already included files (for include guards)
   std::set<std::filesystem::path> m_includedFiles;

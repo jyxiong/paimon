@@ -3,33 +3,26 @@
 #include <algorithm>
 #include <regex>
 
+#include "paimon/core/macro.h"
 #include "paimon/core/io/file.h"
 #include "paimon/core/log_system.h"
-#include "paimon/core/macro.h"
 #include "paimon/rendering/shader_source.h"
 
 using namespace paimon;
 
 ShaderPreprocessor::ShaderPreprocessor() {}
 
-void ShaderPreprocessor::addIncludePath(const std::filesystem::path &path) {
+void ShaderPreprocessor::addSearchPath(const std::filesystem::path &path) {
   auto absPath = std::filesystem::absolute(path);
   if (!std::filesystem::exists(absPath)) {
     LOG_WARN("Include path does not exist: {}", absPath.string());
   }
-  m_includePaths.push_back(absPath);
-}
-
-void ShaderPreprocessor::setIncludePaths(
-    const std::vector<std::filesystem::path> &paths) {
-  m_includePaths.clear();
-  for (const auto &path : paths) {
-    addIncludePath(path);
-  }
+  m_searchPaths.push_back(absPath);
 }
 
 std::string
-ShaderPreprocessor::processShaderSource(const ShaderSource &shaderSource) {
+ShaderPreprocessor::process(const ShaderSource &shaderSource) {
+  m_includedFiles.clear();
   m_processingStack.clear();
 
   std::string source = shaderSource.getSource();
@@ -39,12 +32,8 @@ ShaderPreprocessor::processShaderSource(const ShaderSource &shaderSource) {
   resolveDefines(source, defines);
 
   resolveIncludes(source);
-  return source;
-}
 
-void ShaderPreprocessor::clearCache() {
-  m_includedFiles.clear();
-  m_processingStack.clear();
+  return source;
 }
 
 void ShaderPreprocessor::resolveDefines(
@@ -97,16 +86,16 @@ void ShaderPreprocessor::resolveIncludes(std::string &source) {
     // match[1] = opening delimiter (" or <)
     // match[2] = file path
     // match[3] = closing delimiter (" or >)
-    std::string includePath = match[2].str();
+    std::string includeFile = match[2].str();
 
     // Resolve the include path: search in all include paths
-    std::filesystem::path path(includePath);
+    std::filesystem::path filePath(includeFile);
     std::filesystem::path resolvedPath;
 
     // Try include paths
-    auto found = std::find_if(m_includePaths.begin(), m_includePaths.end(),
+    auto found = std::find_if(m_searchPaths.begin(), m_searchPaths.end(),
                               [&](const std::filesystem::path &searchPath) {
-                                auto fullPath = searchPath / path;
+                                auto fullPath = searchPath / filePath;
                                 if (std::filesystem::exists(fullPath)) {
                                   resolvedPath =
                                       std::filesystem::canonical(fullPath);
@@ -115,8 +104,8 @@ void ShaderPreprocessor::resolveIncludes(std::string &source) {
                                 return false;
                               });
 
-    if (found == m_includePaths.end()) {
-      LOG_ERROR("Included file not found: {}", includePath);
+    if (found == m_searchPaths.end()) {
+      LOG_ERROR("Included file not found: {}", includeFile);
       return;
     }
 
@@ -150,11 +139,11 @@ void ShaderPreprocessor::resolveIncludes(std::string &source) {
 
       // Build replacement with comments
       replacement =
-          "// --- Begin include: " + includePath + " ---\n" + includeSource;
+          "// --- Begin include: " + includeFile + " ---\n" + includeSource;
       if (!includeSource.empty() && includeSource.back() != '\n') {
         replacement += "\n";
       }
-      replacement += "// --- End include: " + includePath + " ---";
+      replacement += "// --- End include: " + includeFile + " ---";
 
       // Remove from processing stack
       m_processingStack.pop_back();
