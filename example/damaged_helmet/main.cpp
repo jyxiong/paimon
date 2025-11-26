@@ -8,23 +8,18 @@
 
 #include "glad/gl.h"
 #include "paimon/app/window.h"
-#include "paimon/core/io/file.h"
 #include "paimon/core/io/gltf.h"
 #include "paimon/core/log_system.h"
 #include "paimon/opengl/buffer.h"
 #include "paimon/opengl/framebuffer.h"
-#include "paimon/opengl/program.h"
 #include "paimon/opengl/render_buffer.h"
 #include "paimon/opengl/sampler.h"
-#include "paimon/opengl/shader.h"
-#include "paimon/opengl/shader_program.h"
 #include "paimon/opengl/texture.h"
 #include "paimon/opengl/vertex_array.h"
 #include "paimon/rendering/graphics_pipeline.h"
 #include "paimon/rendering/render_context.h"
 #include "paimon/rendering/rendering_info.h"
-#include "paimon/rendering/shader_preprocessor.h"
-#include "paimon/rendering/shader_source.h"
+#include "paimon/rendering/shader_manager.h"
 
 #include "screen_quad.h"
 
@@ -130,29 +125,23 @@ int main() {
       .vsync = true,
   });
 
-  // Setup shader preprocessor
+  // Setup shader manager
   auto assetPath = std::filesystem::current_path().parent_path().parent_path()/ "asset";
   auto shaderPath = assetPath / "shader";
 
-  ShaderPreprocessor preprocessor;
-  preprocessor.addSearchPath(shaderPath);
+  auto& shaderManager = ShaderManager::getInstance();
+  shaderManager.load(shaderPath);
 
-  // Load and process shaders
-  ShaderSource vertexSource(shaderPath / "damaged_helmet.vert");
-  ShaderSource fragmentSource(shaderPath / "damaged_helmet.frag");
+  // Get shader programs for main rendering (separable programs for pipeline)
+  auto vertex_program_ptr = shaderManager.getShaderProgram(
+      "damaged_helmet.vert", GL_VERTEX_SHADER);
+  auto fragment_program_ptr = shaderManager.getShaderProgram(
+      "damaged_helmet.frag", GL_FRAGMENT_SHADER);
 
-  std::string vertex_source = preprocessor.process(vertexSource);
-  std::string fragment_source =
-      preprocessor.process(fragmentSource);
-
-  // Load screen quad shaders
-  ShaderSource screenVertSource(shaderPath / "screen_quad.vert");
-  ShaderSource screenFragSource(shaderPath / "screen_quad.frag");
-  std::string screen_vert_source =
-      preprocessor.process(screenVertSource);
-  std::string screen_frag_source =
-      preprocessor.process(screenFragSource);
-
+  if (!vertex_program_ptr || !fragment_program_ptr) {
+    LOG_ERROR("Failed to load main shader programs");
+    return -1;
+  }
   // Load glTF model
   GltfLoader loader;
   sg::Scene scene;
@@ -170,38 +159,11 @@ int main() {
     LOG_WARN("glTF warnings: {}", loader.GetWarning());
   }
 
-  // Compile separable shader programs for the pipeline
-  ShaderProgram vertex_program(GL_VERTEX_SHADER, vertex_source);
-  ShaderProgram fragment_program(GL_FRAGMENT_SHADER, fragment_source);
-
-  // Compile screen quad shader program
-  Shader screen_vert_shader(GL_VERTEX_SHADER);
-  Shader screen_frag_shader(GL_FRAGMENT_SHADER);
-  if (!screen_vert_shader.compile(screen_vert_source)) {
-    LOG_ERROR("Screen vertex shader compilation failed: {}",
-              screen_vert_shader.get_info_log());
-    return -1;
-  }
-  if (!screen_frag_shader.compile(screen_frag_source)) {
-    LOG_ERROR("Screen fragment shader compilation failed: {}",
-              screen_frag_shader.get_info_log());
-    return -1;
-  }
-
-  Program screen_program;
-  screen_program.attach(screen_vert_shader);
-  screen_program.attach(screen_frag_shader);
-  if (!screen_program.link()) {
-    LOG_ERROR("Screen shader program linking failed: {}",
-              screen_program.get_info_log());
-    return -1;
-  }
-
   // Create graphics pipeline
   GraphicsPipelineCreateInfo pipelineInfo;
   pipelineInfo.shaderStages = {
-      {GL_VERTEX_SHADER_BIT, &vertex_program},
-      {GL_FRAGMENT_SHADER_BIT, &fragment_program},
+      {GL_VERTEX_SHADER_BIT, vertex_program_ptr.get()},
+      {GL_FRAGMENT_SHADER_BIT, fragment_program_ptr.get()},
   };
   
   // Configure depth testing
@@ -375,9 +337,8 @@ int main() {
     return -1;
   }
 
-  // Create screen quad
+  // Create screen quad (it will load shaders internally from singleton)
   ScreenQuad screen_quad;
-  screen_quad.setProgram(&screen_program);
 
   // Create render context
   RenderContext ctx;
@@ -543,7 +504,7 @@ int main() {
     glClear(GL_COLOR_BUFFER_BIT);
     glDisable(GL_DEPTH_TEST);
 
-    fbo_color_texture.bind(6);
+    // Use screen quad to render FBO texture
     screen_quad.draw(fbo_color_texture);
 
     // Swap buffers
@@ -551,5 +512,9 @@ int main() {
   }
 
   LOG_INFO("Shutting down");
+  
+  // Clear shader resources before OpenGL context is destroyed
+  shaderManager.clear();
+  
   return 0;
 }

@@ -1,4 +1,4 @@
-#include "paimon/rendering/shader_preprocessor.h"
+#include "paimon/rendering/shader_includer.h"
 
 #include <algorithm>
 #include <regex>
@@ -6,13 +6,10 @@
 #include "paimon/core/macro.h"
 #include "paimon/core/io/file.h"
 #include "paimon/core/log_system.h"
-#include "paimon/rendering/shader_source.h"
 
 using namespace paimon;
 
-ShaderPreprocessor::ShaderPreprocessor() {}
-
-void ShaderPreprocessor::addSearchPath(const std::filesystem::path &path) {
+void ShaderIncluder::addSearchPath(const std::filesystem::path &path) {
   auto absPath = std::filesystem::absolute(path);
   if (!std::filesystem::exists(absPath)) {
     LOG_WARN("Include path does not exist: {}", absPath.string());
@@ -20,61 +17,24 @@ void ShaderPreprocessor::addSearchPath(const std::filesystem::path &path) {
   m_searchPaths.push_back(absPath);
 }
 
-std::string
-ShaderPreprocessor::process(const ShaderSource &shaderSource) {
+std::string ShaderIncluder::process(const std::string &source) {
+  // Clear state for new processing
   m_includedFiles.clear();
   m_processingStack.clear();
 
-  std::string source = shaderSource.getSource();
-  const auto &defines = shaderSource.getDefines();
-
-  // Resolve defines
-  resolveDefines(source, defines);
-
-  resolveIncludes(source);
-
-  return source;
+  std::string result = source;
+  resolveIncludes(result);
+  return result;
 }
 
-void ShaderPreprocessor::resolveDefines(
-    std::string &source, const std::vector<std::string> &defines) const {
-
-  if (defines.empty()) {
-    return;
-  }
-
-  static const std::regex versionPattern(R"(^[ \t]*#version\s+\d+[^\n]*)");
-  std::smatch match;
-
-  std::string defineBlock;
-  for (const auto &define : defines) {
-    defineBlock += "#define " + define + "\n";
-  }
-
-  if (std::regex_search(source, match, versionPattern)) {
-    // Insert defines after #version line
-    size_t insertPos = match.position() + match.length();
-    // Find the end of the line
-    size_t newlinePos = source.find('\n', insertPos);
-    if (newlinePos != std::string::npos) {
-      source.insert(newlinePos + 1, defineBlock);
-    } else {
-      source += "\n" + defineBlock;
-    }
-  } else {
-    // No #version, insert at beginning
-    source.insert(0, defineBlock + "\n");
-  }
-}
-
-void ShaderPreprocessor::resolveIncludes(std::string &source) {
-
+void ShaderIncluder::resolveIncludes(std::string &source) {
   // Regex to match #include "file" or #include <file>
 #ifdef PAIMON_OS_WINDOWS
   // MSVC doesn't support std::regex_constants::multiline
   static const std::regex includePattern(
       R"(^\s*#include\s+([<"])([^>"]+)([>"])\s*(?://.*)?$)");
-#else
+#endif
+#ifdef PAIMON_OS_UNIX
   static const std::regex includePattern(
       R"(^\s*#include\s+([<"])([^>"]+)([>"])\s*(?://.*)?$)",
       std::regex_constants::multiline);
@@ -93,16 +53,16 @@ void ShaderPreprocessor::resolveIncludes(std::string &source) {
     std::filesystem::path resolvedPath;
 
     // Try include paths
-    auto found = std::find_if(m_searchPaths.begin(), m_searchPaths.end(),
-                              [&](const std::filesystem::path &searchPath) {
-                                auto fullPath = searchPath / filePath;
-                                if (std::filesystem::exists(fullPath)) {
-                                  resolvedPath =
-                                      std::filesystem::canonical(fullPath);
-                                  return true;
-                                }
-                                return false;
-                              });
+    auto found = std::find_if(
+        m_searchPaths.begin(), m_searchPaths.end(),
+        [&](const std::filesystem::path &searchPath) {
+          auto fullPath = searchPath / filePath;
+          if (std::filesystem::exists(fullPath)) {
+            resolvedPath = std::filesystem::canonical(fullPath);
+            return true;
+          }
+          return false;
+        });
 
     if (found == m_searchPaths.end()) {
       LOG_ERROR("Included file not found: {}", includeFile);
@@ -131,6 +91,7 @@ void ShaderPreprocessor::resolveIncludes(std::string &source) {
       // Read the included file
       std::string includeSource = File::readText(resolvedPath);
       if (includeSource.empty()) {
+        LOG_ERROR("Failed to read included file: {}", resolvedPath.string());
         return;
       }
 
