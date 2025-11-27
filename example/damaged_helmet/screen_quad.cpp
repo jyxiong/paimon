@@ -39,8 +39,8 @@ ScreenQuad::ScreenQuad() {
 void ScreenQuad::draw(const Texture &texture) {
   m_vao->bind();
   m_pipeline->bind();
-  texture.bind(0);
-  m_sampler->bind(0);
+  texture.bind(6);
+  m_sampler->bind(6);
   // Draw full-screen quad with 6 vertices (2 triangles)
   glDrawArrays(GL_TRIANGLES, 0, 6);
 }

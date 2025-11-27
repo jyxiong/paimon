@@ -4,19 +4,19 @@
 #include "paimon/opengl/framebuffer.h"
 #include "paimon/opengl/program.h"
 #include "paimon/opengl/vertex_array.h"
+#include "paimon/rendering/framebuffer_cache.h"
 
 namespace paimon {
 
 void RenderContext::beginRendering(const RenderingInfo& info) {
   m_insideRenderPass = true;
-  m_currentRenderingInfo = info;
+
+  // Get or create framebuffer from cache based on attachments
+  Framebuffer* framebuffer = m_framebufferCache.getOrCreate(info);
+  m_currentFbo = framebuffer;
 
   // Bind framebuffer
-  if (info.framebuffer) {
-    info.framebuffer->bind();
-  } else {
-    Framebuffer::unbind(); // Bind default framebuffer
-  }
+  m_currentFbo->bind();
 
   // Set viewport to render area if specified
   if (info.renderAreaExtent.x > 0 && info.renderAreaExtent.y > 0) {
@@ -30,8 +30,31 @@ void RenderContext::beginRendering(const RenderingInfo& info) {
 
 void RenderContext::endRendering() {
   m_insideRenderPass = false;
+  m_currentFbo = nullptr;
   // Unbind framebuffer
   Framebuffer::unbind();
+}
+
+void RenderContext::beginSwapchainRendering(const SwapchainRenderingInfo& info) {
+  m_insideRenderPass = true;
+  m_currentFbo = nullptr;
+
+  // Bind default framebuffer
+  Framebuffer::unbind();
+
+  // Set viewport to render area if specified
+  if (info.renderAreaExtent.x > 0 && info.renderAreaExtent.y > 0) {
+    glViewport(info.renderAreaOffset.x, info.renderAreaOffset.y,
+               info.renderAreaExtent.x, info.renderAreaExtent.y);
+  }
+
+  // Apply clear operations for swapchain (default framebuffer)
+  applyClearOperationsSwapchain(info);
+}
+
+void RenderContext::endSwapchainRendering() {
+  m_insideRenderPass = false;
+  m_currentFbo = nullptr;
 }
 
 void RenderContext::bindPipeline(const GraphicsPipeline& pipeline) {
@@ -101,42 +124,18 @@ void RenderContext::drawIndexed(uint32_t indexCount, uint32_t instanceCount,
   }
 }
 
-void RenderContext::clearColorAttachment(uint32_t attachmentIndex, 
-                                         const float* clearColor) {
-  if (m_currentRenderingInfo.framebuffer) {
-    m_currentRenderingInfo.framebuffer->clear(GL_COLOR, attachmentIndex, clearColor);
-  } else {
-    glClearBufferfv(GL_COLOR, attachmentIndex, clearColor);
-  }
-}
-
-void RenderContext::clearDepthAttachment(float depth) {
-  glClearBufferfv(GL_DEPTH, 0, &depth);
-}
-
-void RenderContext::clearStencilAttachment(uint32_t stencil) {
-  GLint stencilValue = static_cast<GLint>(stencil);
-  glClearBufferiv(GL_STENCIL, 0, &stencilValue);
-}
-
-void RenderContext::clearDepthStencilAttachment(float depth, uint32_t stencil) {
-  glClearBufferfi(GL_DEPTH_STENCIL, 0, depth, static_cast<GLint>(stencil));
-}
-
 void RenderContext::applyClearOperations(const RenderingInfo& info) {
   // Clear color attachments
   for (size_t i = 0; i < info.colorAttachments.size(); ++i) {
-    if (info.colorAttachments[i].has_value()) {
-      const auto& attachment = info.colorAttachments[i].value();
-      if (attachment.loadOp == AttachmentLoadOp::Clear) {
-        const float clearColor[4] = {
-          attachment.clearValue.color.r,
-          attachment.clearValue.color.g,
-          attachment.clearValue.color.b,
-          attachment.clearValue.color.a
-        };
-        clearColorAttachment(static_cast<uint32_t>(i), clearColor);
-      }
+    const auto& attachment = info.colorAttachments[i];
+    if (attachment.loadOp == AttachmentLoadOp::Clear) {
+      const float clearColor[4] = {
+        attachment.clearValue.color.r,
+        attachment.clearValue.color.g,
+        attachment.clearValue.color.b,
+        attachment.clearValue.color.a
+      };
+      m_currentFbo->clear(GL_COLOR, static_cast<uint32_t>(i), clearColor);
     }
   }
 
@@ -144,7 +143,8 @@ void RenderContext::applyClearOperations(const RenderingInfo& info) {
   if (info.depthAttachment.has_value()) {
     const auto& attachment = info.depthAttachment.value();
     if (attachment.loadOp == AttachmentLoadOp::Clear) {
-      clearDepthAttachment(attachment.clearValue.depthStencil.depth);
+      float depth = attachment.clearValue.depthStencil.depth;
+      m_currentFbo->clear(GL_DEPTH, 0, &depth);
     }
   }
 
@@ -152,9 +152,25 @@ void RenderContext::applyClearOperations(const RenderingInfo& info) {
   if (info.stencilAttachment.has_value()) {
     const auto& attachment = info.stencilAttachment.value();
     if (attachment.loadOp == AttachmentLoadOp::Clear) {
-      clearStencilAttachment(attachment.clearValue.depthStencil.stencil);
+      GLint stencilValue = static_cast<GLint>(attachment.clearValue.depthStencil.stencil);
+      m_currentFbo->clear(GL_STENCIL, 0, &stencilValue);
     }
   }
+}
+
+void RenderContext::applyClearOperationsSwapchain(const SwapchainRenderingInfo& info) {
+  // Clear color
+  glClearColor(info.clearColor.color.r, info.clearColor.color.g,
+               info.clearColor.color.b, info.clearColor.color.a);
+
+  // Clear depth
+  glClearDepth(info.clearDepth);
+
+  // Clear stencil
+  glClearStencil(static_cast<GLint>(info.clearStencil));
+
+  // Execute clear
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 }
 
 } // namespace paimon
