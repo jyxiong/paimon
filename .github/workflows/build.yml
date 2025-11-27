@@ -19,6 +19,17 @@ jobs:
           submodules: recursive
       # - name: Setup MSVC
       #   uses: ilammy/msvc-dev-cmd@v1
+      - name: Print PATH
+        run: echo $Env:Path
+        shell: pwsh
+        
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Print PATH
+        run: echo $Env:Path
+        shell: pwsh
+
       - name: Setup Python
         uses: actions/setup-python@v6
         with:
