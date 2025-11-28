@@ -42,9 +42,9 @@ private:
   GLint m_layer;
 };
 
-class Framebuffer : NamedObject {
+class Framebuffer : public NamedObject {
 public:
-  Framebuffer();
+  Framebuffer(bool isDefault = false);
   ~Framebuffer();
 
   Framebuffer(const Framebuffer &other) = delete;

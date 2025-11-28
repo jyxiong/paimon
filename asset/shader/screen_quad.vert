@@ -1,5 +1,10 @@
 #version 460 core
 
+// Redeclare built-in block required by ARB_separate_shader_objects
+out gl_PerVertex {
+  vec4 gl_Position;
+};
+
 out vec2 v_texcoord;
 
 void main()

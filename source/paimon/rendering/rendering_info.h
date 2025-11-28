@@ -1,14 +1,14 @@
 #pragma once
 
-#include <array>
 #include <cstdint>
 #include <optional>
+#include <vector>
 
 #include <glm/glm.hpp>
 
-namespace paimon {
+#include "paimon/opengl/texture.h"
 
-class Framebuffer;
+namespace paimon {
 
 // Attachment load operation (similar to VkAttachmentLoadOp)
 enum class AttachmentLoadOp {
@@ -56,6 +56,7 @@ struct ClearValue {
 
 // Rendering attachment info (similar to VkRenderingAttachmentInfo)
 struct RenderingAttachmentInfo {
+  Texture &texture;
   AttachmentLoadOp loadOp = AttachmentLoadOp::DontCare;
   AttachmentStoreOp storeOp = AttachmentStoreOp::Store;
   ClearValue clearValue;
@@ -63,15 +64,12 @@ struct RenderingAttachmentInfo {
 
 // Main rendering info structure (similar to VkRenderingInfo)
 struct RenderingInfo {
-  // Framebuffer to render to (nullptr for default framebuffer)
-  Framebuffer* framebuffer = nullptr;
-  
   // Render area
   glm::ivec2 renderAreaOffset{0, 0};
   glm::ivec2 renderAreaExtent{0, 0};
   
-  // Color attachments (support up to 8 color attachments)
-  std::array<std::optional<RenderingAttachmentInfo>, 8> colorAttachments;
+  // Color attachments (dynamic size)
+  std::vector<RenderingAttachmentInfo> colorAttachments;
   
   // Depth attachment
   std::optional<RenderingAttachmentInfo> depthAttachment;
@@ -80,6 +78,24 @@ struct RenderingInfo {
   std::optional<RenderingAttachmentInfo> stencilAttachment;
 
   RenderingInfo() = default;
+};
+
+// Swapchain rendering info for default framebuffer
+struct SwapchainRenderingInfo {
+  // Render area
+  glm::ivec2 renderAreaOffset{0, 0};
+  glm::ivec2 renderAreaExtent{0, 0};
+  
+  // Clear color
+  ClearValue clearColor;
+  
+  // Clear depth
+  float clearDepth = 1.0f;
+  
+  // Clear stencil
+  uint32_t clearStencil = 0;
+
+  SwapchainRenderingInfo() = default;
 };
 
 } // namespace paimon

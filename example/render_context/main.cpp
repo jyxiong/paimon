@@ -19,6 +19,11 @@ std::string vertex_source = R"(
   layout(location = 0) in vec3 a_position;
   layout(location = 1) in vec3 a_color;
 
+  // Redeclare built-in block required by ARB_separate_shader_objects
+  out gl_PerVertex {
+    vec4 gl_Position;
+  };
+
   out vec3 v_color;
 
   void main()
@@ -88,21 +93,48 @@ int main() {
   if (!validate_shader_program(vertex_program, "Vertex")) {
     return 1;
   }
+  
+  LOG_INFO("Vertex program info log: {}", vertex_program.get_info_log());
 
   if (!validate_shader_program(fragment_program, "Fragment")) {
     return 1;
   }
+  
+  LOG_INFO("Fragment program info log: {}", fragment_program.get_info_log());
 
   GraphicsPipelineCreateInfo pipelineInfo{
       .shaderStages = {
-          {GL_VERTEX_SHADER, &vertex_program},
-          {GL_FRAGMENT_SHADER, &fragment_program},
+          {GL_VERTEX_SHADER_BIT, &vertex_program},
+          {GL_FRAGMENT_SHADER_BIT, &fragment_program},
       },
       .state = {
+        .depthStencil = {
+          .depthTestEnable = false,
+        },
+        .rasterization = {
+          .cullMode = GL_NONE,
+        },
       },
   };
 
   auto pipeline = GraphicsPipeline(pipelineInfo);
+  
+  // Validate pipeline
+  if (!pipeline.validate()) {
+    LOG_ERROR("Pipeline validation failed!");
+    
+    // Get pipeline info log
+    GLint logLength = 0;
+    glGetProgramPipelineiv(pipeline.get_name(), GL_INFO_LOG_LENGTH, &logLength);
+    if (logLength > 0) {
+      std::string infoLog(logLength, '\0');
+      glGetProgramPipelineInfoLog(pipeline.get_name(), logLength, nullptr, infoLog.data());
+      LOG_ERROR("Pipeline info log: {}", infoLog);
+    }
+    return 1;
+  }
+  
+  LOG_INFO("Pipeline created and validated successfully");
 
   // Define triangle vertices (position + color)
   struct Vertex {
@@ -123,7 +155,6 @@ int main() {
 
   // Create Vertex Array Object (VAO)
   VertexArray vao;
-  vao.bind();
 
   // Position attribute (location 0)
   auto &binding0 = vao.get_binding(0);
@@ -152,44 +183,50 @@ int main() {
   RenderContext ctx;
 
   LOG_INFO("Starting render loop...");
+  LOG_INFO("Window size: {}x{}", g_size.x, g_size.y);
 
+  bool firstFrame = true;
+  
   // Main render loop
   while (!window->shouldClose()) {
     window->pollEvents();
 
-    // Setup rendering info (similar to VkRenderingInfo)
-    RenderingInfo renderingInfo;
-    renderingInfo.framebuffer = nullptr; // Use default framebuffer
-    renderingInfo.renderAreaOffset = {0, 0};
-    renderingInfo.renderAreaExtent = {g_size.x, g_size.y};
-
-    // Setup color attachment
-    RenderingAttachmentInfo colorAttachment;
-    colorAttachment.loadOp = AttachmentLoadOp::Clear;
-    colorAttachment.storeOp = AttachmentStoreOp::Store;
-    colorAttachment.clearValue = ClearValue::Color(0.2f, 0.3f, 0.3f, 1.0f);
-    renderingInfo.colorAttachments[0] = colorAttachment;
+    // Setup swapchain rendering info
+    SwapchainRenderingInfo swapchainInfo;
+    swapchainInfo.renderAreaOffset = {0, 0};
+    swapchainInfo.renderAreaExtent = {g_size.x, g_size.y};
+    swapchainInfo.clearColor = ClearValue::Color(1.0f, 0.0f, 0.0f, 1.0f); // Red background
+    swapchainInfo.clearDepth = 1.0f;
+    swapchainInfo.clearStencil = 0;
 
     // === Vulkan-style rendering commands ===
     
-    // Begin rendering pass
-    ctx.beginRendering(renderingInfo);
+    // Begin rendering to swapchain (default framebuffer)
+    ctx.beginSwapchainRendering(swapchainInfo);
 
     // Bind graphics pipeline (sets shader stages + pipeline state)
     ctx.bindPipeline(pipeline);
-
-    // Set viewport
-    // Note: setViewport like Vulkan with dynamic state
-    ctx.setViewport(0, 0, g_size.x, g_size.y);
 
     // Bind vertex array
     ctx.bindVertexArray(vao);
 
     // Draw the triangle
     ctx.draw(3); // 3 vertices
+    
+    if (firstFrame) {
+      LOG_INFO("First frame rendered");
+      
+      // Check for OpenGL errors
+      GLenum err;
+      while ((err = glGetError()) != GL_NO_ERROR) {
+        LOG_ERROR("OpenGL error: 0x{:x}", err);
+      }
+      
+      firstFrame = false;
+    }
 
-    // End rendering pass
-    ctx.endRendering();
+    // End rendering to swapchain
+    ctx.endSwapchainRendering();
 
     // Swap buffers
     window->swapBuffers();

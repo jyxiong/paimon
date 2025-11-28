@@ -1,5 +1,6 @@
 #include "paimon/rendering/graphics_pipeline.h"
 
+#include "paimon/core/log_system.h"
 #include "paimon/opengl/program_pipeline.h"
 
 using namespace paimon;
@@ -11,6 +12,7 @@ GraphicsPipeline::GraphicsPipeline(const GraphicsPipelineCreateInfo &ci)
   }
 
   if (!validate()) {
+    LOG_ERROR("GraphicsPipeline validation failed!");
   }
 
   m_state = ci.state;

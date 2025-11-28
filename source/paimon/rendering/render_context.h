@@ -3,6 +3,7 @@
 #include "glad/gl.h"
 
 #include "paimon/opengl/state.h"
+#include "paimon/rendering/framebuffer_cache.h"
 #include "paimon/rendering/graphics_pipeline.h"
 #include "paimon/rendering/rendering_info.h"
 
@@ -27,6 +28,12 @@ public:
 
   // End rendering pass
   void endRendering();
+
+  // Begin rendering to swapchain (default framebuffer)
+  void beginSwapchainRendering(const SwapchainRenderingInfo& info);
+
+  // End rendering to swapchain
+  void endSwapchainRendering();
 
   // Bind graphics pipeline (applies all pipeline states)
   void bindPipeline(const GraphicsPipeline& pipeline);
@@ -60,19 +67,17 @@ public:
                   uint32_t firstIndex = 0, int32_t vertexOffset = 0,
                   uint32_t firstInstance = 0);
 
-  // Clear commands (can be called within a render pass)
-  void clearColorAttachment(uint32_t attachmentIndex, const float* clearColor);
-  void clearDepthAttachment(float depth);
-  void clearStencilAttachment(uint32_t stencil);
-  void clearDepthStencilAttachment(float depth, uint32_t stencil);
-
 private:
   bool m_insideRenderPass = false;
-  RenderingInfo m_currentRenderingInfo;
+  Framebuffer* m_currentFbo = nullptr;
   PipelineState m_currentPipelineState;
+  FramebufferCache m_framebufferCache;
 
   // Apply clear operations
   void applyClearOperations(const RenderingInfo& info);
+  
+  // Apply clear operations for swapchain (default framebuffer)
+  void applyClearOperationsSwapchain(const SwapchainRenderingInfo& info);
 };
 
 } // namespace paimon

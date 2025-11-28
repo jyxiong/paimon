@@ -12,7 +12,6 @@
 #include "paimon/core/log_system.h"
 #include "paimon/opengl/buffer.h"
 #include "paimon/opengl/framebuffer.h"
-#include "paimon/opengl/render_buffer.h"
 #include "paimon/opengl/sampler.h"
 #include "paimon/opengl/texture.h"
 #include "paimon/opengl/vertex_array.h"
@@ -168,11 +167,11 @@ int main() {
   
   // Configure depth testing
   pipelineInfo.state.depthStencil.depthTestEnable = true;
-  // pipelineInfo.state.depthStencil.depthWriteEnable = true;
-  // pipelineInfo.state.depthStencil.depthCompareOp = GL_LESS;
+  pipelineInfo.state.depthStencil.depthWriteEnable = true;
+  pipelineInfo.state.depthStencil.depthCompareOp = GL_LESS;
   
   // Disable face culling for debugging
-  // pipelineInfo.state.rasterization.cullMode = GL_NONE;
+  pipelineInfo.state.rasterization.cullMode = GL_BACK;
 
   auto pipeline = GraphicsPipeline(pipelineInfo);
 
@@ -318,24 +317,12 @@ int main() {
   lighting_ubo.set_storage(sizeof(LightingUBO), nullptr, GL_DYNAMIC_STORAGE_BIT);
   lighting_ubo.bind_base(GL_UNIFORM_BUFFER, 2);
 
-  // Create FBO with color and depth attachments
+  // Create FBO textures for color and depth attachments
   Texture fbo_color_texture(GL_TEXTURE_2D);
   fbo_color_texture.set_storage_2d(1, GL_RGBA8, g_size.x, g_size.y);
 
-  Renderbuffer fbo_depth_buffer;
-  fbo_depth_buffer.storage(GL_DEPTH24_STENCIL8, g_size.x, g_size.y);
-
-  Framebuffer fbo;
-  fbo.attachTexture(GL_COLOR_ATTACHMENT0, &fbo_color_texture, 0);
-  fbo.attachRenderbuffer(GL_DEPTH_STENCIL_ATTACHMENT, &fbo_depth_buffer);
-  GLenum drawBuffers[] = {GL_COLOR_ATTACHMENT0};
-  fbo.setDrawBuffers(1, drawBuffers);
-  // fbo.setReadBuffer(GL_COLOR_ATTACHMENT0);
-
-  if (!fbo.isComplete(GL_DRAW_FRAMEBUFFER)) {
-    LOG_ERROR("Framebuffer is not complete!");
-    return -1;
-  }
+  Texture fbo_depth_texture(GL_TEXTURE_2D);
+  fbo_depth_texture.set_storage_2d(1, GL_DEPTH24_STENCIL8, g_size.x, g_size.y);
 
   // Create screen quad (it will load shaders internally from singleton)
   ScreenQuad screen_quad;
@@ -386,126 +373,129 @@ int main() {
     lighting_ubo.set_sub_data(0, sizeof(LightingUBO), &lightingData);
 
     // ===== First Pass: Render to FBO =====
-    fbo.bind();
-    // glViewport(0, 0, g_size.x, g_size.y);
-    // glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-    // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    // glEnable(GL_DEPTH_TEST);
 
-    // Setup rendering info for FBO
-    RenderingInfo renderingInfo;
-    renderingInfo.framebuffer = &fbo;
-    renderingInfo.renderAreaOffset = {0, 0};
-    renderingInfo.renderAreaExtent = {g_size.x, g_size.y};
+    { 
+      // Setup rendering info for FBO
+      RenderingInfo renderingInfo;
+      renderingInfo.renderAreaOffset = {0, 0};
+      renderingInfo.renderAreaExtent = {g_size.x, g_size.y};
 
-    // Setup color attachment
-    RenderingAttachmentInfo colorAttachment;
-    colorAttachment.loadOp = AttachmentLoadOp::Clear;
-    colorAttachment.storeOp = AttachmentStoreOp::Store;
-    colorAttachment.clearValue = ClearValue::Color(0.1f, 0.1f, 0.1f, 1.0f);
-    renderingInfo.colorAttachments[0] = colorAttachment;
+      // Setup color attachment
+      renderingInfo.colorAttachments.emplace_back(
+        fbo_color_texture,
+        AttachmentLoadOp::Clear,
+        AttachmentStoreOp::Store,
+        ClearValue::Color(0.1f, 0.1f, 0.1f, 1.0f)
+      );
 
-    // Setup depth attachment
-    RenderingAttachmentInfo depthAttachment;
-    depthAttachment.loadOp = AttachmentLoadOp::Clear;
-    depthAttachment.storeOp = AttachmentStoreOp::Store;
-    depthAttachment.clearValue = ClearValue::DepthStencil(1.0f, 0);
-    renderingInfo.depthAttachment = depthAttachment;
+      // Setup depth attachment
+      renderingInfo.depthAttachment.emplace(
+        fbo_depth_texture,
+        AttachmentLoadOp::Clear,
+        AttachmentStoreOp::Store,
+        ClearValue::DepthStencil(1.0f, 0)
+      );
 
-    // Begin rendering to FBO
-    ctx.beginRendering(renderingInfo);
+      // Begin rendering to FBO
+      ctx.beginRendering(renderingInfo);
 
-    // Bind pipeline
-    ctx.bindPipeline(pipeline);
+      // Bind pipeline
+      ctx.bindPipeline(pipeline);
 
-    // Set viewport
-    ctx.setViewport(0, 0, g_size.x, g_size.y);
+      // Set viewport
+      ctx.setViewport(0, 0, g_size.x, g_size.y);
 
-    // Render each mesh
-    int meshCount = 0;
-    for (const auto &mesh_data : mesh_data_list) {
-      // Bind vertex array
-      ctx.bindVertexArray(mesh_data.vao);
+      // Render each mesh
+      int meshCount = 0;
+      for (const auto &mesh_data : mesh_data_list) {
+        // Bind vertex array
+        ctx.bindVertexArray(mesh_data.vao);
 
-      // Update material UBO and bind textures
-      if (mesh_data.material) {
-        const auto &mat = mesh_data.material;
-        const auto &pbr = mat->pbr_metallic_roughness;
+        // Update material UBO and bind textures
+        if (mesh_data.material) {
+          const auto &mat = mesh_data.material;
+          const auto &pbr = mat->pbr_metallic_roughness;
 
-        // Prepare material data
-        MaterialUBO materialData;
-        materialData.baseColorFactor = pbr.base_color_factor;
-        materialData.emissiveFactor = mat->emissive_factor;
-        materialData.metallicFactor = pbr.metallic_factor;
-        materialData.roughnessFactor = pbr.roughness_factor;
+          // Prepare material data
+          MaterialUBO materialData;
+          materialData.baseColorFactor = pbr.base_color_factor;
+          materialData.emissiveFactor = mat->emissive_factor;
+          materialData.metallicFactor = pbr.metallic_factor;
+          materialData.roughnessFactor = pbr.roughness_factor;
 
-        // Update material UBO
-        material_ubo.set_sub_data(0, sizeof(MaterialUBO), &materialData);
+          // Update material UBO
+          material_ubo.set_sub_data(0, sizeof(MaterialUBO), &materialData);
 
-        // Bind textures with sampler
-        // Base color (unit 0)
-        if (pbr.base_color_texture &&
-            texture_map.count(pbr.base_color_texture)) {
-          texture_map.at(pbr.base_color_texture)->bind(0);
-        } else {
-          default_white.bind(0);
+          // Bind textures with sampler
+          // Base color (unit 0)
+          if (pbr.base_color_texture &&
+              texture_map.count(pbr.base_color_texture)) {
+            texture_map.at(pbr.base_color_texture)->bind(0);
+          } else {
+            default_white.bind(0);
+          }
+          sampler.bind(0);
+
+          // Metallic roughness (unit 1)
+          if (pbr.metallic_roughness_texture &&
+              texture_map.count(pbr.metallic_roughness_texture)) {
+            texture_map.at(pbr.metallic_roughness_texture)->bind(1);
+          } else {
+            default_metallic_roughness.bind(1);
+          }
+          sampler.bind(1);
+
+          // Normal (unit 2)
+          if (mat->normal_texture && texture_map.count(mat->normal_texture)) {
+            texture_map.at(mat->normal_texture)->bind(2);
+          } else {
+            default_normal.bind(2);
+          }
+          sampler.bind(2);
+
+          // Emissive (unit 3)
+          if (mat->emissive_texture && texture_map.count(mat->emissive_texture)) {
+            texture_map.at(mat->emissive_texture)->bind(3);
+          } else {
+            default_black.bind(3);
+          }
+          sampler.bind(3);
+
+          // Occlusion (unit 4)
+          if (mat->occlusion_texture &&
+              texture_map.count(mat->occlusion_texture)) {
+            texture_map.at(mat->occlusion_texture)->bind(4);
+          } else {
+            default_white.bind(4);
+          }
+          sampler.bind(4);
         }
-        sampler.bind(0);
 
-        // Metallic roughness (unit 1)
-        if (pbr.metallic_roughness_texture &&
-            texture_map.count(pbr.metallic_roughness_texture)) {
-          texture_map.at(pbr.metallic_roughness_texture)->bind(1);
-        } else {
-          default_metallic_roughness.bind(1);
+        // Draw indexed
+        if (mesh_data.index_count > 0) {
+          ctx.drawIndexed(static_cast<uint32_t>(mesh_data.index_count));
+          meshCount++;
         }
-        sampler.bind(1);
-
-        // Normal (unit 2)
-        if (mat->normal_texture && texture_map.count(mat->normal_texture)) {
-          texture_map.at(mat->normal_texture)->bind(2);
-        } else {
-          default_normal.bind(2);
-        }
-        sampler.bind(2);
-
-        // Emissive (unit 3)
-        if (mat->emissive_texture && texture_map.count(mat->emissive_texture)) {
-          texture_map.at(mat->emissive_texture)->bind(3);
-        } else {
-          default_black.bind(3);
-        }
-        sampler.bind(3);
-
-        // Occlusion (unit 4)
-        if (mat->occlusion_texture &&
-            texture_map.count(mat->occlusion_texture)) {
-          texture_map.at(mat->occlusion_texture)->bind(4);
-        } else {
-          default_white.bind(4);
-        }
-        sampler.bind(4);
       }
+    
+      // End rendering to FBO
+      ctx.endRendering();
 
-      // Draw indexed
-      if (mesh_data.index_count > 0) {
-        ctx.drawIndexed(static_cast<uint32_t>(mesh_data.index_count));
-        meshCount++;
-      }
     }
-  
-    // End rendering to FBO
-    ctx.endRendering();
 
     // ===== Second Pass: Render FBO texture to screen =====
-    Framebuffer::unbind();
-    glViewport(0, 0, g_size.x, g_size.y);
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
-    glDisable(GL_DEPTH_TEST);
+    {
+      Framebuffer::unbind();
+      glViewport(0, 0, g_size.x, g_size.y);
+      glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+      glClear(GL_COLOR_BUFFER_BIT);
+      glDisable(GL_DEPTH_TEST);
 
-    // Use screen quad to render FBO texture
-    screen_quad.draw(fbo_color_texture);
+      // Use screen quad to render FBO texture
+      screen_quad.draw(fbo_color_texture);
+    }
+
+
 
     // Swap buffers
     window->swapBuffers();

@@ -1,10 +1,18 @@
 #include "paimon/opengl/program_pipeline.h"
+
+#include "paimon/core/log_system.h"
 #include "paimon/opengl/shader_program.h"
 
 using namespace paimon;
 
 ProgramPipeline::ProgramPipeline() : NamedObject(GL_PROGRAM_PIPELINE) {
   glCreateProgramPipelines(1, &m_name);
+
+  if (!validate()) {
+    LOG_ERROR("program pipeline error!");
+
+    
+  }
 }
 
 ProgramPipeline::~ProgramPipeline() {

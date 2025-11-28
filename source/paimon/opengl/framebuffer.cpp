@@ -23,8 +23,12 @@ TextureAttachment::TextureAttachment(Framebuffer *framebuffer,
     : FramebufferAttachment(framebuffer, attachment),
       m_texture(texture->get_name()), m_level(level), m_layer(layer) {}
 
-Framebuffer::Framebuffer() : NamedObject(GL_FRAMEBUFFER) {
-  glCreateFramebuffers(1, &m_name);
+Framebuffer::Framebuffer(bool isDefault) : NamedObject(GL_FRAMEBUFFER) {
+  if (isDefault) {
+    m_name = 0;
+  } else {
+    glCreateFramebuffers(1, &m_name);
+  }
 }
 
 Framebuffer::~Framebuffer() {
