@@ -6,6 +6,7 @@
 #include "paimon/opengl/texture.h"
 #include "paimon/opengl/vertex_array.h"
 #include "paimon/rendering/graphics_pipeline.h"
+#include "paimon/rendering/render_context.h"
 
 using namespace paimon;
 
@@ -13,7 +14,7 @@ class ScreenQuad {
 public:
   ScreenQuad();
 
-  void draw(const Texture &texture);
+  void draw(RenderContext& ctx, const Texture &texture);
 
 private:
   std::unique_ptr<VertexArray> m_vao;

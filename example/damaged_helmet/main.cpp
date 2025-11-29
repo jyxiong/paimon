@@ -11,7 +11,6 @@
 #include "paimon/core/io/gltf.h"
 #include "paimon/core/log_system.h"
 #include "paimon/opengl/buffer.h"
-#include "paimon/opengl/framebuffer.h"
 #include "paimon/opengl/sampler.h"
 #include "paimon/opengl/texture.h"
 #include "paimon/opengl/vertex_array.h"
@@ -174,7 +173,10 @@ int main() {
   pipelineInfo.state.rasterization.cullMode = GL_BACK;
 
   auto pipeline = GraphicsPipeline(pipelineInfo);
-
+  if (!pipeline.validate()) {
+    LOG_ERROR("Failed to validate graphics pipeline");
+    return -1;
+  }
 
   // Process all meshes in the scene
   struct MeshData {
@@ -322,7 +324,7 @@ int main() {
   fbo_color_texture.set_storage_2d(1, GL_RGBA8, g_size.x, g_size.y);
 
   Texture fbo_depth_texture(GL_TEXTURE_2D);
-  fbo_depth_texture.set_storage_2d(1, GL_DEPTH24_STENCIL8, g_size.x, g_size.y);
+  fbo_depth_texture.set_storage_2d(1, GL_DEPTH_COMPONENT32, g_size.x, g_size.y);
 
   // Create screen quad (it will load shaders internally from singleton)
   ScreenQuad screen_quad;
@@ -399,7 +401,7 @@ int main() {
       // Begin rendering to FBO
       ctx.beginRendering(renderingInfo);
 
-      // Bind pipeline
+      // Bind pipeline (this applies depth test and other states)
       ctx.bindPipeline(pipeline);
 
       // Set viewport
@@ -485,14 +487,25 @@ int main() {
 
     // ===== Second Pass: Render FBO texture to screen =====
     {
-      Framebuffer::unbind();
-      glViewport(0, 0, g_size.x, g_size.y);
-      glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-      glClear(GL_COLOR_BUFFER_BIT);
+      // Setup swapchain rendering info
+      SwapchainRenderingInfo swapchainInfo;
+      swapchainInfo.renderAreaOffset = {0, 0};
+      swapchainInfo.renderAreaExtent = {g_size.x, g_size.y};
+      swapchainInfo.clearColor = ClearValue::Color(0.0f, 0.0f, 0.0f, 1.0f);
+      swapchainInfo.clearDepth = 1.0f;
+      swapchainInfo.clearStencil = 0;
+
+      // Begin swapchain rendering
+      ctx.beginSwapchainRendering(swapchainInfo);
+      
+      // Disable depth test for screen quad
       glDisable(GL_DEPTH_TEST);
 
       // Use screen quad to render FBO texture
-      screen_quad.draw(fbo_color_texture);
+      screen_quad.draw(ctx, fbo_color_texture);
+      
+      // End swapchain rendering
+      ctx.endSwapchainRendering();
     }
 
 

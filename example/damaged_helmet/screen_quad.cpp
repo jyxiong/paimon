@@ -36,11 +36,11 @@ ScreenQuad::ScreenQuad() {
   m_pipeline = std::make_unique<GraphicsPipeline>(pipelineInfo);
 }
 
-void ScreenQuad::draw(const Texture &texture) {
-  m_vao->bind();
-  m_pipeline->bind();
+void ScreenQuad::draw(RenderContext& ctx, const Texture &texture) {
+  ctx.bindVertexArray(*m_vao);
+  ctx.bindPipeline(*m_pipeline);
   texture.bind(6);
   m_sampler->bind(6);
   // Draw full-screen quad with 6 vertices (2 triangles)
-  glDrawArrays(GL_TRIANGLES, 0, 6);
+  ctx.draw(6, 1, 0, 0);
 }

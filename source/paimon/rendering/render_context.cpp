@@ -24,8 +24,37 @@ void RenderContext::beginRendering(const RenderingInfo& info) {
                info.renderAreaExtent.x, info.renderAreaExtent.y);
   }
 
-  // Apply clear operations
-  applyClearOperations(info);
+  // Clear color attachments
+  for (size_t i = 0; i < info.colorAttachments.size(); ++i) {
+    const auto& attachment = info.colorAttachments[i];
+    if (attachment.loadOp == AttachmentLoadOp::Clear) {
+      const float clearColor[4] = {
+        attachment.clearValue.color.r,
+        attachment.clearValue.color.g,
+        attachment.clearValue.color.b,
+        attachment.clearValue.color.a
+      };
+      m_currentFbo->clear(GL_COLOR, static_cast<GLint>(i), clearColor);
+    }
+  }
+
+  // Clear depth attachment
+  if (info.depthAttachment.has_value()) {
+    const auto& attachment = info.depthAttachment.value();
+    if (attachment.loadOp == AttachmentLoadOp::Clear) {
+      float depth = attachment.clearValue.depthStencil.depth;
+      m_currentFbo->clear(GL_DEPTH, 0, &depth);
+    }
+  }
+
+  // Clear stencil attachment
+  if (info.stencilAttachment.has_value()) {
+    const auto& attachment = info.stencilAttachment.value();
+    if (attachment.loadOp == AttachmentLoadOp::Clear) {
+      GLint stencilValue = static_cast<GLint>(attachment.clearValue.depthStencil.stencil);
+      m_currentFbo->clear(GL_STENCIL, 0, &stencilValue);
+    }
+  }
 }
 
 void RenderContext::endRendering() {
@@ -37,10 +66,12 @@ void RenderContext::endRendering() {
 
 void RenderContext::beginSwapchainRendering(const SwapchainRenderingInfo& info) {
   m_insideRenderPass = true;
-  m_currentFbo = nullptr;
+  
+  // Get default framebuffer from cache
+  m_currentFbo = m_framebufferCache.getOrCreate(info);
 
   // Bind default framebuffer
-  Framebuffer::unbind();
+  m_currentFbo->bind();
 
   // Set viewport to render area if specified
   if (info.renderAreaExtent.x > 0 && info.renderAreaExtent.y > 0) {
@@ -48,8 +79,21 @@ void RenderContext::beginSwapchainRendering(const SwapchainRenderingInfo& info) 
                info.renderAreaExtent.x, info.renderAreaExtent.y);
   }
 
-  // Apply clear operations for swapchain (default framebuffer)
-  applyClearOperationsSwapchain(info);
+  // Clear color
+  const float clearColor[4] = {
+    info.clearColor.color.r,
+    info.clearColor.color.g,
+    info.clearColor.color.b,
+    info.clearColor.color.a
+  };
+  m_currentFbo->clear(GL_COLOR, 0, clearColor);
+
+  // Clear depth
+  m_currentFbo->clear(GL_DEPTH, 0, &info.clearDepth);
+
+  // Clear stencil
+  GLint stencilValue = static_cast<GLint>(info.clearStencil);
+  m_currentFbo->clear(GL_STENCIL, 0, &stencilValue);
 }
 
 void RenderContext::endSwapchainRendering() {
@@ -122,55 +166,6 @@ void RenderContext::drawIndexed(uint32_t indexCount, uint32_t instanceCount,
         GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, indices,
         instanceCount, vertexOffset, firstInstance);
   }
-}
-
-void RenderContext::applyClearOperations(const RenderingInfo& info) {
-  // Clear color attachments
-  for (size_t i = 0; i < info.colorAttachments.size(); ++i) {
-    const auto& attachment = info.colorAttachments[i];
-    if (attachment.loadOp == AttachmentLoadOp::Clear) {
-      const float clearColor[4] = {
-        attachment.clearValue.color.r,
-        attachment.clearValue.color.g,
-        attachment.clearValue.color.b,
-        attachment.clearValue.color.a
-      };
-      m_currentFbo->clear(GL_COLOR, static_cast<uint32_t>(i), clearColor);
-    }
-  }
-
-  // Clear depth attachment
-  if (info.depthAttachment.has_value()) {
-    const auto& attachment = info.depthAttachment.value();
-    if (attachment.loadOp == AttachmentLoadOp::Clear) {
-      float depth = attachment.clearValue.depthStencil.depth;
-      m_currentFbo->clear(GL_DEPTH, 0, &depth);
-    }
-  }
-
-  // Clear stencil attachment
-  if (info.stencilAttachment.has_value()) {
-    const auto& attachment = info.stencilAttachment.value();
-    if (attachment.loadOp == AttachmentLoadOp::Clear) {
-      GLint stencilValue = static_cast<GLint>(attachment.clearValue.depthStencil.stencil);
-      m_currentFbo->clear(GL_STENCIL, 0, &stencilValue);
-    }
-  }
-}
-
-void RenderContext::applyClearOperationsSwapchain(const SwapchainRenderingInfo& info) {
-  // Clear color
-  glClearColor(info.clearColor.color.r, info.clearColor.color.g,
-               info.clearColor.color.b, info.clearColor.color.a);
-
-  // Clear depth
-  glClearDepth(info.clearDepth);
-
-  // Clear stencil
-  glClearStencil(static_cast<GLint>(info.clearStencil));
-
-  // Execute clear
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 }
 
 } // namespace paimon
