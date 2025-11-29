@@ -72,12 +72,6 @@ private:
   Framebuffer* m_currentFbo = nullptr;
   PipelineState m_currentPipelineState;
   FramebufferCache m_framebufferCache;
-
-  // Apply clear operations
-  void applyClearOperations(const RenderingInfo& info);
-  
-  // Apply clear operations for swapchain (default framebuffer)
-  void applyClearOperationsSwapchain(const SwapchainRenderingInfo& info);
 };
 
 } // namespace paimon

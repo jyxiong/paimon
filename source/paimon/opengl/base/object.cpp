@@ -28,7 +28,7 @@ void NamedObject::set_label(const std::string &label) {
                 label.data());
 }
 
-GLint NamedObject::get_name() const { return m_name; }
+GLuint NamedObject::get_name() const { return m_name; }
 
 SyncObject::SyncObject(SyncObject &&other) noexcept
     : Object(std::move(other)), m_sync(other.m_sync) {

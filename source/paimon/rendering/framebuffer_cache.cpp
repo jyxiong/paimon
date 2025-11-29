@@ -1,22 +1,21 @@
 #include "paimon/rendering/framebuffer_cache.h"
 
+#include "paimon/core/hash.h"
 #include "paimon/core/log_system.h"
 
 namespace paimon {
 
 Framebuffer* FramebufferCache::getOrCreate(const RenderingInfo& info) {
-  // Check if we need to use the default framebuffer (no attachments)
-  if (info.colorAttachments.empty() && 
-      !info.depthAttachment.has_value() && 
-      !info.stencilAttachment.has_value()) {
-    return nullptr; // Use default framebuffer
+  // Compute hash directly from RenderingInfo
+  std::size_t hash = createHash(info);
+  
+  // Ensure hash is not 0 (reserved for default framebuffer)
+  if (hash == 0) {
+    hash = 1;
   }
 
-  // Create configuration key
-  AttachmentConfig config = createConfig(info);
-
   // Check if framebuffer already exists in cache
-  auto it = m_cache.find(config);
+  auto it = m_cache.find(hash);
   if (it != m_cache.end()) {
     return it->second.get();
   }
@@ -35,9 +34,29 @@ Framebuffer* FramebufferCache::getOrCreate(const RenderingInfo& info) {
   }
 
   Framebuffer* ptr = framebuffer.get();
-  m_cache[config] = std::move(framebuffer);
+  m_cache[hash] = std::move(framebuffer);
 
-  LOG_INFO("Created and cached new framebuffer (cache size: {})", m_cache.size());
+  LOG_INFO("Created and cached new framebuffer with hash {} (cache size: {})", hash, m_cache.size());
+  
+  return ptr;
+}
+
+Framebuffer* FramebufferCache::getOrCreate(const SwapchainRenderingInfo& info) {
+  // Default framebuffer uses key = 0
+  constexpr std::size_t defaultKey = 0;
+  
+  // Check if default framebuffer already exists in cache
+  auto it = m_cache.find(defaultKey);
+  if (it != m_cache.end()) {
+    return it->second.get();
+  }
+  
+  // Create default framebuffer
+  auto framebuffer = std::make_unique<Framebuffer>(true); // true = default framebuffer
+  Framebuffer* ptr = framebuffer.get();
+  m_cache[defaultKey] = std::move(framebuffer);
+  
+  LOG_INFO("Created and cached default framebuffer with key 0 (cache size: {})", m_cache.size());
   
   return ptr;
 }
@@ -47,31 +66,25 @@ void FramebufferCache::clear() {
   LOG_INFO("Framebuffer cache cleared");
 }
 
-AttachmentConfig FramebufferCache::createConfig(const RenderingInfo& info) const {
-  AttachmentConfig config;
+std::size_t FramebufferCache::createHash(const RenderingInfo& info) const {
+  std::size_t hash = 0;
 
-  // Add color attachments
+  // Hash color attachments
   for (const auto& colorAttachment : info.colorAttachments) {
-    config.colorTextures.push_back(
-      static_cast<GLuint>(colorAttachment.texture.get_name())
-    );
+    hashCombine(hash, colorAttachment.texture.get_name());
   }
 
-  // Add depth attachment
+  // Hash depth attachment
   if (info.depthAttachment.has_value()) {
-    config.depthTexture = static_cast<GLuint>(
-      info.depthAttachment.value().texture.get_name()
-    );
+    hashCombine(hash, info.depthAttachment.value().texture.get_name());
   }
 
-  // Add stencil attachment
+  // Hash stencil attachment
   if (info.stencilAttachment.has_value()) {
-    config.stencilTexture = static_cast<GLuint>(
-      info.stencilAttachment.value().texture.get_name()
-    );
+    hashCombine(hash, info.stencilAttachment.value().texture.get_name());
   }
 
-  return config;
+  return hash;
 }
 
 std::unique_ptr<Framebuffer> FramebufferCache::createFramebuffer(
@@ -103,7 +116,7 @@ std::unique_ptr<Framebuffer> FramebufferCache::createFramebuffer(
   // Attach depth texture
   if (info.depthAttachment.has_value()) {
     const auto& attachment = info.depthAttachment.value();
-    framebuffer->attachTexture(GL_DEPTH_ATTACHMENT, &attachment.texture, 0);
+      framebuffer->attachTexture(GL_DEPTH_ATTACHMENT, &attachment.texture, 0);
   }
 
   // Attach stencil texture

@@ -7,12 +7,6 @@ using namespace paimon;
 
 ProgramPipeline::ProgramPipeline() : NamedObject(GL_PROGRAM_PIPELINE) {
   glCreateProgramPipelines(1, &m_name);
-
-  if (!validate()) {
-    LOG_ERROR("program pipeline error!");
-
-    
-  }
 }
 
 ProgramPipeline::~ProgramPipeline() {

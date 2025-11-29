@@ -37,7 +37,7 @@ public:
   std::string get_label() const override;
   void set_label(const std::string &label) override;
 
-  GLint get_name() const;
+  GLuint get_name() const;
 
 protected:
   GLenum m_identifier;
