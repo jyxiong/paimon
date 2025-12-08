@@ -9,43 +9,6 @@ namespace paimon {
 
 class VertexArray : public NamedObject {
 public:
-  class Binding {
-  public:
-    Binding(const VertexArray &vao, GLuint index);
-
-    GLuint get_index() const;
-
-    void bind_buffer(const Buffer &buffer, GLintptr offset,
-                     GLsizei stride) const;
-
-    void set_divisor(GLuint divisor) const;
-
-  private:
-    const VertexArray &m_vao;
-    GLuint m_index;
-  };
-
-  class Attribute {
-  public:
-    Attribute(const VertexArray &vao, GLuint index);
-
-    GLuint get_index() const;
-
-    void enable() const;
-
-    void disable() const;
-
-    void set_format(GLint size, GLenum type, GLboolean normalized,
-                    GLuint relative_offset) const;
-
-    void bind(const Binding &binding) const;
-
-  private:
-    const VertexArray &m_vao;
-    GLuint m_index;
-  };
-
-public:
   VertexArray();
   ~VertexArray() override;
 
@@ -56,18 +19,26 @@ public:
 
   bool is_valid() const override;
 
+  // attribute methods
+  void enable_attribute(GLuint index) const;
+  void disable_attribute(GLuint index) const;
+
+  void set_attribute_format(GLuint attribute, GLint size, GLenum type,
+                            GLboolean normalized,
+                            GLuint relative_offset) const;
+
+  void set_binding_divisor(GLuint binding, GLuint divisor) const;
+
+  void set_vertex_buffer(uint32_t binding, const Buffer &buffer,
+                         GLintptr offset, GLsizei stride) const;
+
   void set_element_buffer(const Buffer &buffer) const;
 
-  Binding &get_binding(GLuint index);
-
-  Attribute &get_attribute(GLuint index);
+  void set_attribute_binding(GLuint attribute, GLuint binding) const;
 
   void bind() const;
   static void unbind();
 
-private:
-  std::vector<Binding> m_bindings;
-  std::vector<Attribute> m_attributes;
 };
 
 } // namespace paimon

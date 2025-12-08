@@ -6,6 +6,7 @@
 #include "paimon/rendering/framebuffer_cache.h"
 #include "paimon/rendering/graphics_pipeline.h"
 #include "paimon/rendering/rendering_info.h"
+#include "paimon/rendering/vertex_array_cache.h"
 
 namespace paimon {
 
@@ -41,9 +42,6 @@ public:
   // Bind shader program
   void bindProgram(const Program& program);
 
-  // Bind vertex array
-  void bindVertexArray(const VertexArray& vao);
-
   // Bind vertex buffers
   void bindVertexBuffer(uint32_t binding, const Buffer& buffer, 
                        GLintptr offset, GLsizei stride);
@@ -69,9 +67,14 @@ public:
 
 private:
   bool m_insideRenderPass = false;
+
   Framebuffer* m_currentFbo = nullptr;
+  VertexArray* m_currentVao = nullptr;
+
   PipelineState m_currentPipelineState;
+
   FramebufferCache m_framebufferCache;
+  VertexArrayCache m_vertexArrayCache;
 };
 
 } // namespace paimon

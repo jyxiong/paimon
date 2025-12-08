@@ -1,4 +1,6 @@
+#include <cstdint>
 #include <glm/glm.hpp>
+#include <sys/types.h>
 
 #include "paimon/app/window.h"
 #include "paimon/core/log_system.h"
@@ -86,16 +88,15 @@ int main() {
   vbo.set_storage(sizeof(vertices), vertices, GL_DYNAMIC_STORAGE_BIT);
   vbo.bind(GL_ARRAY_BUFFER);
 
+  uint32_t attribute_index = 0;
+  uint32_t binding_index = 0;
   VertexArray vao;
   vao.bind();
 
-  auto &binding = vao.get_binding(0);
-  binding.bind_buffer(vbo, 0, 3 * sizeof(float));
-
-  auto &attribute = vao.get_attribute(0);
-  attribute.set_format(3, GL_FLOAT, GL_FALSE, 0);
-  attribute.bind(binding);
-  attribute.enable();
+  vao.enable_attribute(attribute_index);
+  vao.set_attribute_format(attribute_index, 3, GL_FLOAT, GL_FALSE, 0);
+  vao.set_vertex_buffer(binding_index, vbo, 0, 3 * sizeof(float));
+  vao.set_attribute_binding(attribute_index, binding_index);
 
   while (!window->shouldClose()) {
     // Check if any events have been activated (key pressed, mouse moved etc.)

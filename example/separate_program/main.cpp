@@ -81,13 +81,10 @@ int main() {
   VertexArray vao;
   vao.bind();
 
-  auto &binding = vao.get_binding(0);
-  binding.bind_buffer(vbo, 0, 3 * sizeof(float));
-
-  auto &attribute = vao.get_attribute(0);
-  attribute.set_format(3, GL_FLOAT, GL_FALSE, 0);
-  attribute.bind(binding);
-  attribute.enable();
+  vao.set_vertex_buffer(0, vbo, 0, 3 * sizeof(float));
+  vao.set_attribute_format(0, 3, GL_FLOAT, GL_FALSE, 0);
+  vao.set_attribute_binding(0, 0);
+  vao.enable_attribute(0);
 
   while (!window->shouldClose()) {
     // Check if any events have been activated (key pressed, mouse moved etc.)

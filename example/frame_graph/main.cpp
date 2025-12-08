@@ -268,35 +268,29 @@ void setupGeometry(RenderData &rd) {
   rd.cubeVBO.set_storage(cubeVertices.size() * sizeof(Vertex),
                          cubeVertices.data(), 0);
 
-  auto &cubeBinding = rd.cubeVAO.get_binding(0);
-  cubeBinding.bind_buffer(rd.cubeVBO, 0, sizeof(Vertex));
+  rd.cubeVAO.set_vertex_buffer(0, rd.cubeVBO, 0, sizeof(Vertex));
 
-  auto &cubePos = rd.cubeVAO.get_attribute(0);
-  cubePos.set_format(3, GL_FLOAT, GL_FALSE, offsetof(Vertex, position));
-  cubePos.bind(cubeBinding);
-  cubePos.enable();
+  rd.cubeVAO.set_attribute_format(0, 3, GL_FLOAT, GL_FALSE, offsetof(Vertex, position));
+  rd.cubeVAO.set_attribute_binding(0, 0);
+  rd.cubeVAO.enable_attribute(0);
 
-  auto &cubeNormal = rd.cubeVAO.get_attribute(1);
-  cubeNormal.set_format(3, GL_FLOAT, GL_FALSE, offsetof(Vertex, normal));
-  cubeNormal.bind(cubeBinding);
-  cubeNormal.enable();
+  rd.cubeVAO.set_attribute_format(1, 3, GL_FLOAT, GL_FALSE, offsetof(Vertex, normal));
+  rd.cubeVAO.set_attribute_binding(1, 0);
+  rd.cubeVAO.enable_attribute(1);
 
   // Setup plane VBO and VAO
   rd.planeVBO.set_storage(planeVertices.size() * sizeof(Vertex),
                           planeVertices.data(), 0);
 
-  auto &planeBinding = rd.planeVAO.get_binding(0);
-  planeBinding.bind_buffer(rd.planeVBO, 0, sizeof(Vertex));
+  rd.planeVAO.set_vertex_buffer(0, rd.planeVBO, 0, sizeof(Vertex));
 
-  auto &planePos = rd.planeVAO.get_attribute(0);
-  planePos.set_format(3, GL_FLOAT, GL_FALSE, offsetof(Vertex, position));
-  planePos.bind(planeBinding);
-  planePos.enable();
+  rd.planeVAO.set_attribute_format(0, 3, GL_FLOAT, GL_FALSE, offsetof(Vertex, position));
+  rd.planeVAO.set_attribute_binding(0, 0);
+  rd.planeVAO.enable_attribute(0);
 
-  auto &planeNormal = rd.planeVAO.get_attribute(1);
-  planeNormal.set_format(3, GL_FLOAT, GL_FALSE, offsetof(Vertex, normal));
-  planeNormal.bind(planeBinding);
-  planeNormal.enable();
+  rd.planeVAO.set_attribute_format(1, 3, GL_FLOAT, GL_FALSE, offsetof(Vertex, normal));
+  rd.planeVAO.set_attribute_binding(1, 0);
+  rd.planeVAO.enable_attribute(1);
 }
 
 void setupShaders(RenderData &rd) {

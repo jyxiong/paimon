@@ -17,7 +17,7 @@ public:
   void draw(RenderContext& ctx, const Texture &texture);
 
 private:
-  std::unique_ptr<VertexArray> m_vao;
+  // std::unique_ptr<VertexArray> m_vao;
   std::unique_ptr<Sampler> m_sampler;
   std::unique_ptr<GraphicsPipeline> m_pipeline;
 };

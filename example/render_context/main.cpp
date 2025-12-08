@@ -157,22 +157,16 @@ int main() {
   VertexArray vao;
 
   // Position attribute (location 0)
-  auto &binding0 = vao.get_binding(0);
-  binding0.bind_buffer(vbo, 0, sizeof(Vertex));
-
-  auto &position_attr = vao.get_attribute(0);
-  position_attr.set_format(3, GL_FLOAT, GL_FALSE, offsetof(Vertex, position));
-  position_attr.bind(binding0);
-  position_attr.enable();
+  vao.set_vertex_buffer(0, vbo, 0, sizeof(Vertex));
+  vao.set_attribute_format(0, 3, GL_FLOAT, GL_FALSE, offsetof(Vertex, position));
+  vao.set_attribute_binding(0, 0);
+  vao.enable_attribute(0);
 
   // Color attribute (location 1)
-  auto &binding1 = vao.get_binding(1);
-  binding1.bind_buffer(vbo, 0, sizeof(Vertex));
-
-  auto &color_attr = vao.get_attribute(1);
-  color_attr.set_format(3, GL_FLOAT, GL_FALSE, offsetof(Vertex, color));
-  color_attr.bind(binding1);
-  color_attr.enable();
+  vao.set_vertex_buffer(1, vbo, 0, sizeof(Vertex));
+  vao.set_attribute_format(1, 3, GL_FLOAT, GL_FALSE, offsetof(Vertex, color));
+  vao.set_attribute_binding(1, 1);
+  vao.enable_attribute(1);
 
   
   // Configure viewport
@@ -206,9 +200,6 @@ int main() {
 
     // Bind graphics pipeline (sets shader stages + pipeline state)
     ctx.bindPipeline(pipeline);
-
-    // Bind vertex array
-    ctx.bindVertexArray(vao);
 
     // Draw the triangle
     ctx.draw(3); // 3 vertices

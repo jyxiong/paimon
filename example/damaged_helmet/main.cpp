@@ -172,6 +172,37 @@ int main() {
   // Disable face culling for debugging
   pipelineInfo.state.rasterization.cullMode = GL_BACK;
 
+  // VertexInputState - configure vertex attribute layout
+  // We use separate bindings for each attribute to allow independent buffer binding
+  pipelineInfo.state.vertexInput.bindings = {
+      {.binding = 0, .stride = sizeof(glm::vec3)},  // Position
+      {.binding = 1, .stride = sizeof(glm::vec3)},  // Normal
+      {.binding = 2, .stride = sizeof(glm::vec2)},  // TexCoord
+  };
+  pipelineInfo.state.vertexInput.attributes = {
+      {
+          .location = 0,
+          .binding = 0,
+          .format = GL_FLOAT,
+          .size = 3,  // vec3
+          .offset = 0,
+      },
+      {
+          .location = 1,
+          .binding = 1,
+          .format = GL_FLOAT,
+          .size = 3,  // vec3
+          .offset = 0,
+      },
+      {
+          .location = 2,
+          .binding = 2,
+          .format = GL_FLOAT,
+          .size = 2,  // vec2
+          .offset = 0,
+      },
+  };
+
   auto pipeline = GraphicsPipeline(pipelineInfo);
   if (!pipeline.validate()) {
     LOG_ERROR("Failed to validate graphics pipeline");
@@ -180,7 +211,7 @@ int main() {
 
   // Process all meshes in the scene
   struct MeshData {
-    VertexArray vao;
+    // VertexArray vao;
     Buffer position_buffer;
     Buffer normal_buffer;
     Buffer texcoord_buffer;
@@ -222,45 +253,39 @@ int main() {
       }
 
       // Setup VAO
-      mesh_data.vao.bind();
+      // mesh_data.vao.bind();
 
-      // Position attribute (location 0)
-      if (primitive.attributes.HasPositions()) {
-        auto &binding_pos = mesh_data.vao.get_binding(0);
-        binding_pos.bind_buffer(mesh_data.position_buffer, 0,
-                                sizeof(glm::vec3));
-        auto &attr_pos = mesh_data.vao.get_attribute(0);
-        attr_pos.set_format(3, GL_FLOAT, GL_FALSE, 0);
-        attr_pos.bind(binding_pos);
-        attr_pos.enable();
-      }
+      // // Position attribute (location 0)
+      // if (primitive.attributes.HasPositions()) {
+      //   mesh_data.vao.set_vertex_buffer(0, mesh_data.position_buffer, 0,
+      //                                   sizeof(glm::vec3));
+      //   mesh_data.vao.set_attribute_format(0, 3, GL_FLOAT, GL_FALSE, 0);
+      //   mesh_data.vao.set_attribute_binding(0, 0);
+      //   mesh_data.vao.enable_attribute(0);
+      // }
 
-      // Normal attribute (location 1)
-      if (primitive.attributes.HasNormals()) {
-        auto &binding_normal = mesh_data.vao.get_binding(1);
-        binding_normal.bind_buffer(mesh_data.normal_buffer, 0,
-                                   sizeof(glm::vec3));
-        auto &attr_normal = mesh_data.vao.get_attribute(1);
-        attr_normal.set_format(3, GL_FLOAT, GL_FALSE, 0);
-        attr_normal.bind(binding_normal);
-        attr_normal.enable();
-      }
+      // // Normal attribute (location 1)
+      // if (primitive.attributes.HasNormals()) {
+      //   mesh_data.vao.set_vertex_buffer(1, mesh_data.normal_buffer, 0,
+      //                                   sizeof(glm::vec3));
+      //   mesh_data.vao.set_attribute_format(1, 3, GL_FLOAT, GL_FALSE, 0);
+      //   mesh_data.vao.set_attribute_binding(1, 1);
+      //   mesh_data.vao.enable_attribute(1);
+      // }
 
-      // Texcoord attribute (location 2)
-      if (primitive.attributes.HasTexCoords0()) {
-        auto &binding_texcoord = mesh_data.vao.get_binding(2);
-        binding_texcoord.bind_buffer(mesh_data.texcoord_buffer, 0,
-                                     sizeof(glm::vec2));
-        auto &attr_texcoord = mesh_data.vao.get_attribute(2);
-        attr_texcoord.set_format(2, GL_FLOAT, GL_FALSE, 0);
-        attr_texcoord.bind(binding_texcoord);
-        attr_texcoord.enable();
-      }
+      // // Texcoord attribute (location 2)
+      // if (primitive.attributes.HasTexCoords0()) {
+      //   mesh_data.vao.set_vertex_buffer(2, mesh_data.texcoord_buffer, 0,
+      //                                   sizeof(glm::vec2));
+      //   mesh_data.vao.set_attribute_format(2, 2, GL_FLOAT, GL_FALSE, 0);
+      //   mesh_data.vao.set_attribute_binding(2, 2);
+      //   mesh_data.vao.enable_attribute(2);
+      // }
 
-      // Element buffer
-      if (primitive.HasIndices()) {
-        mesh_data.vao.set_element_buffer(mesh_data.index_buffer);
-      }
+      // // Element buffer
+      // if (primitive.HasIndices()) {
+      //   mesh_data.vao.set_element_buffer(mesh_data.index_buffer);
+      // }
 
       mesh_data.material = primitive.material;
       mesh_data_list.push_back(std::move(mesh_data));
@@ -410,8 +435,11 @@ int main() {
       // Render each mesh
       int meshCount = 0;
       for (const auto &mesh_data : mesh_data_list) {
-        // Bind vertex array
-        ctx.bindVertexArray(mesh_data.vao);
+
+        ctx.bindVertexBuffer(0, mesh_data.position_buffer, 0, sizeof(glm::vec3));
+        ctx.bindVertexBuffer(1, mesh_data.normal_buffer, 0, sizeof(glm::vec3));
+        ctx.bindVertexBuffer(2, mesh_data.texcoord_buffer, 0, sizeof(glm::vec2));
+        ctx.bindIndexBuffer(mesh_data.index_buffer);
 
         // Update material UBO and bind textures
         if (mesh_data.material) {
