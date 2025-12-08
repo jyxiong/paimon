@@ -64,13 +64,10 @@ public:
     // Setup VAO
     m_vao.bind();
 
-    auto &binding = m_vao.get_binding(0);
-    binding.bind_buffer(m_vbo, 0, 3 * sizeof(float));
-
-    auto &attribute = m_vao.get_attribute(0);
-    attribute.set_format(3, GL_FLOAT, GL_FALSE, 0);
-    attribute.bind(binding);
-    attribute.enable();
+    m_vao.set_vertex_buffer(0, m_vbo, 0, 3 * sizeof(float));
+    m_vao.set_attribute_format(0, 3, GL_FLOAT, GL_FALSE, 0);
+    m_vao.set_attribute_binding(0, 0);
+    m_vao.enable_attribute(0);
   }
 
   void onUpdate() override {

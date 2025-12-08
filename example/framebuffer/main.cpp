@@ -83,13 +83,10 @@ int main() {
   vbo.bind(GL_ARRAY_BUFFER);
 
   VertexArray vao;
-  auto &binding = vao.get_binding(0);
-  binding.bind_buffer(vbo, 0, 3 * sizeof(float));
-
-  auto &attribute = vao.get_attribute(0);
-  attribute.set_format(3, GL_FLOAT, GL_FALSE, 0);
-  attribute.bind(binding);
-  attribute.enable();
+  vao.set_vertex_buffer(0, vbo, 0, 3 * sizeof(float));
+  vao.set_attribute_format(0, 3, GL_FLOAT, GL_FALSE, 0);
+  vao.set_attribute_binding(0, 0);
+  vao.enable_attribute(0);
 
   Texture texture(GL_TEXTURE_2D);
   texture.set_storage_2d(1, GL_RGBA8, 100, 100);

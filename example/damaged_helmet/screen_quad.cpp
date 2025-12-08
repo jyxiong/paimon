@@ -6,7 +6,7 @@
 
 ScreenQuad::ScreenQuad() {
   // Create a minimal VAO (no vertex data needed, vertices are in shader)
-  m_vao = std::make_unique<VertexArray>();
+  // m_vao = std::make_unique<VertexArray>();
 
   // Setup sampler for texture filtering
   m_sampler = std::make_unique<Sampler>();
@@ -37,7 +37,6 @@ ScreenQuad::ScreenQuad() {
 }
 
 void ScreenQuad::draw(RenderContext& ctx, const Texture &texture) {
-  ctx.bindVertexArray(*m_vao);
   ctx.bindPipeline(*m_pipeline);
   texture.bind(6);
   m_sampler->bind(6);

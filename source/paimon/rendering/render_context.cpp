@@ -12,8 +12,7 @@ void RenderContext::beginRendering(const RenderingInfo& info) {
   m_insideRenderPass = true;
 
   // Get or create framebuffer from cache based on attachments
-  Framebuffer* framebuffer = m_framebufferCache.getOrCreate(info);
-  m_currentFbo = framebuffer;
+  m_currentFbo = m_framebufferCache.getOrCreate(info);
 
   // Bind framebuffer
   m_currentFbo->bind();
@@ -106,24 +105,27 @@ void RenderContext::bindPipeline(const GraphicsPipeline& pipeline) {
   pipeline.bind();
 
   m_currentPipelineState.apply(pipeline.getState());
+  // Vertex Input State is handled via Vertex Array Objects
+  auto nextVao = m_vertexArrayCache.getOrCreate(pipeline.getState().vertexInput);
+  if (nextVao != m_currentVao) {
+    nextVao->bind();
+    m_currentVao = nextVao;
+  }
 }
 
 void RenderContext::bindProgram(const Program& program) {
   program.use();
 }
 
-void RenderContext::bindVertexArray(const VertexArray& vao) {
-  vao.bind();
-}
-
 void RenderContext::bindVertexBuffer(uint32_t binding, const Buffer& buffer,
                                     GLintptr offset, GLsizei stride) {
-  buffer.bind(GL_ARRAY_BUFFER);
-  glBindVertexBuffer(binding, static_cast<GLuint>(buffer.get_name()), offset, stride);
+  // buffer.bind(GL_ARRAY_BUFFER);
+  // glBindVertexBuffer(binding, static_cast<GLuint>(buffer.get_name()), offset, stride);
+  m_currentVao->set_vertex_buffer(binding, buffer, offset, stride);
 }
 
 void RenderContext::bindIndexBuffer(const Buffer& buffer) {
-  buffer.bind(GL_ELEMENT_ARRAY_BUFFER);
+  m_currentVao->set_element_buffer(buffer);
 }
 
 void RenderContext::setViewport(float x, float y, float width, float height) {

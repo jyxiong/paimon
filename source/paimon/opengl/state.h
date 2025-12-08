@@ -6,6 +6,7 @@
 #include "paimon/opengl/state/multisample.h"
 #include "paimon/opengl/state/rasterization.h"
 #include "paimon/opengl/state/tessellation.h"
+#include "paimon/opengl/state/vertex_input.h"
 #include "paimon/opengl/state/viewport.h"
 
 namespace paimon {
@@ -17,6 +18,7 @@ struct PipelineState {
   MultisampleState multisample;
   RasterizationState rasterization;
   TessellationState tessellation;
+  VertexInputState vertexInput;
   ViewportState viewport;
 
   void apply(const PipelineState &state);
@@ -28,6 +30,7 @@ private:
   void apply(const MultisampleState &state);
   void apply(const RasterizationState &state);
   void apply(const TessellationState &state);
+  void apply(const VertexInputState &state);
   void apply(const ViewportState &state);
 };
 

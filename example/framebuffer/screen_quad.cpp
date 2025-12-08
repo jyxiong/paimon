@@ -60,22 +60,19 @@ ScreenQuad::ScreenQuad() {
   m_index_buffer->bind(GL_ELEMENT_ARRAY_BUFFER);
 
   m_vao = std::make_unique<VertexArray>();
-  auto &binding = m_vao->get_binding(0);
-  binding.bind_buffer(*m_vertex_buffer, 0, 5 * sizeof(float));
+  m_vao->set_vertex_buffer(0, *m_vertex_buffer, 0, 5 * sizeof(float));
+  m_vao->set_element_buffer(*m_index_buffer);
 
   // 位置属性
-  auto &attribute_pos = m_vao->get_attribute(0);
-  attribute_pos.set_format(3, GL_FLOAT, GL_FALSE, 0);
-  attribute_pos.bind(binding);
-  attribute_pos.enable();
+  m_vao->enable_attribute(0);
+  m_vao->set_attribute_format(0, 3, GL_FLOAT, GL_FALSE, 0);
+  m_vao->set_attribute_binding(0, 0);
 
   // 纹理坐标属性
-  auto &attribute_tex = m_vao->get_attribute(1);
-  attribute_tex.set_format(2, GL_FLOAT, GL_FALSE, 3 * sizeof(float));
-  attribute_tex.bind(binding);
-  attribute_tex.enable();
+  m_vao->enable_attribute(1);
+  m_vao->set_attribute_format(1, 2, GL_FLOAT, GL_FALSE, 3 * sizeof(float));
+  m_vao->set_attribute_binding(1, 0);
 
-  m_vao->set_element_buffer(*m_index_buffer);
 
   Shader vertex_shader(GL_VERTEX_SHADER);
   Shader fragment_shader(GL_FRAGMENT_SHADER);

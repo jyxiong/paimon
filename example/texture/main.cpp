@@ -125,23 +125,18 @@ int main() {
 
   VertexArray vao;
   vao.bind();
-  auto &binding_pos = vao.get_binding(0);
-  binding_pos.bind_buffer(
-      pos_vbo, 0, sizeof(glm::vec3)); // stride = sizeof(glm::vec3), offset = 0
-  auto &binding_tex = vao.get_binding(1);
-  binding_tex.bind_buffer(tex_vbo, 0, sizeof(glm::vec2));
+  vao.set_vertex_buffer(0, pos_vbo, 0, sizeof(glm::vec3)); // stride = sizeof(glm::vec3), offset = 0
+  vao.set_vertex_buffer(1, tex_vbo, 0, sizeof(glm::vec2));
 
   // 位置属性
-  auto &attribute_pos = vao.get_attribute(0);
-  attribute_pos.set_format(3, GL_FLOAT, GL_FALSE, 0);
-  attribute_pos.bind(binding_pos);
-  attribute_pos.enable();
+  vao.set_attribute_format(0, 3, GL_FLOAT, GL_FALSE, 0);
+  vao.set_attribute_binding(0, 0);
+  vao.enable_attribute(0);
 
   // 纹理坐标属性
-  auto &attribute_tex = vao.get_attribute(1);
-  attribute_tex.set_format(2, GL_FLOAT, GL_FALSE, 0);
-  attribute_tex.bind(binding_tex);
-  attribute_tex.enable();
+  vao.set_attribute_format(1, 2, GL_FLOAT, GL_FALSE, 0);
+  vao.set_attribute_binding(1, 1);
+  vao.enable_attribute(1);
 
   vao.set_element_buffer(ebo);
 

@@ -354,18 +354,15 @@ int main() {
   VertexArray vao;
   vao.bind();
 
-  auto &binding = vao.get_binding(0);
-  binding.bind_buffer(vbo, 0, sizeof(Vertex));
+  vao.set_vertex_buffer(0, vbo, 0, sizeof(Vertex));
 
-  auto &pos_attribute = vao.get_attribute(0);
-  pos_attribute.set_format(3, GL_FLOAT, GL_FALSE, offsetof(Vertex, pos));
-  pos_attribute.bind(binding);
-  pos_attribute.enable();
+  vao.set_attribute_format(0, 3, GL_FLOAT, GL_FALSE, offsetof(Vertex, pos));
+  vao.set_attribute_binding(0, 0);
+  vao.enable_attribute(0);
 
-  auto &width_attribute = vao.get_attribute(1);
-  width_attribute.set_format(1, GL_FLOAT, GL_FALSE, offsetof(Vertex, width));
-  width_attribute.bind(binding);
-  width_attribute.enable();
+  vao.set_attribute_format(1, 1, GL_FLOAT, GL_FALSE, offsetof(Vertex, width));
+  vao.set_attribute_binding(1, 0);
+  vao.enable_attribute(1);
 
   vao.set_element_buffer(ebo);
   if (!vao.is_valid()) {

@@ -9,6 +9,7 @@ void PipelineState::apply(const PipelineState &state) {
   apply(state.multisample);
   apply(state.rasterization);
   apply(state.tessellation);
+  apply(state.vertexInput);
   apply(state.viewport);
 }
 
@@ -308,6 +309,11 @@ void PipelineState::apply(const TessellationState &state) {
     tessellation.patchControlPoints = state.patchControlPoints;
     glPatchParameteri(GL_PATCH_VERTICES, state.patchControlPoints);
   }
+}
+
+void PipelineState::apply(const VertexInputState &state) {
+  // Vertex input state is applied via Vertex Array Objects (VAOs)
+  // This function is a placeholder as VAO binding happens elsewhere
 }
 
 void PipelineState::apply(const ViewportState &state) {
