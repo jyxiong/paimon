@@ -1,5 +1,6 @@
 #include "paimon/opengl/render_buffer.h"
-#include "glad/gl.h"
+
+#include <glad/gl.h>
 
 using namespace paimon;
 

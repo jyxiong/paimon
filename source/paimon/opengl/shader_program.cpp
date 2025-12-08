@@ -1,7 +1,8 @@
 #include "paimon/opengl/shader_program.h"
 
-#include "glad/gl.h"
 #include <vector>
+
+#include <glad/gl.h>
 
 using namespace paimon;
 

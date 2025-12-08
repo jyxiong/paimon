@@ -5,8 +5,7 @@
 #include <map>
 
 #include <X11/Xlib.h>
-
-#include "glad/gl.h"
+#include <glad/gl.h>
 
 #include "paimon/core/log_system.h"
 #include "paimon/platform/glx_context/platform.h"

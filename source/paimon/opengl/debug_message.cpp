@@ -1,8 +1,6 @@
 #include "paimon/opengl/debug_message.h"
 
-#include "glad/gl.h"
 #include "paimon/core/log_system.h"
-#include <string>
 
 using namespace paimon;
 

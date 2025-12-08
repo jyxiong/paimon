@@ -4,8 +4,8 @@
 
 #include <map>
 
-#include "glad/gl.h"
-#include "glad/wgl.h"
+#include <glad/gl.h>
+#include <glad/wgl.h>
 
 #include "paimon/core/log_system.h"
 #include "paimon/platform/wgl_context/platform.h"

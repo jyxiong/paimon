@@ -1,6 +1,7 @@
 #include "screen_quad.h"
 
-#include "glad/gl.h"
+#include <glad/gl.h>
+
 #include "paimon/core/log_system.h"
 #include "paimon/opengl/shader.h"
 

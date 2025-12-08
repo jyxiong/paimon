@@ -1,6 +1,6 @@
-#include <sstream>
-
 #include "paimon/app/event/mouse_event.h"
+
+#include <sstream>
 
 namespace paimon {
 

@@ -1,6 +1,6 @@
 #include "paimon/opengl/vertex_array.h"
 
-#include "glad/gl.h"
+#include <glad/gl.h>
 
 using namespace paimon;
 

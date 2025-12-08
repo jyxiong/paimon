@@ -1,19 +1,18 @@
+#include <filesystem>
+#include <map>
+
 #include <GLFW/glfw3.h>
+#include <glad/gl.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include <filesystem>
-#include <map>
-
-#include "glad/gl.h"
 #include "paimon/app/window.h"
 #include "paimon/core/io/gltf.h"
 #include "paimon/core/log_system.h"
 #include "paimon/opengl/buffer.h"
 #include "paimon/opengl/sampler.h"
 #include "paimon/opengl/texture.h"
-#include "paimon/opengl/vertex_array.h"
 #include "paimon/rendering/graphics_pipeline.h"
 #include "paimon/rendering/render_context.h"
 #include "paimon/rendering/rendering_info.h"
