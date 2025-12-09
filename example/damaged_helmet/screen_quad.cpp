@@ -42,5 +42,5 @@ void ScreenQuad::draw(RenderContext& ctx, const Texture &texture) {
   texture.bind(6);
   m_sampler->bind(6);
   // Draw full-screen quad with 6 vertices (2 triangles)
-  ctx.draw(6, 1, 0, 0);
+  ctx.drawArrays(0, 6);
 }

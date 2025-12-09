@@ -14,7 +14,7 @@ Sampler::~Sampler() {
 
 bool Sampler::is_valid() const { return glIsSampler(m_name) == GL_TRUE; }
 
-void Sampler::bind(GLuint unit) { glBindSampler(unit, m_name); }
+void Sampler::bind(GLuint unit) const { glBindSampler(unit, m_name); }
 
 template <>
 void Sampler::get<GLint>(GLenum property, GLint *value) {

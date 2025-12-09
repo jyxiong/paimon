@@ -5,7 +5,7 @@
 
 namespace paimon {
 
-VertexArray* VertexArrayCache::getOrCreate(const VertexInputState& state) {
+VertexArray* VertexArrayCache::get(const VertexInputState& state) {
   // Compute hash from VertexInputState
   std::size_t hash = createHash(state);
 

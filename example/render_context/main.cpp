@@ -202,7 +202,7 @@ int main() {
     ctx.bindPipeline(pipeline);
 
     // Draw the triangle
-    ctx.draw(3); // 3 vertices
+    ctx.drawArrays(0, 3);
     
     if (firstFrame) {
       LOG_INFO("First frame rendered");

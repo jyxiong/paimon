@@ -1,10 +1,6 @@
 #include "paimon/rendering/render_context.h"
 
-#include "paimon/opengl/buffer.h"
-#include "paimon/opengl/framebuffer.h"
-#include "paimon/opengl/program.h"
-#include "paimon/opengl/vertex_array.h"
-#include "paimon/rendering/framebuffer_cache.h"
+
 
 namespace paimon {
 
@@ -12,7 +8,7 @@ void RenderContext::beginRendering(const RenderingInfo& info) {
   m_insideRenderPass = true;
 
   // Get or create framebuffer from cache based on attachments
-  m_currentFbo = m_framebufferCache.getOrCreate(info);
+  m_currentFbo = m_framebufferCache.get(info);
 
   // Bind framebuffer
   m_currentFbo->bind();
@@ -59,15 +55,17 @@ void RenderContext::beginRendering(const RenderingInfo& info) {
 void RenderContext::endRendering() {
   m_insideRenderPass = false;
   m_currentFbo = nullptr;
+  m_currentVao = nullptr;
   // Unbind framebuffer
   Framebuffer::unbind();
+  VertexArray::unbind();
 }
 
 void RenderContext::beginSwapchainRendering(const SwapchainRenderingInfo& info) {
   m_insideRenderPass = true;
   
   // Get default framebuffer from cache
-  m_currentFbo = m_framebufferCache.getOrCreate(info);
+  m_currentFbo = m_framebufferCache.get(info);
 
   // Bind default framebuffer
   m_currentFbo->bind();
@@ -106,26 +104,11 @@ void RenderContext::bindPipeline(const GraphicsPipeline& pipeline) {
 
   m_currentPipelineState.apply(pipeline.getState());
   // Vertex Input State is handled via Vertex Array Objects
-  auto nextVao = m_vertexArrayCache.getOrCreate(pipeline.getState().vertexInput);
+  auto nextVao = m_vertexArrayCache.get(pipeline.getState().vertexInput);
   if (nextVao != m_currentVao) {
     nextVao->bind();
     m_currentVao = nextVao;
   }
-}
-
-void RenderContext::bindProgram(const Program& program) {
-  program.use();
-}
-
-void RenderContext::bindVertexBuffer(uint32_t binding, const Buffer& buffer,
-                                    GLintptr offset, GLsizei stride) {
-  // buffer.bind(GL_ARRAY_BUFFER);
-  // glBindVertexBuffer(binding, static_cast<GLuint>(buffer.get_name()), offset, stride);
-  m_currentVao->set_vertex_buffer(binding, buffer, offset, stride);
-}
-
-void RenderContext::bindIndexBuffer(const Buffer& buffer) {
-  m_currentVao->set_element_buffer(buffer);
 }
 
 void RenderContext::setViewport(float x, float y, float width, float height) {
@@ -145,29 +128,148 @@ void RenderContext::setScissor(uint32_t index, int x, int y, int width, int heig
   glScissorIndexed(index, x, y, width, height);
 }
 
-void RenderContext::draw(uint32_t vertexCount, uint32_t instanceCount,
-                        uint32_t firstVertex, uint32_t firstInstance) {
-  if (instanceCount == 1 && firstInstance == 0) {
-    glDrawArrays(GL_TRIANGLES, firstVertex, vertexCount);
-  } else {
-    glDrawArraysInstancedBaseInstance(GL_TRIANGLES, firstVertex, vertexCount,
-                                     instanceCount, firstInstance);
-  }
+void RenderContext::bindVertexBuffer(uint32_t binding, const Buffer& buffer,
+                                    GLintptr offset, GLsizei stride) {
+  m_currentVao->set_vertex_buffer(binding, buffer, offset, stride);
 }
 
-void RenderContext::drawIndexed(uint32_t indexCount, uint32_t instanceCount,
-                                uint32_t firstIndex, int32_t vertexOffset,
-                                uint32_t firstInstance) {
-  const void* indices = reinterpret_cast<const void*>(
-      static_cast<uintptr_t>(firstIndex * sizeof(uint32_t)));
+void RenderContext::bindIndexBuffer(const Buffer& buffer, GLenum indexType) {
+  m_currentVao->set_element_buffer(buffer);
 
-  if (instanceCount == 1 && firstInstance == 0 && vertexOffset == 0) {
-    glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, indices);
-  } else {
-    glDrawElementsInstancedBaseVertexBaseInstance(
-        GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, indices,
-        instanceCount, vertexOffset, firstInstance);
-  }
+  m_currentIndexType = indexType;
+}
+
+void RenderContext::bindUniformBuffer(uint32_t binding, const Buffer& buffer,
+                                      GLintptr offset, GLsizeiptr size) {
+  buffer.bind_range(GL_UNIFORM_BUFFER, binding, offset, size);
+}
+
+void RenderContext::bindStorageBuffer(uint32_t binding, const Buffer& buffer,
+                                      GLintptr offset, GLsizeiptr size) {
+  buffer.bind_range(GL_SHADER_STORAGE_BUFFER, binding, offset, size);
+}
+
+void RenderContext::bindTexture(uint32_t unit, const Texture& texture,
+                                 const Sampler& sampler) {
+  texture.bind(unit);
+  sampler.bind(unit);
+}
+
+void RenderContext::bindImage(uint32_t unit, const Texture& texture,
+                                GLenum access, GLenum format, uint32_t level,
+                                GLboolean layered, uint32_t layer) {
+  texture.bind(unit, access, format, level, layered, layer);
+}
+
+// Non-indexed draw commands
+void RenderContext::drawArrays(GLint first, GLsizei count) {
+  glDrawArrays(m_currentPipelineState.inputAssembly.topology, first, count);
+}
+
+void RenderContext::drawArraysInstanced(GLint first, GLsizei count,
+                                       GLsizei instanceCount) {
+  glDrawArraysInstanced(m_currentPipelineState.inputAssembly.topology, 
+                       first, count, instanceCount);
+}
+
+void RenderContext::drawArraysInstancedBaseInstance(GLint first, GLsizei count,
+                                                   GLsizei instanceCount,
+                                                   GLuint baseInstance) {
+  glDrawArraysInstancedBaseInstance(m_currentPipelineState.inputAssembly.topology,
+                                   first, count, instanceCount, baseInstance);
+}
+
+void RenderContext::drawArraysIndirect(const void* indirect) {
+  glDrawArraysIndirect(m_currentPipelineState.inputAssembly.topology, indirect);
+}
+
+void RenderContext::multiDrawArrays(const GLint* first, const GLsizei* count,
+                                   GLsizei drawCount) {
+  glMultiDrawArrays(m_currentPipelineState.inputAssembly.topology, 
+                   first, count, drawCount);
+}
+
+void RenderContext::multiDrawArraysIndirect(const void* indirect,
+                                           GLsizei drawCount, GLsizei stride) {
+  glMultiDrawArraysIndirect(m_currentPipelineState.inputAssembly.topology,
+                           indirect, drawCount, stride);
+}
+
+// Indexed draw commands
+void RenderContext::drawElements(GLsizei count, const void* indices) {
+  glDrawElements(m_currentPipelineState.inputAssembly.topology, 
+                count, m_currentIndexType, indices);
+}
+
+void RenderContext::drawElementsBaseVertex(GLsizei count, const void* indices,
+                                          GLint baseVertex) {
+  glDrawElementsBaseVertex(m_currentPipelineState.inputAssembly.topology,
+                          count, m_currentIndexType, indices, baseVertex);
+}
+
+void RenderContext::drawElementsInstanced(GLsizei count, const void* indices,
+                                         GLsizei instanceCount) {
+  glDrawElementsInstanced(m_currentPipelineState.inputAssembly.topology,
+                         count, m_currentIndexType, indices, instanceCount);
+}
+
+void RenderContext::drawElementsInstancedBaseInstance(GLsizei count, const void* indices,
+                                                     GLsizei instanceCount,
+                                                     GLuint baseInstance) {
+  glDrawElementsInstancedBaseInstance(m_currentPipelineState.inputAssembly.topology,
+                                     count, m_currentIndexType, indices,
+                                     instanceCount, baseInstance);
+}
+
+void RenderContext::drawElementsInstancedBaseVertex(GLsizei count, const void* indices,
+                                                   GLsizei instanceCount, GLint baseVertex) {
+  glDrawElementsInstancedBaseVertex(m_currentPipelineState.inputAssembly.topology,
+                                   count, m_currentIndexType, indices,
+                                   instanceCount, baseVertex);
+}
+
+void RenderContext::drawElementsInstancedBaseVertexBaseInstance(
+    GLsizei count, const void* indices, GLsizei instanceCount, 
+    GLint baseVertex, GLuint baseInstance) {
+  glDrawElementsInstancedBaseVertexBaseInstance(
+      m_currentPipelineState.inputAssembly.topology, count, m_currentIndexType, indices,
+      instanceCount, baseVertex, baseInstance);
+}
+
+void RenderContext::drawElementsIndirect(const void* indirect) {
+  glDrawElementsIndirect(m_currentPipelineState.inputAssembly.topology,
+                        m_currentIndexType, indirect);
+}
+
+void RenderContext::drawRangeElements(GLuint start, GLuint end, GLsizei count,
+                                     const void* indices) {
+  glDrawRangeElements(m_currentPipelineState.inputAssembly.topology,
+                     start, end, count, m_currentIndexType, indices);
+}
+
+void RenderContext::drawRangeElementsBaseVertex(GLuint start, GLuint end, GLsizei count,
+                                               const void* indices, GLint baseVertex) {
+  glDrawRangeElementsBaseVertex(m_currentPipelineState.inputAssembly.topology,
+                               start, end, count, m_currentIndexType, indices, baseVertex);
+}
+
+void RenderContext::multiDrawElements(const GLsizei* count, const void* const* indices,
+                                     GLsizei drawCount) {
+  glMultiDrawElements(m_currentPipelineState.inputAssembly.topology,
+                     count, m_currentIndexType, indices, drawCount);
+}
+
+void RenderContext::multiDrawElementsBaseVertex(const GLsizei* count,
+                                               const void* const* indices,
+                                               GLsizei drawCount, const GLint* baseVertex) {
+  glMultiDrawElementsBaseVertex(m_currentPipelineState.inputAssembly.topology,
+                               count, m_currentIndexType, indices, drawCount, baseVertex);
+}
+
+void RenderContext::multiDrawElementsIndirect(const void* indirect, GLsizei drawCount,
+                                             GLsizei stride) {
+  glMultiDrawElementsIndirect(m_currentPipelineState.inputAssembly.topology,
+                             m_currentIndexType, indirect, drawCount, stride);
 }
 
 } // namespace paimon

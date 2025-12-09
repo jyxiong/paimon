@@ -5,7 +5,16 @@
 
 namespace paimon {
 
-Framebuffer* FramebufferCache::getOrCreate(const RenderingInfo& info) {
+constexpr std::size_t defaultFramebufferKey = 0;
+
+FramebufferCache::FramebufferCache() {
+  // create default framebuffer entry
+  auto defaultFramebuffer = std::make_unique<Framebuffer>(true); // true = default framebuffer
+  m_cache[defaultFramebufferKey] = std::move(defaultFramebuffer);
+  LOG_INFO("Initialized FramebufferCache with default framebuffer (key 0)");
+}
+
+Framebuffer* FramebufferCache::get(const RenderingInfo& info) {
   // Compute hash directly from RenderingInfo
   std::size_t hash = createHash(info);
   
@@ -41,24 +50,9 @@ Framebuffer* FramebufferCache::getOrCreate(const RenderingInfo& info) {
   return ptr;
 }
 
-Framebuffer* FramebufferCache::getOrCreate(const SwapchainRenderingInfo& info) {
-  // Default framebuffer uses key = 0
-  constexpr std::size_t defaultKey = 0;
-  
-  // Check if default framebuffer already exists in cache
-  auto it = m_cache.find(defaultKey);
-  if (it != m_cache.end()) {
-    return it->second.get();
-  }
-  
-  // Create default framebuffer
-  auto framebuffer = std::make_unique<Framebuffer>(true); // true = default framebuffer
-  Framebuffer* ptr = framebuffer.get();
-  m_cache[defaultKey] = std::move(framebuffer);
-  
-  LOG_INFO("Created and cached default framebuffer with key 0 (cache size: {})", m_cache.size());
-  
-  return ptr;
+Framebuffer* FramebufferCache::get(const SwapchainRenderingInfo&) {
+  // Default framebuffer uses key=0
+  return m_cache[defaultFramebufferKey].get();
 }
 
 void FramebufferCache::clear() {

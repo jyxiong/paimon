@@ -17,6 +17,9 @@ public:
 
   void bind(GLuint unit) const;
 
+  void bind(GLuint unit, GLenum access, GLenum format, GLuint level = 0,
+            GLboolean layered = GL_FALSE, GLuint layer = 0) const;
+
   void set_buffer_data(GLenum internalformat, GLuint buffer);
 
   void set_buffer_range(GLenum internalformat, GLuint buffer, GLintptr offset,
