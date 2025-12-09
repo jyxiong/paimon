@@ -18,6 +18,11 @@ bool Texture::is_valid() const { return glIsTexture(m_name) == GL_TRUE; }
 
 void Texture::bind(GLuint unit) const { glBindTextureUnit(unit, m_name); }
 
+void Texture::bind(GLuint unit, GLenum access, GLenum format, GLuint level,
+                   GLboolean layered, GLuint layer) const {
+  glBindImageTexture(unit, m_name, level, layered, layer, access, format);
+}
+
 void Texture::set_buffer_data(GLenum internalformat, GLuint buffer) {
   glTextureBuffer(m_name, internalformat, buffer);
 }

@@ -17,7 +17,7 @@ public:
   bool is_valid() const override;
 
 public:
-  void bind(GLuint unit);
+  void bind(GLuint unit) const;
 
   template <class T>
   void get(GLenum property, T *value);

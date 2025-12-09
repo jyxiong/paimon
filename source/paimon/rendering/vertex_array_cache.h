@@ -19,7 +19,7 @@ public:
   VertexArrayCache& operator=(const VertexArrayCache&) = delete;
 
   // Get or create a vertex array based on VertexInputState
-  VertexArray* getOrCreate(const VertexInputState& state);
+  VertexArray* get(const VertexInputState& state);
 
   // Clear the cache
   void clear();

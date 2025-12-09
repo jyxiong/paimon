@@ -11,7 +11,7 @@ namespace paimon {
 // FramebufferCache manages framebuffer objects based on attachment configurations
 class FramebufferCache {
 public:
-  FramebufferCache() = default;
+  FramebufferCache();
   ~FramebufferCache() = default;
 
   // Delete copy constructor and assignment
@@ -19,10 +19,10 @@ public:
   FramebufferCache& operator=(const FramebufferCache&) = delete;
 
   // Get or create a framebuffer based on RenderingInfo
-  Framebuffer* getOrCreate(const RenderingInfo& info);
+  Framebuffer* get(const RenderingInfo& info);
 
   // Get or create default framebuffer (uses key=0)
-  Framebuffer* getOrCreate(const SwapchainRenderingInfo& info);
+  Framebuffer* get(const SwapchainRenderingInfo&);
 
   // Clear the cache
   void clear();

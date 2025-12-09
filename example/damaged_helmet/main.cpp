@@ -251,41 +251,6 @@ int main() {
         mesh_data.index_count = primitive.indices.size();
       }
 
-      // Setup VAO
-      // mesh_data.vao.bind();
-
-      // // Position attribute (location 0)
-      // if (primitive.attributes.HasPositions()) {
-      //   mesh_data.vao.set_vertex_buffer(0, mesh_data.position_buffer, 0,
-      //                                   sizeof(glm::vec3));
-      //   mesh_data.vao.set_attribute_format(0, 3, GL_FLOAT, GL_FALSE, 0);
-      //   mesh_data.vao.set_attribute_binding(0, 0);
-      //   mesh_data.vao.enable_attribute(0);
-      // }
-
-      // // Normal attribute (location 1)
-      // if (primitive.attributes.HasNormals()) {
-      //   mesh_data.vao.set_vertex_buffer(1, mesh_data.normal_buffer, 0,
-      //                                   sizeof(glm::vec3));
-      //   mesh_data.vao.set_attribute_format(1, 3, GL_FLOAT, GL_FALSE, 0);
-      //   mesh_data.vao.set_attribute_binding(1, 1);
-      //   mesh_data.vao.enable_attribute(1);
-      // }
-
-      // // Texcoord attribute (location 2)
-      // if (primitive.attributes.HasTexCoords0()) {
-      //   mesh_data.vao.set_vertex_buffer(2, mesh_data.texcoord_buffer, 0,
-      //                                   sizeof(glm::vec2));
-      //   mesh_data.vao.set_attribute_format(2, 2, GL_FLOAT, GL_FALSE, 0);
-      //   mesh_data.vao.set_attribute_binding(2, 2);
-      //   mesh_data.vao.enable_attribute(2);
-      // }
-
-      // // Element buffer
-      // if (primitive.HasIndices()) {
-      //   mesh_data.vao.set_element_buffer(mesh_data.index_buffer);
-      // }
-
       mesh_data.material = primitive.material;
       mesh_data_list.push_back(std::move(mesh_data));
     }
@@ -438,7 +403,7 @@ int main() {
         ctx.bindVertexBuffer(0, mesh_data.position_buffer, 0, sizeof(glm::vec3));
         ctx.bindVertexBuffer(1, mesh_data.normal_buffer, 0, sizeof(glm::vec3));
         ctx.bindVertexBuffer(2, mesh_data.texcoord_buffer, 0, sizeof(glm::vec2));
-        ctx.bindIndexBuffer(mesh_data.index_buffer);
+        ctx.bindIndexBuffer(mesh_data.index_buffer, GL_UNSIGNED_INT);
 
         // Update material UBO and bind textures
         if (mesh_data.material) {
@@ -502,7 +467,7 @@ int main() {
 
         // Draw indexed
         if (mesh_data.index_count > 0) {
-          ctx.drawIndexed(static_cast<uint32_t>(mesh_data.index_count));
+          ctx.drawElements(mesh_data.index_count, nullptr);
           meshCount++;
         }
       }
