@@ -6,7 +6,7 @@
 
 #include <memory>
 
-#include "glad/glx.h"
+#include <glad/glx.h>
 
 namespace paimon {
 class NativeContext : public Context {

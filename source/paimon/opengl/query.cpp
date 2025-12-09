@@ -1,6 +1,7 @@
 #include "paimon/opengl/query.h"
 
-#include "glad/gl.h"
+#include <glad/gl.h>
+
 #include "paimon/opengl/base/object.h"
 
 using namespace paimon;

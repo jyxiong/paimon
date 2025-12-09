@@ -6,7 +6,7 @@
 
 #include <memory>
 
-#include "glad/egl.h"
+#include <glad/egl.h>
 
 namespace paimon {
 

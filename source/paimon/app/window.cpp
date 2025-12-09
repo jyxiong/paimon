@@ -1,7 +1,6 @@
 #include "paimon/app/window.h"
 
-#include "GLFW/glfw3.h"
-#include "glad/gl.h"
+#include <glad/gl.h>
 
 #include "paimon/core/log_system.h"
 #include "paimon/app/event/application_event.h"

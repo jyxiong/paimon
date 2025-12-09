@@ -3,7 +3,7 @@
 #include <functional>
 #include <string>
 
-#include "glad/gl.h"
+#include <glad/gl.h>
 
 namespace paimon {
 

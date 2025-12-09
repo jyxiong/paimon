@@ -2,7 +2,7 @@
 
 #include "paimon/platform/glx_context/platform.h"
 
-#include "glad/glx.h"
+#include <glad/glx.h>
 
 #include "paimon/core/log_system.h"
 

@@ -1,6 +1,6 @@
-#include <sstream>
-
 #include "paimon/app/event/application_event.h"
+
+#include <sstream>
 
 namespace paimon {
 

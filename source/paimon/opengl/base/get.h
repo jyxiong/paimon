@@ -2,9 +2,8 @@
 
 #include <concepts>
 
-#include "glad/gl.h"
-
-#include "glm/gtc/type_ptr.hpp"
+#include <glad/gl.h>
+#include <glm/gtc/type_ptr.hpp>
 
 // https://registry.khronos.org/OpenGL-Refpages/gl4/html/glGet.xhtml
 

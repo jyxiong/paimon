@@ -6,7 +6,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "glad/gl.h"
+#include <glad/gl.h>
 #include "paimon/rendering/shader_template.h"
 #include "paimon/rendering/shader_define.h"
 #include "paimon/rendering/shader_includer.h"

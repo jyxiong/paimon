@@ -1,5 +1,6 @@
 #include "paimon/opengl/sampler.h"
-#include "glad/gl.h"
+
+#include <glad/gl.h>
 
 using namespace paimon;
 

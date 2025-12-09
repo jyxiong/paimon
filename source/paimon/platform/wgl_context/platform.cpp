@@ -2,7 +2,7 @@
 
 #include "paimon/platform/wgl_context/platform.h"
 
-#include "glad/wgl.h"
+#include <glad/wgl.h>
 
 #include "paimon/core/log_system.h"
 

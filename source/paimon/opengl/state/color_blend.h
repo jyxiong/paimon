@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include "glad/gl.h"
+#include <glad/gl.h>
 
 namespace paimon {
 

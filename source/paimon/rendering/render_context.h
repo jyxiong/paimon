@@ -1,6 +1,6 @@
 #pragma once
 
-#include "glad/gl.h"
+#include <glad/gl.h>
 
 #include "paimon/opengl/state.h"
 #include "paimon/rendering/framebuffer_cache.h"

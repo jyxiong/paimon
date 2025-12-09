@@ -1,5 +1,5 @@
 #include "paimon/opengl/texture.h"
-#include "glad/gl.h"
+#include <glad/gl.h>
 #include "texture.h"
 
 using namespace paimon;

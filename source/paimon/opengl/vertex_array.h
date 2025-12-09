@@ -1,7 +1,5 @@
 #pragma once
 
-#include <vector>
-
 #include "paimon/opengl/base/object.h"
 #include "paimon/opengl/buffer.h"
 
