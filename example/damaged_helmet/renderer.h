@@ -6,14 +6,11 @@
 
 #include <glm/glm.hpp>
 
-#include "paimon/core/fg/frame_graph.h"
 #include "paimon/core/fg/transient_resources.h"
 #include "paimon/core/sg/material.h"
 #include "paimon/core/sg/scene.h"
 #include "paimon/opengl/buffer.h"
-#include "paimon/opengl/sampler.h"
 #include "paimon/opengl/texture.h"
-#include "paimon/rendering/graphics_pipeline.h"
 #include "paimon/rendering/render_context.h"
 
 #include "color_pass.h"
