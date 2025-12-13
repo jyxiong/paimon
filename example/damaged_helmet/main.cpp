@@ -1,100 +1,15 @@
 #include <filesystem>
-#include <map>
 
 #include <GLFW/glfw3.h>
-#include <glad/gl.h>
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
 
 #include "paimon/app/window.h"
-#include "paimon/core/io/gltf.h"
 #include "paimon/core/log_system.h"
-#include "paimon/opengl/buffer.h"
-#include "paimon/opengl/sampler.h"
-#include "paimon/opengl/texture.h"
-#include "paimon/rendering/graphics_pipeline.h"
-#include "paimon/rendering/render_context.h"
-#include "paimon/rendering/rendering_info.h"
 #include "paimon/rendering/shader_manager.h"
 
-#include "screen_quad.h"
+#include "renderer.h"
 
 using namespace paimon;
-
-namespace {
-
-// UBO structures matching shader layout
-struct TransformUBO {
-  alignas(16) glm::mat4 model;
-  alignas(16) glm::mat4 view;
-  alignas(16) glm::mat4 projection;
-};
-
-struct MaterialUBO {
-  alignas(16) glm::vec4 baseColorFactor;
-  alignas(16) glm::vec3 emissiveFactor;
-  alignas(4) float metallicFactor;
-  alignas(4) float roughnessFactor;
-  alignas(4) float _padding[3]; // alignment
-};
-
-struct LightingUBO {
-  alignas(16) glm::vec3 lightPos;
-  alignas(4) float _padding1;
-  alignas(16) glm::vec3 viewPos;
-  alignas(4) float _padding2;
-};
-
-// Camera state
-struct Camera {
-  glm::vec3 position = glm::vec3(0.0f, 0.0f, 3.0f);
-  glm::vec3 front = glm::vec3(0.0f, 0.0f, -1.0f);
-  glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-  float yaw = -90.0f;
-  float pitch = 0.0f;
-  float fov = 45.0f;
-};
-
-Camera g_camera;
-glm::ivec2 g_size = {1280, 720};
-
-// Helper function to create OpenGL texture from sg::Image
-Texture createTextureFromImage(const std::shared_ptr<sg::Image> &image) {
-  Texture texture(GL_TEXTURE_2D);
-
-  if (!image || image->data.empty()) {
-    // Create a default 1x1 white texture
-    std::vector<unsigned char> white = {255, 255, 255, 255};
-    texture.set_storage_2d(1, GL_RGBA8, 1, 1);
-    texture.set_sub_image_2d(0, 0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE,
-                             white.data());
-    return texture;
-  }
-
-  GLenum internalFormat = GL_RGBA8;
-  GLenum format = GL_RGBA;
-
-  if (image->components == 1) {
-    internalFormat = GL_R8;
-    format = GL_RED;
-  } else if (image->components == 2) {
-    internalFormat = GL_RG8;
-    format = GL_RG;
-  } else if (image->components == 3) {
-    internalFormat = GL_RGB8;
-    format = GL_RGB;
-  }
-
-  texture.set_storage_2d(1, internalFormat, image->width, image->height);
-  texture.set_sub_image_2d(0, 0, 0, image->width, image->height, format,
-                           GL_UNSIGNED_BYTE, image->data.data());
-  texture.generate_mipmap();
-
-  return texture;
-}
-
-} // namespace
 
 int main() {
   LogSystem::init();
@@ -104,6 +19,9 @@ int main() {
   LOG_INFO("  - Use UBOs for uniforms (Transform, Material, Lighting)");
   LOG_INFO("  - Use GraphicsPipeline + RenderContext for rendering");
   LOG_INFO("");
+
+  // Window dimensions
+  glm::ivec2 windowSize = {1280, 720};
 
   // Create window
   auto window = Window::create(WindowConfig{
@@ -115,215 +33,41 @@ int main() {
               .profile = ContextProfile::Core,
               .debug = false,
           },
-      .width = static_cast<uint32_t>(g_size.x),
-      .height = static_cast<uint32_t>(g_size.y),
+      .width = static_cast<uint32_t>(windowSize.x),
+      .height = static_cast<uint32_t>(windowSize.y),
       .resizable = true,
       .visible = true,
       .vsync = true,
   });
 
-  // Setup shader manager
-  auto assetPath = std::filesystem::current_path().parent_path().parent_path()/ "asset";
-  auto shaderPath = assetPath / "shader";
+  // Get asset path
+  auto assetPath = std::filesystem::current_path().parent_path().parent_path() / "asset";
 
-  auto& shaderManager = ShaderManager::getInstance();
-  shaderManager.load(shaderPath);
-
-  // Get shader programs for main rendering (separable programs for pipeline)
-  auto vertex_program_ptr = shaderManager.getShaderProgram(
-      "damaged_helmet.vert", GL_VERTEX_SHADER);
-  auto fragment_program_ptr = shaderManager.getShaderProgram(
-      "damaged_helmet.frag", GL_FRAGMENT_SHADER);
-
-  if (!vertex_program_ptr || !fragment_program_ptr) {
-    LOG_ERROR("Failed to load main shader programs");
+  // Create and initialize renderer
+  Renderer renderer;
+  if (!renderer.initialize(windowSize, assetPath)) {
+    LOG_ERROR("Failed to initialize renderer");
     return -1;
   }
+
   // Load glTF model
-  GltfLoader loader;
-  sg::Scene scene;
-
-  auto assetPModelath = assetPath / "model";
-
-  std::string model_path =
-      (assetPModelath / "DamagedHelmet/glTF/DamagedHelmet.gltf").string();
-  if (!loader.LoadFromFile(model_path, scene)) {
-    LOG_ERROR("Failed to load glTF model: {}", loader.GetError());
+  auto modelPath = assetPath / "model" / "DamagedHelmet/glTF/DamagedHelmet.gltf";
+  if (!renderer.loadModel(modelPath.string())) {
+    LOG_ERROR("Failed to load model");
     return -1;
   }
 
-  if (!loader.GetWarning().empty()) {
-    LOG_WARN("glTF warnings: {}", loader.GetWarning());
-  }
+  // Setup camera
+  Camera camera;
+  camera.position = glm::vec3(0.0f, 0.0f, 3.0f);
+  camera.fov = 45.0f;
+  renderer.setCamera(camera);
 
-  // Create graphics pipeline
-  GraphicsPipelineCreateInfo pipelineInfo;
-  pipelineInfo.shaderStages = {
-      {GL_VERTEX_SHADER_BIT, vertex_program_ptr.get()},
-      {GL_FRAGMENT_SHADER_BIT, fragment_program_ptr.get()},
-  };
-  
-  // Configure depth testing
-  pipelineInfo.state.depthStencil.depthTestEnable = true;
-  pipelineInfo.state.depthStencil.depthWriteEnable = true;
-  pipelineInfo.state.depthStencil.depthCompareOp = GL_LESS;
-  
-  // Disable face culling for debugging
-  pipelineInfo.state.rasterization.cullMode = GL_BACK;
-
-  // VertexInputState - configure vertex attribute layout
-  // We use separate bindings for each attribute to allow independent buffer binding
-  pipelineInfo.state.vertexInput.bindings = {
-      {.binding = 0, .stride = sizeof(glm::vec3)},  // Position
-      {.binding = 1, .stride = sizeof(glm::vec3)},  // Normal
-      {.binding = 2, .stride = sizeof(glm::vec2)},  // TexCoord
-  };
-  pipelineInfo.state.vertexInput.attributes = {
-      {
-          .location = 0,
-          .binding = 0,
-          .format = GL_FLOAT,
-          .size = 3,  // vec3
-          .offset = 0,
-      },
-      {
-          .location = 1,
-          .binding = 1,
-          .format = GL_FLOAT,
-          .size = 3,  // vec3
-          .offset = 0,
-      },
-      {
-          .location = 2,
-          .binding = 2,
-          .format = GL_FLOAT,
-          .size = 2,  // vec2
-          .offset = 0,
-      },
-  };
-
-  auto pipeline = GraphicsPipeline(pipelineInfo);
-  if (!pipeline.validate()) {
-    LOG_ERROR("Failed to validate graphics pipeline");
-    return -1;
-  }
-
-  // Process all meshes in the scene
-  struct MeshData {
-    // VertexArray vao;
-    Buffer position_buffer;
-    Buffer normal_buffer;
-    Buffer texcoord_buffer;
-    Buffer index_buffer;
-    size_t index_count;
-    std::shared_ptr<sg::Material> material;
-  };
-
-  std::vector<MeshData> mesh_data_list;
-
-  for (const auto &mesh : scene.meshes) {
-    for (const auto &primitive : mesh->primitives) {
-      MeshData mesh_data;
-
-      // Setup buffers
-      if (primitive.attributes.HasPositions()) {
-        mesh_data.position_buffer.set_storage(
-            sizeof(glm::vec3) * primitive.attributes.positions.size(),
-            primitive.attributes.positions.data(), GL_DYNAMIC_STORAGE_BIT);
-      }
-
-      if (primitive.attributes.HasNormals()) {
-        mesh_data.normal_buffer.set_storage(
-            sizeof(glm::vec3) * primitive.attributes.normals.size(),
-            primitive.attributes.normals.data(), GL_DYNAMIC_STORAGE_BIT);
-      }
-
-      if (primitive.attributes.HasTexCoords0()) {
-        mesh_data.texcoord_buffer.set_storage(
-            sizeof(glm::vec2) * primitive.attributes.texcoords_0.size(),
-            primitive.attributes.texcoords_0.data(), GL_DYNAMIC_STORAGE_BIT);
-      }
-
-      if (primitive.HasIndices()) {
-        mesh_data.index_buffer.set_storage(
-            sizeof(uint32_t) * primitive.indices.size(),
-            primitive.indices.data(), GL_DYNAMIC_STORAGE_BIT);
-        mesh_data.index_count = primitive.indices.size();
-      }
-
-      mesh_data.material = primitive.material;
-      mesh_data_list.push_back(std::move(mesh_data));
-    }
-  }
-
-  // Create textures from materials
-  std::map<std::shared_ptr<sg::Texture>, std::unique_ptr<Texture>> texture_map;
-
-  for (const auto &tex_pair : scene.textures) {
-    if (tex_pair && tex_pair->image) {
-      texture_map[tex_pair] =
-          std::make_unique<Texture>(createTextureFromImage(tex_pair->image));
-    }
-  }
-
-  // Create default textures
-  Texture default_white = createTextureFromImage(nullptr);
-  std::vector<unsigned char> normal_data = {128, 128, 255,
-                                            255}; // default normal (0, 0, 1)
-  Texture default_normal(GL_TEXTURE_2D);
-  default_normal.set_storage_2d(1, GL_RGBA8, 1, 1);
-  default_normal.set_sub_image_2d(0, 0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE,
-                                  normal_data.data());
-
-  std::vector<unsigned char> mr_data = {
-      0, 255, 0, 255}; // default: no AO, full roughness, no metallic
-  Texture default_metallic_roughness(GL_TEXTURE_2D);
-  default_metallic_roughness.set_storage_2d(1, GL_RGBA8, 1, 1);
-  default_metallic_roughness.set_sub_image_2d(0, 0, 0, 1, 1, GL_RGBA,
-                                              GL_UNSIGNED_BYTE, mr_data.data());
-
-  std::vector<unsigned char> black_data = {0, 0, 0, 255};
-  Texture default_black(GL_TEXTURE_2D);
-  default_black.set_storage_2d(1, GL_RGBA8, 1, 1);
-  default_black.set_sub_image_2d(0, 0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE,
-                                 black_data.data());
-
-  // Create sampler
-  Sampler sampler;
-  sampler.set(GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-  sampler.set(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  sampler.set(GL_TEXTURE_WRAP_S, GL_REPEAT);
-  sampler.set(GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-  // Create UBOs
-  Buffer transform_ubo;
-  transform_ubo.set_storage(sizeof(TransformUBO), nullptr, GL_DYNAMIC_STORAGE_BIT);
-  transform_ubo.bind_base(GL_UNIFORM_BUFFER, 0);
-
-  Buffer material_ubo;
-  material_ubo.set_storage(sizeof(MaterialUBO), nullptr, GL_DYNAMIC_STORAGE_BIT);
-  material_ubo.bind_base(GL_UNIFORM_BUFFER, 1);
-
-  Buffer lighting_ubo;
-  lighting_ubo.set_storage(sizeof(LightingUBO), nullptr, GL_DYNAMIC_STORAGE_BIT);
-  lighting_ubo.bind_base(GL_UNIFORM_BUFFER, 2);
-
-  // Create FBO textures for color and depth attachments
-  Texture fbo_color_texture(GL_TEXTURE_2D);
-  fbo_color_texture.set_storage_2d(1, GL_RGBA8, g_size.x, g_size.y);
-
-  Texture fbo_depth_texture(GL_TEXTURE_2D);
-  fbo_depth_texture.set_storage_2d(1, GL_DEPTH_COMPONENT32, g_size.x, g_size.y);
-
-  // Create screen quad (it will load shaders internally from singleton)
-  ScreenQuad screen_quad;
-
-  // Create render context
-  RenderContext ctx;
+  // Setup lighting
+  renderer.setLightPosition(glm::vec3(5.0f, 5.0f, 5.0f));
 
   LOG_INFO("Setup complete, entering render loop");
 
-  float rotation = 0.0f;
   float lastFrame = 0.0f;
 
   // Main render loop
@@ -336,180 +80,17 @@ int main() {
     // Input
     window->pollEvents();
 
-    // Auto-rotate the model
-    rotation += deltaTime * 30.0f; // 30 degrees per second
-
-    // Setup transformation matrices
-    TransformUBO transformData;
-    transformData.model = glm::mat4(1.0f);
-    transformData.model = glm::rotate(transformData.model, 
-                                     glm::radians(rotation), 
-                                     glm::vec3(0.0f, 1.0f, 0.0f));
-    transformData.view = glm::lookAt(g_camera.position, 
-                                    glm::vec3(0.0f, 0.0f, 0.0f),
-                                    g_camera.up);
-    transformData.projection = glm::perspective(glm::radians(g_camera.fov),
-                                               static_cast<float>(g_size.x) / g_size.y, 
-                                               0.1f, 100.0f);
-
-    // Update transform UBO
-    transform_ubo.set_sub_data(0, sizeof(TransformUBO), &transformData);
-
-    // Setup lighting
-    LightingUBO lightingData;
-    lightingData.lightPos = glm::vec3(5.0f, 5.0f, 5.0f);
-    lightingData.viewPos = g_camera.position;
-
-    // Update lighting UBO
-    lighting_ubo.set_sub_data(0, sizeof(LightingUBO), &lightingData);
-
-    // ===== First Pass: Render to FBO =====
-
-    { 
-      // Setup rendering info for FBO
-      RenderingInfo renderingInfo;
-      renderingInfo.renderAreaOffset = {0, 0};
-      renderingInfo.renderAreaExtent = {g_size.x, g_size.y};
-
-      // Setup color attachment
-      renderingInfo.colorAttachments.emplace_back(
-        fbo_color_texture,
-        AttachmentLoadOp::Clear,
-        AttachmentStoreOp::Store,
-        ClearValue::Color(0.1f, 0.1f, 0.1f, 1.0f)
-      );
-
-      // Setup depth attachment
-      renderingInfo.depthAttachment.emplace(
-        fbo_depth_texture,
-        AttachmentLoadOp::Clear,
-        AttachmentStoreOp::Store,
-        ClearValue::DepthStencil(1.0f, 0)
-      );
-
-      // Begin rendering to FBO
-      ctx.beginRendering(renderingInfo);
-
-      // Bind pipeline (this applies depth test and other states)
-      ctx.bindPipeline(pipeline);
-
-      // Set viewport
-      ctx.setViewport(0, 0, g_size.x, g_size.y);
-
-      // Render each mesh
-      int meshCount = 0;
-      for (const auto &mesh_data : mesh_data_list) {
-
-        ctx.bindVertexBuffer(0, mesh_data.position_buffer, 0, sizeof(glm::vec3));
-        ctx.bindVertexBuffer(1, mesh_data.normal_buffer, 0, sizeof(glm::vec3));
-        ctx.bindVertexBuffer(2, mesh_data.texcoord_buffer, 0, sizeof(glm::vec2));
-        ctx.bindIndexBuffer(mesh_data.index_buffer, GL_UNSIGNED_INT);
-
-        // Update material UBO and bind textures
-        if (mesh_data.material) {
-          const auto &mat = mesh_data.material;
-          const auto &pbr = mat->pbr_metallic_roughness;
-
-          // Prepare material data
-          MaterialUBO materialData;
-          materialData.baseColorFactor = pbr.base_color_factor;
-          materialData.emissiveFactor = mat->emissive_factor;
-          materialData.metallicFactor = pbr.metallic_factor;
-          materialData.roughnessFactor = pbr.roughness_factor;
-
-          // Update material UBO
-          material_ubo.set_sub_data(0, sizeof(MaterialUBO), &materialData);
-
-          // Bind textures with sampler
-          // Base color (unit 0)
-          if (pbr.base_color_texture &&
-              texture_map.count(pbr.base_color_texture)) {
-            texture_map.at(pbr.base_color_texture)->bind(0);
-          } else {
-            default_white.bind(0);
-          }
-          sampler.bind(0);
-
-          // Metallic roughness (unit 1)
-          if (pbr.metallic_roughness_texture &&
-              texture_map.count(pbr.metallic_roughness_texture)) {
-            texture_map.at(pbr.metallic_roughness_texture)->bind(1);
-          } else {
-            default_metallic_roughness.bind(1);
-          }
-          sampler.bind(1);
-
-          // Normal (unit 2)
-          if (mat->normal_texture && texture_map.count(mat->normal_texture)) {
-            texture_map.at(mat->normal_texture)->bind(2);
-          } else {
-            default_normal.bind(2);
-          }
-          sampler.bind(2);
-
-          // Emissive (unit 3)
-          if (mat->emissive_texture && texture_map.count(mat->emissive_texture)) {
-            texture_map.at(mat->emissive_texture)->bind(3);
-          } else {
-            default_black.bind(3);
-          }
-          sampler.bind(3);
-
-          // Occlusion (unit 4)
-          if (mat->occlusion_texture &&
-              texture_map.count(mat->occlusion_texture)) {
-            texture_map.at(mat->occlusion_texture)->bind(4);
-          } else {
-            default_white.bind(4);
-          }
-          sampler.bind(4);
-        }
-
-        // Draw indexed
-        if (mesh_data.index_count > 0) {
-          ctx.drawElements(mesh_data.index_count, nullptr);
-          meshCount++;
-        }
-      }
-    
-      // End rendering to FBO
-      ctx.endRendering();
-
-    }
-
-    // ===== Second Pass: Render FBO texture to screen =====
-    {
-      // Setup swapchain rendering info
-      SwapchainRenderingInfo swapchainInfo;
-      swapchainInfo.renderAreaOffset = {0, 0};
-      swapchainInfo.renderAreaExtent = {g_size.x, g_size.y};
-      swapchainInfo.clearColor = ClearValue::Color(0.0f, 0.0f, 0.0f, 1.0f);
-      swapchainInfo.clearDepth = 1.0f;
-      swapchainInfo.clearStencil = 0;
-
-      // Begin swapchain rendering
-      ctx.beginSwapchainRendering(swapchainInfo);
-      
-      // Disable depth test for screen quad
-      glDisable(GL_DEPTH_TEST);
-
-      // Use screen quad to render FBO texture
-      screen_quad.draw(ctx, fbo_color_texture);
-      
-      // End swapchain rendering
-      ctx.endSwapchainRendering();
-    }
-
-
+    // Render frame
+    renderer.render(deltaTime);
 
     // Swap buffers
     window->swapBuffers();
   }
 
   LOG_INFO("Shutting down");
-  
+
   // Clear shader resources before OpenGL context is destroyed
-  shaderManager.clear();
-  
+  ShaderManager::getInstance().clear();
+
   return 0;
 }

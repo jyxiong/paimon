@@ -6,6 +6,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "paimon/app/window.h"
+#include "paimon/core/log_system.h"
 #include "paimon/core/fg/frame_graph.h"
 #include "paimon/core/fg/frame_graph_texture.h"
 #include "paimon/core/fg/transient_resources.h"
@@ -388,6 +389,8 @@ void renderScene(RenderData &rd, Program &program, bool isShadowPass) {
 }
 
 int main() {
+  LogSystem::init();
+
   auto window = Window::create(WindowConfig{
       .title = "Frame Graph Shadow Mapping Example",
       .format =
@@ -403,6 +406,9 @@ int main() {
       .visible = true,
       .vsync = true,
   });
+
+  RenderContext rc;
+  TransientResources allocator(rc);
 
   RenderData renderData;
 
@@ -548,8 +554,6 @@ int main() {
   while (!window->shouldClose()) {
     window->pollEvents();
 
-    RenderContext rc;
-    TransientResources allocator(rc);
     fg.execute(&rc, &allocator);
 
     window->swapBuffers();
