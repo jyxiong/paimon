@@ -40,12 +40,14 @@ public:
 
   template <class TResource>
   TResource &get() {
-    return dynamic_cast<Resource<TResource>>(*m_concept).get();
+    auto &resource = static_cast<Resource<TResource>&>(*m_concept);
+    return resource.get();
   }
 
   template <class TResource>
   typename TResource::Descriptor &get_desc() {
-    return dynamic_cast<Resource<TResource>>(*m_concept).get_desc();
+    auto &resource = static_cast<Resource<TResource>&>(*m_concept);
+    return resource.get_desc();
   }
 
 private:
