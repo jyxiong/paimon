@@ -37,7 +37,7 @@ void RenderContext::beginRendering(const RenderingInfo& info) {
   if (info.depthAttachment.has_value()) {
     const auto& attachment = info.depthAttachment.value();
     if (attachment.loadOp == AttachmentLoadOp::Clear) {
-      float depth = attachment.clearValue.depthStencil.depth;
+      float depth = attachment.clearValue.depth;
       m_currentFbo->clear(GL_DEPTH, 0, &depth);
     }
   }
@@ -46,7 +46,7 @@ void RenderContext::beginRendering(const RenderingInfo& info) {
   if (info.stencilAttachment.has_value()) {
     const auto& attachment = info.stencilAttachment.value();
     if (attachment.loadOp == AttachmentLoadOp::Clear) {
-      GLint stencilValue = static_cast<GLint>(attachment.clearValue.depthStencil.stencil);
+      GLint stencilValue = static_cast<GLint>(attachment.clearValue.stencil);
       m_currentFbo->clear(GL_STENCIL, 0, &stencilValue);
     }
   }

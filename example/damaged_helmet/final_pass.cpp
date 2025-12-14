@@ -44,24 +44,25 @@ FinalPass::FinalPass(RenderContext &renderContext, const std::filesystem::path &
   m_sampler->set(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 }
 
-void FinalPass::registerPass(FrameGraph &fg, NodeId colorInput, const glm::ivec2 &size) {
+void FinalPass::registerPass(FrameGraph &fg, NodeId colorInput, const glm::ivec2 &size, Texture* outputTexture) {
   
   fg.create_pass<Data>(
       "FinalPass",
-      [colorInput](FrameGraph::Builder &builder, Data &data) {
+      [&](FrameGraph::Builder &builder, Data &data) {
         // Read color input from previous pass
         data.colorInput = colorInput;
         builder.read(data.colorInput);
       },
-      [&](FrameGraphResources &resources, void *context) {
+      [&](const Data &data, FrameGraphResources &resources, void *context) {
         // Get source texture from frame graph
-        auto &texture = fg.get<FrameGraphTexture>(colorInput);
+        auto *texture = fg.get<FrameGraphTexture>(data.colorInput).getTexture();
         
         // Setup rendering to default framebuffer
         SwapchainRenderingInfo renderingInfo;
         renderingInfo.renderAreaOffset = {0, 0};
         renderingInfo.renderAreaExtent = {size.x, size.y};
-        
+        renderingInfo.clearColor = ClearValue::Color(1.0f, 0.0f, 0.0f, 1.0f);
+
         // Begin rendering to default framebuffer
         m_renderContext.beginSwapchainRendering(renderingInfo);
         
@@ -69,7 +70,7 @@ void FinalPass::registerPass(FrameGraph &fg, NodeId colorInput, const glm::ivec2
         m_renderContext.bindPipeline(*m_pipeline);
         
         // Bind texture and sampler
-        m_renderContext.bindTexture(0, *texture.getTexture(), *m_sampler);
+        m_renderContext.bindTexture(6, *outputTexture, *m_sampler);
         
         // Set viewport
         m_renderContext.setViewport(0, 0, size.x, size.y);

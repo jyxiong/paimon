@@ -6,6 +6,7 @@
 
 #include "paimon/core/fg/frame_graph.h"
 #include "paimon/opengl/sampler.h"
+#include "paimon/opengl/texture.h"
 #include "paimon/rendering/graphics_pipeline.h"
 #include "paimon/rendering/render_context.h"
 
@@ -20,7 +21,7 @@ public:
   FinalPass(RenderContext &renderContext, const std::filesystem::path &assetPath);
 
   // Register FinalPass to the frame graph
-  void registerPass(FrameGraph &fg, NodeId colorInput, const glm::ivec2 &size);
+  void registerPass(FrameGraph &fg, NodeId colorInput, const glm::ivec2 &size, Texture* outputTexture);
 
 private:
   RenderContext &m_renderContext;

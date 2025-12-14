@@ -41,6 +41,8 @@ public:
       Buffer *materialUBO,
       Buffer *lightingUBO);
 
+  Texture* getColorTexture() const { return m_colorTexture.get(); }
+
 private:
   RenderContext &m_renderContext;
   std::filesystem::path m_assetPath;
@@ -48,6 +50,9 @@ private:
   // Graphics pipeline
   std::unique_ptr<GraphicsPipeline> m_pipeline;
   std::unique_ptr<Sampler> m_sampler;
+
+  std::unique_ptr<Texture> m_colorTexture;
+  std::unique_ptr<Texture> m_depthTexture;
 };
 
 } // namespace paimon

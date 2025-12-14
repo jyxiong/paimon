@@ -469,7 +469,7 @@ int main() {
             });
         data.shadow_map = builder.write(data.shadow_map);
       },
-      [&renderData](FrameGraphResources &resources, void *context) {
+      [&renderData](const ShadowPassData &data, FrameGraphResources &resources, void *context) {
         std::cout << "Executing Shadow Pass\n";
 
         // Bind shadow framebuffer
@@ -499,7 +499,7 @@ int main() {
       [&](FrameGraph::Builder &builder, ScenePassData &data) {
         data.shadow_input = builder.read(shadow_pass.shadow_map);
       },
-      [&renderData](FrameGraphResources &resources, void *context) {
+      [&renderData](const ScenePassData &data, FrameGraphResources &resources, void *context) {
         std::cout << "Executing Scene Pass\n";
 
         // Render to default framebuffer

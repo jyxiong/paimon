@@ -61,7 +61,7 @@ ColorPass::ColorPass(RenderContext &renderContext, const std::filesystem::path &
   pipelineInfo.state.depthStencil.depthCompareOp = GL_LESS;
 
   // Disable face culling for debugging
-  pipelineInfo.state.rasterization.cullMode = GL_BACK;
+  pipelineInfo.state.rasterization.cullMode = GL_NONE;
 
   // VertexInputState
   pipelineInfo.state.vertexInput.bindings = {
@@ -83,10 +83,13 @@ ColorPass::ColorPass(RenderContext &renderContext, const std::filesystem::path &
 
   // Create sampler
   m_sampler = std::make_unique<Sampler>();
-  m_sampler->set(GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+  m_sampler->set(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   m_sampler->set(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   m_sampler->set(GL_TEXTURE_WRAP_S, GL_REPEAT);
   m_sampler->set(GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+  m_colorTexture = std::make_unique<Texture>(GL_TEXTURE_2D);
+  m_depthTexture = std::make_unique<Texture>(GL_TEXTURE_2D);
 }
 
 NodeId ColorPass::registerPass(
@@ -97,10 +100,10 @@ NodeId ColorPass::registerPass(
     Buffer *transformUBO,
     Buffer *materialUBO,
     Buffer *lightingUBO) {
-  
-  NodeId colorOutput;
-  NodeId depthOutput;
-  
+
+  m_colorTexture->set_storage_2d(1, GL_RGBA8, size.x, size.y);
+  m_depthTexture->set_storage_2d(1, GL_DEPTH_COMPONENT32, size.x, size.y);
+
   auto &passData = fg.create_pass<Data>(
       "ColorPass",
       [&](FrameGraph::Builder &builder, Data &data) {
@@ -123,16 +126,12 @@ NodeId ColorPass::registerPass(
         // Mark as write targets
         builder.write(data.colorOutput);
         builder.write(data.depthOutput);
-        
-        // Capture NodeIds for execute phase
-        colorOutput = data.colorOutput;
-        depthOutput = data.depthOutput;
       },
-      [&](FrameGraphResources &resources, void *context) {
+      [&](const Data &data, FrameGraphResources &resources, void *context) {
         // Get textures from frame graph
-        auto &colorTexture = fg.get<FrameGraphTexture>(colorOutput);
-        auto &depthTexture = fg.get<FrameGraphTexture>(depthOutput);
-        
+        auto *colorTexture = fg.get<FrameGraphTexture>(data.colorOutput).getTexture();
+        auto *depthTexture = fg.get<FrameGraphTexture>(data.depthOutput).getTexture();
+
         // Setup rendering info for FBO
         RenderingInfo renderingInfo;
         renderingInfo.renderAreaOffset = {0, 0};
@@ -140,17 +139,17 @@ NodeId ColorPass::registerPass(
 
         // Setup color attachment
         renderingInfo.colorAttachments.emplace_back(
-            *colorTexture.getTexture(),
+            *m_colorTexture,
             AttachmentLoadOp::Clear,
             AttachmentStoreOp::Store,
             ClearValue::Color(0.1f, 0.1f, 0.1f, 1.0f));
 
         // Setup depth attachment
         renderingInfo.depthAttachment.emplace(
-            *depthTexture.getTexture(),
+            *m_depthTexture,
             AttachmentLoadOp::Clear,
             AttachmentStoreOp::Store,
-            ClearValue::DepthStencil(1.0f, 0));
+            ClearValue::Depth(1.0f));
 
         // Begin rendering to FBO
         m_renderContext.beginRendering(renderingInfo);
@@ -160,6 +159,14 @@ NodeId ColorPass::registerPass(
 
         // Set viewport
         m_renderContext.setViewport(0, 0, size.x, size.y);
+
+        // Bind UBOs
+        if (transformUBO) {
+          m_renderContext.bindUniformBuffer(0, *transformUBO, 0, sizeof(TransformUBO));
+        }
+        if (lightingUBO) {
+          m_renderContext.bindUniformBuffer(2, *lightingUBO, 0, sizeof(LightingUBO));
+        }
 
         // Render each mesh
         for (const auto &meshData : meshDataList) {

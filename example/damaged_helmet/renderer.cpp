@@ -30,15 +30,12 @@ bool Renderer::initialize(const glm::ivec2 &size, const std::filesystem::path &a
   // Create UBOs
   m_transformUBO = std::make_unique<Buffer>();
   m_transformUBO->set_storage(sizeof(TransformUBO), nullptr, GL_DYNAMIC_STORAGE_BIT);
-  m_transformUBO->bind_base(GL_UNIFORM_BUFFER, 0);
 
   m_materialUBO = std::make_unique<Buffer>();
   m_materialUBO->set_storage(sizeof(MaterialUBO), nullptr, GL_DYNAMIC_STORAGE_BIT);
-  m_materialUBO->bind_base(GL_UNIFORM_BUFFER, 1);
 
   m_lightingUBO = std::make_unique<Buffer>();
   m_lightingUBO->set_storage(sizeof(LightingUBO), nullptr, GL_DYNAMIC_STORAGE_BIT);
-  m_lightingUBO->bind_base(GL_UNIFORM_BUFFER, 2);
   
   // Create passes
   m_colorPass = std::make_unique<ColorPass>(*m_renderContext, m_assetPath);
@@ -175,7 +172,7 @@ void Renderer::render(float deltaTime) {
       m_lightingUBO.get());
 
   // Register FinalPass using ColorPass output
-  m_finalPass->registerPass(fg, colorOutput, m_size);
+  m_finalPass->registerPass(fg, colorOutput, m_size, m_colorPass->getColorTexture());
 
   // Compile the frame graph
   fg.compile();
@@ -222,7 +219,6 @@ Texture Renderer::createTextureFromImage(const std::shared_ptr<sg::Image> &image
   texture.set_storage_2d(1, internalFormat, image->width, image->height);
   texture.set_sub_image_2d(0, 0, 0, image->width, image->height, format,
                            GL_UNSIGNED_BYTE, image->data.data());
-  texture.generate_mipmap();
 
   return texture;
 }

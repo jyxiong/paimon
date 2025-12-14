@@ -12,7 +12,6 @@ void FrameGraphTexture::create(void *allocator, const Descriptor &desc) {
 void FrameGraphTexture::destroy(void *allocator, const Descriptor &desc) {
   auto *transientResources = static_cast<TransientResources *>(allocator);
   transientResources->releaseTexture(desc, m_texture);
-  m_texture = nullptr;
 }
 
 void FrameGraphTexture::preRead(void *context, const Descriptor &desc,

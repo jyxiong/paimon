@@ -51,7 +51,7 @@ public:
 
   template <class TData, class TSetup, class TExecutor>
     requires std::invocable<TSetup, Builder &, TData &> &&
-             std::invocable<TExecutor, FrameGraphResources &, void *>
+             std::invocable<TExecutor, const TData&, FrameGraphResources &, void *>
   const TData &create_pass(std::string name, TSetup &&setup,
                            TExecutor &&executor) {
     auto id = m_pass_nodes.size();
