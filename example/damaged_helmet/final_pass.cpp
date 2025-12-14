@@ -1,11 +1,13 @@
-#include "screen_quad.h"
+#include "final_pass.h"
 
 #include <glad/gl.h>
 
 #include "paimon/core/log_system.h"
 #include "paimon/rendering/shader_manager.h"
 
-ScreenQuad::ScreenQuad() {
+using namespace paimon;
+
+FinalPass::FinalPass() {
   // Create a minimal VAO (no vertex data needed, vertices are in shader)
   // m_vao = std::make_unique<VertexArray>();
 
@@ -37,10 +39,22 @@ ScreenQuad::ScreenQuad() {
   m_pipeline = std::make_unique<GraphicsPipeline>(pipelineInfo);
 }
 
-void ScreenQuad::draw(RenderContext& ctx, const Texture &texture) {
+void FinalPass::draw(RenderContext& ctx, const Texture &texture, const glm::ivec2 &size) {
+
+  SwapchainRenderingInfo renderingInfo;
+  renderingInfo.renderAreaOffset = {0, 0};
+  renderingInfo.renderAreaExtent = {size.x, size.y};
+  renderingInfo.clearColor = ClearValue::Color(0.0f, 0.0f, 0.0f, 1.0f);
+  renderingInfo.clearDepth = 1.0f;
+  renderingInfo.clearStencil = 0;
+
+  ctx.beginSwapchainRendering(renderingInfo);
+
   ctx.bindPipeline(*m_pipeline);
-  texture.bind(6);
-  m_sampler->bind(6);
-  // Draw full-screen quad with 6 vertices (2 triangles)
+  
+  ctx.bindTexture(6, texture, *m_sampler);
+
   ctx.drawArrays(0, 6);
+
+  ctx.endSwapchainRendering();
 }
