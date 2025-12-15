@@ -7,9 +7,9 @@
 #include <vector>
 
 #include <glad/gl.h>
-#include "paimon/rendering/shader_template.h"
 #include "paimon/rendering/shader_define.h"
 #include "paimon/rendering/shader_includer.h"
+#include "paimon/rendering/shader_program_cache.h"
 
 namespace paimon {
 
@@ -67,11 +67,11 @@ private:
   void loadShaderFile(const std::filesystem::path &filePath);
 
 private:
-  /// Map of shader filename to shader template
-  std::unordered_map<std::string, ShaderTemplate> m_shaderTemplates;
+  /// Map of shader filename to base shader source
+  std::unordered_map<std::string, std::string> m_shaderSources;
 
-  /// Cache structure: (filename, hash) -> ShaderProgram
-  std::unordered_map<std::string, std::unordered_map<std::size_t, std::shared_ptr<ShaderProgram>>> m_shaderCache;
+  /// Cache structure: filename -> ShaderProgramCache
+  std::unordered_map<std::string, ShaderProgramCache> m_programCaches;
 
   /// Shader includer for processing #include directives
   ShaderIncluder m_includer;

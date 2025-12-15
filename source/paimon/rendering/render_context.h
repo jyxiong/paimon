@@ -12,6 +12,7 @@
 #include "paimon/rendering/graphics_pipeline.h"
 #include "paimon/rendering/rendering_info.h"
 #include "paimon/rendering/vertex_array_cache.h"
+#include "paimon/rendering/shader_program_cache.h"
 
 namespace paimon {
 
@@ -128,6 +129,7 @@ private:
   PipelineState m_currentPipelineState;
 
   FramebufferCache m_framebufferCache;
+  ShaderProgramCache m_shaderProgramCache;
   VertexArrayCache m_vertexArrayCache;
 };
 

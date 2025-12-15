@@ -61,66 +61,40 @@ void ShaderManager::loadShaderFile(const std::filesystem::path &filePath) {
     return;
   }
 
-  // Resolve includes to create the template
+  // Resolve includes
   source = m_includer.process(source);
 
   // Store with filename as key
   std::string filename = filePath.filename().string();
-  m_shaderTemplates.emplace(filename, ShaderTemplate(source));
-  LOG_INFO("Loaded shader template: {} ({} bytes)", filename, source.size());
+  m_shaderSources.emplace(filename, std::move(source));
+  LOG_INFO("Loaded shader source: {} ({} bytes)", filename, m_shaderSources[filename].size());
 }
 
 std::shared_ptr<ShaderProgram>
 ShaderManager::getShaderProgram(const std::string &filename, GLenum type,
                                 const std::vector<ShaderDefine> &defines) {
-  // Check if template exists
-  auto templateIt = m_shaderTemplates.find(filename);
-  if (templateIt == m_shaderTemplates.end()) {
-    LOG_ERROR("Shader template not found: {}", filename);
+  // Check if source exists
+  auto sourceIt = m_shaderSources.find(filename);
+  if (sourceIt == m_shaderSources.end()) {
+    LOG_ERROR("Shader source not found: {}", filename);
     return nullptr;
   }
 
-  // Create variant from template (computes hash once)
-  auto [hash, variant] = templateIt->second.createVariant(defines);
+  // Get or create cache for this file
+  auto &cache = m_programCaches[filename];
 
-  // Check cache using the computed hash
-  auto &fileCache = m_shaderCache[filename];
-  auto cacheIt = fileCache.find(hash);
-  if (cacheIt != fileCache.end()) {
-    LOG_DEBUG("Using cached shader program: {}", filename);
-    return cacheIt->second;
-  }
-
-  // Get processed source from variant
-  const std::string& processedSource = variant.getSource();
-
-  // Create shader program
-  auto shaderProgram = std::make_shared<ShaderProgram>(type, processedSource);
-
-  // Check for compilation errors
-  if (!shaderProgram->is_valid()) {
+  // Get or create shader program from cache
+  auto* program = cache.get(sourceIt->second, type, defines);
+  if (!program) {
     LOG_ERROR("Failed to create shader program: {}", filename);
-    std::string infoLog = shaderProgram->get_info_log();
-    if (!infoLog.empty()) {
-      LOG_ERROR("Shader compilation error:\n{}", infoLog);
-    }
     return nullptr;
   }
 
-  // Check for warnings/info
-  std::string infoLog = shaderProgram->get_info_log();
-  if (!infoLog.empty()) {
-    LOG_INFO("Shader program info log for {}:\n{}", filename, infoLog);
-  }
-
-  // Cache and return using the pre-computed hash
-  fileCache[hash] = shaderProgram;
-  LOG_INFO("Created and cached shader program: {}", filename);
-
-  return shaderProgram;
+  // Return as shared_ptr (non-owning)
+  return std::shared_ptr<ShaderProgram>(program, [](ShaderProgram*){});
 }
 
 void ShaderManager::clear() {
-  m_shaderCache.clear();
-  m_shaderTemplates.clear();
+  m_programCaches.clear();
+  m_shaderSources.clear();
 }
