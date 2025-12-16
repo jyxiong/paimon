@@ -11,11 +11,8 @@
 #include "paimon/core/io/gltf.h"
 #include "paimon/core/log_system.h"
 #include "paimon/opengl/buffer.h"
-#include "paimon/opengl/sampler.h"
 #include "paimon/opengl/texture.h"
-#include "paimon/rendering/graphics_pipeline.h"
 #include "paimon/rendering/render_context.h"
-#include "paimon/rendering/rendering_info.h"
 #include "paimon/rendering/shader_manager.h"
 
 #include "color_pass.h"
@@ -200,12 +197,13 @@ int main() {
   Texture fbo_depth_texture(GL_TEXTURE_2D);
   fbo_depth_texture.set_storage_2d(1, GL_DEPTH_COMPONENT32, g_size.x, g_size.y);
 
-  // Create screen quad (it will load shaders internally from singleton)
-  ColorPass color_pass;
-  FinalPass final_pass;
-
   // Create render context
   RenderContext ctx;
+
+  // Create screen quad (it will load shaders internally from singleton)
+  ColorPass color_pass(ctx);
+  FinalPass final_pass(ctx);
+
 
   LOG_INFO("Setup complete, entering render loop");
 
@@ -222,15 +220,18 @@ int main() {
     // Input
     window->pollEvents();
 
-    // Auto-rotate the model
+    // Auto-rotate the camera
     rotation += deltaTime * 30.0f; // 30 degrees per second
+    
+    // Calculate camera position rotating around the origin
+    float radius = 3.0f;
+    g_camera.position.x = radius * sin(glm::radians(rotation));
+    g_camera.position.z = radius * cos(glm::radians(rotation));
+    g_camera.position.y = 0.0f;
 
     // Setup transformation matrices
     TransformUBO transformData;
-    transformData.model = glm::mat4(1.0f);
-    transformData.model =
-        glm::rotate(transformData.model, glm::radians(rotation),
-                    glm::vec3(0.0f, 1.0f, 0.0f));
+    transformData.model = glm::mat4(1.0f); // Keep model stationary
     transformData.view = glm::lookAt(g_camera.position,
                                      glm::vec3(0.0f, 0.0f, 0.0f), g_camera.up);
     transformData.projection =
@@ -264,9 +265,6 @@ int main() {
   }
 
   LOG_INFO("Shutting down");
-
-  // Clear shader resources before OpenGL context is destroyed
-  shaderManager.clear();
 
   return 0;
 }

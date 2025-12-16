@@ -3,11 +3,13 @@
 #include <glad/gl.h>
 
 #include "paimon/core/log_system.h"
+#include "paimon/rendering/render_context.h"
 #include "paimon/rendering/shader_manager.h"
 
 using namespace paimon;
 
-FinalPass::FinalPass() {
+FinalPass::FinalPass(RenderContext &renderContext)
+    : m_renderContext(renderContext) {
   // Create a minimal VAO (no vertex data needed, vertices are in shader)
   // m_vao = std::make_unique<VertexArray>();
 
@@ -19,9 +21,11 @@ FinalPass::FinalPass() {
   m_sampler->set(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
   // Load shaders from ShaderManager singleton
-  auto& shaderManager = ShaderManager::getInstance();
-  auto vert_program = shaderManager.getShaderProgram("screen_quad.vert", GL_VERTEX_SHADER);
-  auto frag_program = shaderManager.getShaderProgram("screen_quad.frag", GL_FRAGMENT_SHADER);
+  auto &shaderManager = ShaderManager::getInstance();
+  auto *vert_program = m_renderContext.createShaderProgram(
+      shaderManager.getShaderSource("screen_quad.vert"));
+  auto *frag_program = m_renderContext.createShaderProgram(
+      shaderManager.getShaderSource("screen_quad.frag"));
 
   if (!vert_program || !frag_program) {
     LOG_ERROR("Failed to load screen quad shaders");
@@ -31,8 +35,8 @@ FinalPass::FinalPass() {
   // Create graphics pipeline
   GraphicsPipelineCreateInfo pipelineInfo;
   pipelineInfo.shaderStages = {
-      {GL_VERTEX_SHADER_BIT, vert_program.get()},
-      {GL_FRAGMENT_SHADER_BIT, frag_program.get()},
+      {GL_VERTEX_SHADER_BIT, vert_program},
+      {GL_FRAGMENT_SHADER_BIT, frag_program},
   };
   pipelineInfo.state.depthStencil.depthTestEnable = false;
   

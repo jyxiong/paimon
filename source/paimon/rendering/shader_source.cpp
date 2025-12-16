@@ -1,8 +1,8 @@
-#include "paimon/rendering/shader_define.h"
+#include "paimon/rendering/shader_source.h"
 
 using namespace paimon;
 
-ShaderDefine::ShaderDefine(const std::string &name) : m_name(name) {
+ShaderDefine::ShaderDefine(const std::string &name) {
   m_hash = std::hash<std::string>()(name);
   m_source = std::format("#define {} \n", name);
 }

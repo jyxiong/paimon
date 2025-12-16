@@ -35,7 +35,7 @@ struct LightingUBO {
 
 class ColorPass {
 public:
-  ColorPass();
+  ColorPass(RenderContext &renderContext);
 
   void draw(
     RenderContext &ctx, const glm::ivec2 &g_size,
@@ -46,6 +46,8 @@ public:
   Texture* getColorTexture() const { return m_color_texture.get(); }
 
 private:
+  RenderContext& m_renderContext;
+
   std::unique_ptr<Texture> m_color_texture;
   std::unique_ptr<Texture> m_depth_texture;
 
