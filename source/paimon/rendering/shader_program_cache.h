@@ -2,11 +2,9 @@
 
 #include <memory>
 #include <unordered_map>
-#include <vector>
 
 #include "paimon/opengl/shader_program.h"
-#include "paimon/rendering/shader_define.h"
-#include <glad/gl.h>
+#include "paimon/rendering/shader_source.h"
 
 namespace paimon {
 
@@ -22,7 +20,7 @@ public:
   ShaderProgramCache &operator=(const ShaderProgramCache &) = delete;
 
   // Get or create shader program with given defines
-  ShaderProgram *get(const std::string &baseSource, GLenum type,
+  ShaderProgram *get(const ShaderSource &source,
                      const std::vector<ShaderDefine> &defines);
 
   // Clear the cache
@@ -33,13 +31,13 @@ public:
 
 private:
   // Compute hash from defines
-  std::size_t createHash(const std::vector<ShaderDefine> &defines) const;
+  std::size_t createHash(const ShaderSource &source,
+                     const std::vector<ShaderDefine> &defines) const;
 
   // Create a new shader program
   std::unique_ptr<ShaderProgram>
-  createShaderProgram(const std::string &baseSource,
-                      const std::vector<ShaderDefine> &defines,
-                      GLenum type) const;
+  createShaderProgram(const ShaderSource &source,
+                     const std::vector<ShaderDefine> &defines) const;
 
 private:
   // Cache uses hash value as key

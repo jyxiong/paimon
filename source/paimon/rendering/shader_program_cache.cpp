@@ -8,10 +8,10 @@
 using namespace paimon;
 
 ShaderProgram *
-ShaderProgramCache::get(const std::string &baseSource, GLenum type,
-                        const std::vector<ShaderDefine> &defines) {
+ShaderProgramCache::get(const ShaderSource &source,
+                     const std::vector<ShaderDefine> &defines) {
   // Compute hash for the defines
-  std::size_t hash = createHash(defines);
+  std::size_t hash = createHash(source, defines);
 
   // Check if program exists in cache
   auto it = m_cache.find(hash);
@@ -20,7 +20,7 @@ ShaderProgramCache::get(const std::string &baseSource, GLenum type,
   }
 
   // Create new shader program
-  auto program = createShaderProgram(baseSource, defines, type);
+  auto program = createShaderProgram(source, defines);
   if (!program || !program->is_valid()) {
     LOG_ERROR("Failed to create shader program");
     if (program) {
@@ -50,8 +50,10 @@ ShaderProgramCache::get(const std::string &baseSource, GLenum type,
 void ShaderProgramCache::clear() { m_cache.clear(); }
 
 std::size_t
-ShaderProgramCache::createHash(const std::vector<ShaderDefine> &defines) const {
-  std::size_t hash = 0;
+ShaderProgramCache::createHash(const ShaderSource &source,
+                     const std::vector<ShaderDefine> &defines) const {
+  
+  std::size_t hash = std::hash<std::string>()(source.name);
   for (const auto &define : defines) {
     hashCombine(hash, define.getHash());
   }
@@ -59,10 +61,10 @@ ShaderProgramCache::createHash(const std::vector<ShaderDefine> &defines) const {
 }
 
 std::unique_ptr<ShaderProgram> ShaderProgramCache::createShaderProgram(
-    const std::string &baseSource, const std::vector<ShaderDefine> &defines,
-    GLenum type) const {
+    const ShaderSource &source,
+    const std::vector<ShaderDefine> &defines) const {
 
-  std::string variantSource = baseSource;
+  std::string variantSource = source.source;
 
   // Build define block
   std::string defineBlock;
@@ -89,5 +91,5 @@ std::unique_ptr<ShaderProgram> ShaderProgramCache::createShaderProgram(
     variantSource.insert(0, defineBlock + "\n");
   }
 
-  return std::make_unique<ShaderProgram>(type, variantSource);
+  return std::make_unique<ShaderProgram>(source.type, variantSource);
 }

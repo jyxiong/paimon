@@ -1,10 +1,12 @@
 #include "paimon/rendering/shader_manager.h"
 
 #include <algorithm>
+#include <unordered_map>
 
+#include "glad/gl.h"
 #include "paimon/core/io/file.h"
 #include "paimon/core/log_system.h"
-#include "paimon/opengl/shader_program.h"
+#include "paimon/rendering/shader_source.h"
 
 using namespace paimon;
 
@@ -40,6 +42,10 @@ void ShaderManager::load(const std::filesystem::path &directory) {
   }
 }
 
+const ShaderSource &ShaderManager::getShaderSource(const std::string &name) const {
+  return m_shaderSources.at(name);
+}
+
 void ShaderManager::loadShaderFile(const std::filesystem::path &filePath) {
   // Check if it's a shader file (common extensions)
   auto extension = filePath.extension().string();
@@ -56,45 +62,26 @@ void ShaderManager::loadShaderFile(const std::filesystem::path &filePath) {
 
   // Read the shader source
   std::string source = File::readText(filePath);
-  if (source.empty()) {
-    LOG_WARN("Failed to read shader file: {}", filePath.string());
-    return;
-  }
 
   // Resolve includes
-  source = m_includer.process(source);
+  m_includer.process(source);
+
+  // Determine shader type from extension using a lookup table
+  static const std::unordered_map<std::string, GLenum> extToType = {
+      {".vert", GL_VERTEX_SHADER},
+      {".frag", GL_FRAGMENT_SHADER},
+      {".geom", GL_GEOMETRY_SHADER},
+      {".comp", GL_COMPUTE_SHADER},
+      {".tesc", GL_TESS_CONTROL_SHADER},
+      {".tese", GL_TESS_EVALUATION_SHADER},
+      {".glsl", GL_INVALID_ENUM} // Generic GLSL, type must be specified later
+  };
+
+  auto it = extToType.find(extension);
+  GLenum shaderType = (it != extToType.end()) ? it->second : GL_FRAGMENT_SHADER;
 
   // Store with filename as key
   std::string filename = filePath.filename().string();
-  m_shaderSources.emplace(filename, std::move(source));
-  LOG_INFO("Loaded shader source: {} ({} bytes)", filename, m_shaderSources[filename].size());
-}
-
-std::shared_ptr<ShaderProgram>
-ShaderManager::getShaderProgram(const std::string &filename, GLenum type,
-                                const std::vector<ShaderDefine> &defines) {
-  // Check if source exists
-  auto sourceIt = m_shaderSources.find(filename);
-  if (sourceIt == m_shaderSources.end()) {
-    LOG_ERROR("Shader source not found: {}", filename);
-    return nullptr;
-  }
-
-  // Get or create cache for this file
-  auto &cache = m_programCaches[filename];
-
-  // Get or create shader program from cache
-  auto* program = cache.get(sourceIt->second, type, defines);
-  if (!program) {
-    LOG_ERROR("Failed to create shader program: {}", filename);
-    return nullptr;
-  }
-
-  // Return as shared_ptr (non-owning)
-  return std::shared_ptr<ShaderProgram>(program, [](ShaderProgram*){});
-}
-
-void ShaderManager::clear() {
-  m_programCaches.clear();
-  m_shaderSources.clear();
+  ShaderSource src{filename, std::move(source), shaderType};
+  m_shaderSources.emplace(filename, std::move(src));
 }

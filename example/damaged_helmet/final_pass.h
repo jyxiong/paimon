@@ -11,11 +11,13 @@ namespace paimon {
 
 class FinalPass {
 public:
-  FinalPass();
+  FinalPass(RenderContext &renderContext);
 
   void draw(RenderContext& ctx, const Texture &texture, const glm::ivec2 &size);
 
 private:
+  RenderContext& m_renderContext;
+
   std::unique_ptr<Sampler> m_sampler;
   std::unique_ptr<GraphicsPipeline> m_pipeline;
 };

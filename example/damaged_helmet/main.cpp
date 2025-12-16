@@ -197,12 +197,13 @@ int main() {
   Texture fbo_depth_texture(GL_TEXTURE_2D);
   fbo_depth_texture.set_storage_2d(1, GL_DEPTH_COMPONENT32, g_size.x, g_size.y);
 
-  // Create screen quad (it will load shaders internally from singleton)
-  ColorPass color_pass;
-  FinalPass final_pass;
-
   // Create render context
   RenderContext ctx;
+
+  // Create screen quad (it will load shaders internally from singleton)
+  ColorPass color_pass(ctx);
+  FinalPass final_pass(ctx);
+
 
   LOG_INFO("Setup complete, entering render loop");
 
@@ -264,9 +265,6 @@ int main() {
   }
 
   LOG_INFO("Shutting down");
-
-  // Clear shader resources before OpenGL context is destroyed
-  shaderManager.clear();
 
   return 0;
 }

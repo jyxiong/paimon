@@ -6,7 +6,7 @@
 
 namespace paimon {
 
-sg::Image Image::load(const std::filesystem::path &filepath,
+sg::Image ImageLoader::load(const std::filesystem::path &filepath,
                       int desired_channels) {
   sg::Image result;
 

@@ -29,7 +29,7 @@ public:
    * @param source Shader source code to process
    * @return Processed source with includes resolved
    */
-  std::string process(const std::string &source);
+  void process(std::string &source);
 
 private:
   /**

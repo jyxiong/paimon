@@ -5,12 +5,14 @@
 #include "paimon/opengl/buffer.h"
 #include "paimon/opengl/framebuffer.h"
 #include "paimon/opengl/sampler.h"
+#include "paimon/opengl/shader_program.h"
 #include "paimon/opengl/state.h"
 #include "paimon/opengl/texture.h"
 #include "paimon/opengl/vertex_array.h"
 #include "paimon/rendering/framebuffer_cache.h"
 #include "paimon/rendering/graphics_pipeline.h"
 #include "paimon/rendering/rendering_info.h"
+#include "paimon/rendering/shader_source.h"
 #include "paimon/rendering/vertex_array_cache.h"
 #include "paimon/rendering/shader_program_cache.h"
 
@@ -25,6 +27,9 @@ public:
   // Delete copy constructor and assignment
   RenderContext(const RenderContext&) = delete;
   RenderContext& operator=(const RenderContext&) = delete;
+
+  ShaderProgram* createShaderProgram(const ShaderSource& source,
+                                     const std::vector<ShaderDefine>& defines = {});
 
   // Begin rendering pass
   void beginRendering(const RenderingInfo& info);

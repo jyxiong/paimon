@@ -3,11 +3,13 @@
 #include <glad/gl.h>
 
 #include "paimon/core/log_system.h"
+#include "paimon/rendering/render_context.h"
 #include "paimon/rendering/shader_manager.h"
 
 using namespace paimon;
 
-ColorPass::ColorPass() {
+ColorPass::ColorPass(RenderContext &renderContext)
+    : m_renderContext(renderContext) {
   // Create a minimal VAO (no vertex data needed, vertices are in shader)
   // m_vao = std::make_unique<VertexArray>();
 
@@ -18,23 +20,23 @@ ColorPass::ColorPass() {
   m_sampler->set(GL_TEXTURE_WRAP_S, GL_REPEAT);
   m_sampler->set(GL_TEXTURE_WRAP_T, GL_REPEAT);
 
+  // Get shader programs for main rendering (separable programs for pipeline)
   auto &shaderManager = ShaderManager::getInstance();
 
-  // Get shader programs for main rendering (separable programs for pipeline)
-  auto vertex_program_ptr =
-      shaderManager.getShaderProgram("damaged_helmet.vert", GL_VERTEX_SHADER);
-  auto fragment_program_ptr =
-      shaderManager.getShaderProgram("damaged_helmet.frag", GL_FRAGMENT_SHADER);
+  auto *vertex_program = m_renderContext.createShaderProgram(
+      shaderManager.getShaderSource("damaged_helmet.vert"));
+  auto *fragment_program = m_renderContext.createShaderProgram(
+      shaderManager.getShaderSource("damaged_helmet.frag"));
 
-  if (!vertex_program_ptr || !fragment_program_ptr) {
+  if (!vertex_program || !fragment_program) {
     LOG_ERROR("Failed to load main shader programs");
   }
 
   // Create graphics pipeline
   GraphicsPipelineCreateInfo pipelineInfo;
   pipelineInfo.shaderStages = {
-      {GL_VERTEX_SHADER_BIT, vertex_program_ptr.get()},
-      {GL_FRAGMENT_SHADER_BIT, fragment_program_ptr.get()},
+      {GL_VERTEX_SHADER_BIT, vertex_program},
+      {GL_FRAGMENT_SHADER_BIT, fragment_program},
   };
 
   // Configure depth testing
