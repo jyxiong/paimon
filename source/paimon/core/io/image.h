@@ -8,7 +8,7 @@
 
 namespace paimon {
 
-class Image {
+class ImageLoader {
 public:
   static sg::Image load(const std::filesystem::path &filepath,
                         int desired_channels = 0);

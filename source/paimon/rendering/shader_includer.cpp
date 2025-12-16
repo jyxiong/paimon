@@ -17,14 +17,12 @@ void ShaderIncluder::addSearchPath(const std::filesystem::path &path) {
   m_searchPaths.push_back(absPath);
 }
 
-std::string ShaderIncluder::process(const std::string &source) {
+void ShaderIncluder::process(std::string &source) {
   // Clear state for new processing
   m_includedFiles.clear();
   m_processingStack.clear();
 
-  std::string result = source;
-  resolveIncludes(result);
-  return result;
+  resolveIncludes(source);
 }
 
 void ShaderIncluder::resolveIncludes(std::string &source) {

@@ -2,85 +2,63 @@
 
 #include <glad/gl.h>
 
-#include "paimon/core/fg/frame_graph_texture.h"
 #include "paimon/core/log_system.h"
-#include "paimon/rendering/rendering_info.h"
+#include "paimon/rendering/render_context.h"
 #include "paimon/rendering/shader_manager.h"
 
-namespace paimon {
+using namespace paimon;
 
-FinalPass::FinalPass(RenderContext &renderContext, const std::filesystem::path &assetPath)
-    : m_renderContext(renderContext), m_assetPath(assetPath) {
-  
-  auto shaderPath = m_assetPath / "shader";
-  auto &shaderManager = ShaderManager::getInstance();
-  
-  // Get shader programs
-  auto screenVertProgram = shaderManager.getShaderProgram(
-      "screen_quad.vert", GL_VERTEX_SHADER);
-  auto screenFragProgram = shaderManager.getShaderProgram(
-      "screen_quad.frag", GL_FRAGMENT_SHADER);
+FinalPass::FinalPass(RenderContext &renderContext)
+    : m_renderContext(renderContext) {
+  // Create a minimal VAO (no vertex data needed, vertices are in shader)
+  // m_vao = std::make_unique<VertexArray>();
 
-  if (!screenVertProgram || !screenFragProgram) {
-    LOG_ERROR("Failed to load screen quad shader programs");
-    return;
-  }
-
-  // Create screen quad pipeline
-  GraphicsPipelineCreateInfo screenPipelineInfo;
-  screenPipelineInfo.shaderStages = {
-      {GL_VERTEX_SHADER_BIT, screenVertProgram.get()},
-      {GL_FRAGMENT_SHADER_BIT, screenFragProgram.get()},
-  };
-  screenPipelineInfo.state.depthStencil.depthTestEnable = false;
-  screenPipelineInfo.state.depthStencil.depthWriteEnable = false;
-  m_pipeline = std::make_unique<GraphicsPipeline>(screenPipelineInfo);
-  
-  // Create sampler
+  // Setup sampler for texture filtering
   m_sampler = std::make_unique<Sampler>();
   m_sampler->set(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   m_sampler->set(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   m_sampler->set(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   m_sampler->set(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-}
 
-void FinalPass::registerPass(FrameGraph &fg, NodeId colorInput, const glm::ivec2 &size, Texture* outputTexture) {
+  // Load shaders from ShaderManager singleton
+  auto &shaderManager = ShaderManager::getInstance();
+  auto *vert_program = m_renderContext.createShaderProgram(
+      shaderManager.getShaderSource("screen_quad.vert"));
+  auto *frag_program = m_renderContext.createShaderProgram(
+      shaderManager.getShaderSource("screen_quad.frag"));
+
+  if (!vert_program || !frag_program) {
+    LOG_ERROR("Failed to load screen quad shaders");
+    return;
+  }
+
+  // Create graphics pipeline
+  GraphicsPipelineCreateInfo pipelineInfo;
+  pipelineInfo.shaderStages = {
+      {GL_VERTEX_SHADER_BIT, vert_program},
+      {GL_FRAGMENT_SHADER_BIT, frag_program},
+  };
+  pipelineInfo.state.depthStencil.depthTestEnable = false;
   
-  fg.create_pass<Data>(
-      "FinalPass",
-      [&](FrameGraph::Builder &builder, Data &data) {
-        // Read color input from previous pass
-        data.colorInput = colorInput;
-        builder.read(data.colorInput);
-      },
-      [&](const Data &data, FrameGraphResources &resources, void *context) {
-        // Get source texture from frame graph
-        auto *texture = fg.get<FrameGraphTexture>(data.colorInput).getTexture();
-        
-        // Setup rendering to default framebuffer
-        SwapchainRenderingInfo renderingInfo;
-        renderingInfo.renderAreaOffset = {0, 0};
-        renderingInfo.renderAreaExtent = {size.x, size.y};
-        renderingInfo.clearColor = ClearValue::Color(1.0f, 0.0f, 0.0f, 1.0f);
-
-        // Begin rendering to default framebuffer
-        m_renderContext.beginSwapchainRendering(renderingInfo);
-        
-        // Bind screen quad pipeline
-        m_renderContext.bindPipeline(*m_pipeline);
-        
-        // Bind texture and sampler
-        m_renderContext.bindTexture(6, *outputTexture, *m_sampler);
-        
-        // Set viewport
-        m_renderContext.setViewport(0, 0, size.x, size.y);
-        
-        // Draw fullscreen quad (without vertex buffers, generated in vertex shader)
-        m_renderContext.drawArrays(0, 3);
-        
-        // End rendering
-        m_renderContext.endSwapchainRendering();
-      });
+  m_pipeline = std::make_unique<GraphicsPipeline>(pipelineInfo);
 }
 
-} // namespace paimon
+void FinalPass::draw(RenderContext& ctx, const Texture &texture, const glm::ivec2 &size) {
+
+  SwapchainRenderingInfo renderingInfo;
+  renderingInfo.renderAreaOffset = {0, 0};
+  renderingInfo.renderAreaExtent = {size.x, size.y};
+  renderingInfo.clearColor = ClearValue::Color(0.0f, 0.0f, 0.0f, 1.0f);
+  renderingInfo.clearDepth = 1.0f;
+  renderingInfo.clearStencil = 0;
+
+  ctx.beginSwapchainRendering(renderingInfo);
+
+  ctx.bindPipeline(*m_pipeline);
+  
+  ctx.bindTexture(6, texture, *m_sampler);
+
+  ctx.drawArrays(0, 6);
+
+  ctx.endSwapchainRendering();
+}

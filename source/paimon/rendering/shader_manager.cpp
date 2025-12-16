@@ -1,10 +1,12 @@
 #include "paimon/rendering/shader_manager.h"
 
 #include <algorithm>
+#include <unordered_map>
 
+#include "glad/gl.h"
 #include "paimon/core/io/file.h"
 #include "paimon/core/log_system.h"
-#include "paimon/opengl/shader_program.h"
+#include "paimon/rendering/shader_source.h"
 
 using namespace paimon;
 
@@ -40,6 +42,10 @@ void ShaderManager::load(const std::filesystem::path &directory) {
   }
 }
 
+const ShaderSource &ShaderManager::getShaderSource(const std::string &name) const {
+  return m_shaderSources.at(name);
+}
+
 void ShaderManager::loadShaderFile(const std::filesystem::path &filePath) {
   // Check if it's a shader file (common extensions)
   auto extension = filePath.extension().string();
@@ -56,71 +62,26 @@ void ShaderManager::loadShaderFile(const std::filesystem::path &filePath) {
 
   // Read the shader source
   std::string source = File::readText(filePath);
-  if (source.empty()) {
-    LOG_WARN("Failed to read shader file: {}", filePath.string());
-    return;
-  }
 
-  // Resolve includes to create the template
-  source = m_includer.process(source);
+  // Resolve includes
+  m_includer.process(source);
+
+  // Determine shader type from extension using a lookup table
+  static const std::unordered_map<std::string, GLenum> extToType = {
+      {".vert", GL_VERTEX_SHADER},
+      {".frag", GL_FRAGMENT_SHADER},
+      {".geom", GL_GEOMETRY_SHADER},
+      {".comp", GL_COMPUTE_SHADER},
+      {".tesc", GL_TESS_CONTROL_SHADER},
+      {".tese", GL_TESS_EVALUATION_SHADER},
+      {".glsl", GL_INVALID_ENUM} // Generic GLSL, type must be specified later
+  };
+
+  auto it = extToType.find(extension);
+  GLenum shaderType = (it != extToType.end()) ? it->second : GL_FRAGMENT_SHADER;
 
   // Store with filename as key
   std::string filename = filePath.filename().string();
-  m_shaderTemplates.emplace(filename, ShaderTemplate(source));
-  LOG_INFO("Loaded shader template: {} ({} bytes)", filename, source.size());
-}
-
-std::shared_ptr<ShaderProgram>
-ShaderManager::getShaderProgram(const std::string &filename, GLenum type,
-                                const std::vector<ShaderDefine> &defines) {
-  // Check if template exists
-  auto templateIt = m_shaderTemplates.find(filename);
-  if (templateIt == m_shaderTemplates.end()) {
-    LOG_ERROR("Shader template not found: {}", filename);
-    return nullptr;
-  }
-
-  // Create variant from template (computes hash once)
-  auto [hash, variant] = templateIt->second.createVariant(defines);
-
-  // Check cache using the computed hash
-  auto &fileCache = m_shaderCache[filename];
-  auto cacheIt = fileCache.find(hash);
-  if (cacheIt != fileCache.end()) {
-    LOG_DEBUG("Using cached shader program: {}", filename);
-    return cacheIt->second;
-  }
-
-  // Get processed source from variant
-  const std::string& processedSource = variant.getSource();
-
-  // Create shader program
-  auto shaderProgram = std::make_shared<ShaderProgram>(type, processedSource);
-
-  // Check for compilation errors
-  if (!shaderProgram->is_valid()) {
-    LOG_ERROR("Failed to create shader program: {}", filename);
-    std::string infoLog = shaderProgram->get_info_log();
-    if (!infoLog.empty()) {
-      LOG_ERROR("Shader compilation error:\n{}", infoLog);
-    }
-    return nullptr;
-  }
-
-  // Check for warnings/info
-  std::string infoLog = shaderProgram->get_info_log();
-  if (!infoLog.empty()) {
-    LOG_INFO("Shader program info log for {}:\n{}", filename, infoLog);
-  }
-
-  // Cache and return using the pre-computed hash
-  fileCache[hash] = shaderProgram;
-  LOG_INFO("Created and cached shader program: {}", filename);
-
-  return shaderProgram;
-}
-
-void ShaderManager::clear() {
-  m_shaderCache.clear();
-  m_shaderTemplates.clear();
+  ShaderSource src{filename, std::move(source), shaderType};
+  m_shaderSources.emplace(filename, std::move(src));
 }
