@@ -15,8 +15,7 @@
 #include "paimon/rendering/render_context.h"
 #include "paimon/rendering/shader_manager.h"
 
-#include "color_pass.h"
-#include "final_pass.h"
+#include "renderer.h"
 #include "mesh_data.h"
 
 
@@ -24,16 +23,7 @@ using namespace paimon;
 
 namespace {
 
-// Camera state
-struct Camera {
-  glm::vec3 position = glm::vec3(0.0f, 0.0f, 3.0f);
-  glm::vec3 front = glm::vec3(0.0f, 0.0f, -1.0f);
-  glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-  float yaw = -90.0f;
-  float pitch = 0.0f;
-  float fov = 45.0f;
-};
-
+// Camera state is now provided by Renderer::Camera
 Camera g_camera;
 glm::ivec2 g_size = {1280, 720};
 
@@ -177,32 +167,11 @@ int main() {
     texturePtrMap[key] = value.get();
   }
 
-  // Create UBOs
-  Buffer transform_ubo;
-  transform_ubo.set_storage(sizeof(TransformUBO), nullptr,
-                            GL_DYNAMIC_STORAGE_BIT);
-
-  Buffer material_ubo;
-  material_ubo.set_storage(sizeof(MaterialUBO), nullptr,
-                           GL_DYNAMIC_STORAGE_BIT);
-
-  Buffer lighting_ubo;
-  lighting_ubo.set_storage(sizeof(LightingUBO), nullptr,
-                           GL_DYNAMIC_STORAGE_BIT);
-
-  // Create FBO textures for color and depth attachments
-  Texture fbo_color_texture(GL_TEXTURE_2D);
-  fbo_color_texture.set_storage_2d(1, GL_RGBA8, g_size.x, g_size.y);
-
-  Texture fbo_depth_texture(GL_TEXTURE_2D);
-  fbo_depth_texture.set_storage_2d(1, GL_DEPTH_COMPONENT32, g_size.x, g_size.y);
-
   // Create render context
   RenderContext ctx;
 
-  // Create screen quad (it will load shaders internally from singleton)
-  ColorPass color_pass(ctx);
-  FinalPass final_pass(ctx);
+  // Create Renderer (it will own per-pass resources)
+  Renderer renderer(ctx, texturePtrMap);
 
 
   LOG_INFO("Setup complete, entering render loop");
@@ -229,36 +198,13 @@ int main() {
     g_camera.position.z = radius * cos(glm::radians(rotation));
     g_camera.position.y = 0.0f;
 
-    // Setup transformation matrices
-    TransformUBO transformData;
-    transformData.model = glm::mat4(1.0f); // Keep model stationary
-    transformData.view = glm::lookAt(g_camera.position,
-                                     glm::vec3(0.0f, 0.0f, 0.0f), g_camera.up);
-    transformData.projection =
-        glm::perspective(glm::radians(g_camera.fov),
-                         static_cast<float>(g_size.x) / g_size.y, 0.1f, 100.0f);
-    transform_ubo.set_sub_data(0, sizeof(TransformUBO), &transformData);
-
     // Setup lighting
     LightingUBO lightingData;
     lightingData.lightPos = glm::vec3(5.0f, 5.0f, 5.0f);
-    lightingData.viewPos = g_camera.position;
-    lighting_ubo.set_sub_data(0, sizeof(LightingUBO), &lightingData);
+    // Renderer will copy viewPos from camera
 
-    // ===== First Pass: Render to FBO =====
-    color_pass.draw(
-        ctx, g_size, 
-        mesh_data_list,
-        texturePtrMap,
-        transform_ubo,
-        material_ubo,
-        lighting_ubo);
-
-    // ===== Second Pass: Render FBO texture to screen =====
-    {
-      // Use screen quad to render FBO texture
-      final_pass.draw(ctx, *color_pass.getColorTexture(), g_size);
-    }
+    // Render (Renderer handles UBOs and multi-pass internals)
+    renderer.draw(g_size, g_camera, lightingData, mesh_data_list);
 
     // Swap buffers
     window->swapBuffers();
