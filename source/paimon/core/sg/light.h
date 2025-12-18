@@ -1,7 +1,5 @@
 #pragma once
 
-#include <string>
-
 #include <glm/glm.hpp>
 
 namespace paimon {
@@ -17,10 +15,6 @@ struct PunctualLight {
     Spot         // Spot light (cone-shaped)
   };
 
-  std::string name;
-
-  PunctualLight() = default;
-  PunctualLight(const std::string &name) : name(name) {}
   virtual ~PunctualLight() = default;
 
   // Light properties
@@ -29,49 +23,36 @@ struct PunctualLight {
   float range = 0.0f;                // 0.0 = infinite range
 
   // Get light type
-  virtual Type GetType() const = 0;
+  virtual Type getType() const = 0;
 };
 
 /// Directional light (infinite distance, parallel rays)
 struct DirectionalLight : public PunctualLight {
-  DirectionalLight() = default;
-  DirectionalLight(const std::string &name) : PunctualLight(name) {}
 
-  Type GetType() const override { return Type::Directional; }
+  ~DirectionalLight() = default;
 
-  // Direction is defined by the node's transform (forward = -Z axis)
+  Type getType() const override { return Type::Directional; }
 };
 
 /// Point light (omni-directional, radiates in all directions)
 struct PointLight : public PunctualLight {
-  PointLight() = default;
-  PointLight(const std::string &name) : PunctualLight(name) {}
+  ~PointLight() = default;
 
-  Type GetType() const override { return Type::Point; }
-
-  // Position is defined by the node's transform
+  Type getType() const override { return Type::Point; }
 };
 
 /// Spot light (cone-shaped, directional with falloff)
 struct SpotLight : public PunctualLight {
-  float inner_cone_angle = 0.0f; // Inner cone angle in radians
-  float outer_cone_angle =
-      glm::radians(45.0f); // Outer cone angle in radians (default π/4)
+  float innerConeAngle = 0.0f;
+  float outerConeAngle = glm::radians(45.0f);
 
-  SpotLight() = default;
-  SpotLight(const std::string &name) : PunctualLight(name) {}
+  ~SpotLight() = default;
 
-  Type GetType() const override { return Type::Spot; }
+  Type getType() const override { return Type::Spot; }
 
-  // Direction is defined by the node's transform (forward = -Z axis)
-  // Position is defined by the node's transform
+  float getAngleScale() const;
 
-  /// Get the angular attenuation factor for a given angle from the light
-  /// direction
-  /// @param angle_from_direction Angle in radians from the light's forward
-  /// direction
-  /// @return Attenuation factor [0, 1]
-  float GetAngularAttenuation(float angle_from_direction) const;
+  float getAngleOffset() const;
 };
 
 } // namespace sg

@@ -139,7 +139,7 @@ void RenderContext::bindVertexBuffer(uint32_t binding, const Buffer& buffer,
   m_currentVao->set_vertex_buffer(binding, buffer, offset, stride);
 }
 
-void RenderContext::bindIndexBuffer(const Buffer& buffer, GLenum indexType) {
+void RenderContext::bindIndexBuffer(const Buffer& buffer, DataType indexType) {
   m_currentVao->set_element_buffer(buffer);
 
   m_currentIndexType = indexType;
@@ -204,33 +204,33 @@ void RenderContext::multiDrawArraysIndirect(const void* indirect,
 // Indexed draw commands
 void RenderContext::drawElements(GLsizei count, const void* indices) {
   glDrawElements(m_currentPipelineState.inputAssembly.topology, 
-                count, m_currentIndexType, indices);
+                count, cast_enum(m_currentIndexType), indices);
 }
 
 void RenderContext::drawElementsBaseVertex(GLsizei count, const void* indices,
                                           GLint baseVertex) {
   glDrawElementsBaseVertex(m_currentPipelineState.inputAssembly.topology,
-                          count, m_currentIndexType, indices, baseVertex);
+                          count, cast_enum(m_currentIndexType), indices, baseVertex);
 }
 
 void RenderContext::drawElementsInstanced(GLsizei count, const void* indices,
                                          GLsizei instanceCount) {
   glDrawElementsInstanced(m_currentPipelineState.inputAssembly.topology,
-                         count, m_currentIndexType, indices, instanceCount);
+                         count, cast_enum(m_currentIndexType), indices, instanceCount);
 }
 
 void RenderContext::drawElementsInstancedBaseInstance(GLsizei count, const void* indices,
                                                      GLsizei instanceCount,
                                                      GLuint baseInstance) {
   glDrawElementsInstancedBaseInstance(m_currentPipelineState.inputAssembly.topology,
-                                     count, m_currentIndexType, indices,
+                                     count, cast_enum(m_currentIndexType), indices,
                                      instanceCount, baseInstance);
 }
 
 void RenderContext::drawElementsInstancedBaseVertex(GLsizei count, const void* indices,
                                                    GLsizei instanceCount, GLint baseVertex) {
   glDrawElementsInstancedBaseVertex(m_currentPipelineState.inputAssembly.topology,
-                                   count, m_currentIndexType, indices,
+                                   count, cast_enum(m_currentIndexType), indices,
                                    instanceCount, baseVertex);
 }
 
@@ -238,44 +238,44 @@ void RenderContext::drawElementsInstancedBaseVertexBaseInstance(
     GLsizei count, const void* indices, GLsizei instanceCount, 
     GLint baseVertex, GLuint baseInstance) {
   glDrawElementsInstancedBaseVertexBaseInstance(
-      m_currentPipelineState.inputAssembly.topology, count, m_currentIndexType, indices,
+      m_currentPipelineState.inputAssembly.topology, count, cast_enum(m_currentIndexType), indices,
       instanceCount, baseVertex, baseInstance);
 }
 
 void RenderContext::drawElementsIndirect(const void* indirect) {
   glDrawElementsIndirect(m_currentPipelineState.inputAssembly.topology,
-                        m_currentIndexType, indirect);
+                        cast_enum(m_currentIndexType), indirect);
 }
 
 void RenderContext::drawRangeElements(GLuint start, GLuint end, GLsizei count,
                                      const void* indices) {
   glDrawRangeElements(m_currentPipelineState.inputAssembly.topology,
-                     start, end, count, m_currentIndexType, indices);
+                     start, end, count, cast_enum(m_currentIndexType), indices);
 }
 
 void RenderContext::drawRangeElementsBaseVertex(GLuint start, GLuint end, GLsizei count,
                                                const void* indices, GLint baseVertex) {
   glDrawRangeElementsBaseVertex(m_currentPipelineState.inputAssembly.topology,
-                               start, end, count, m_currentIndexType, indices, baseVertex);
+                               start, end, count, cast_enum(m_currentIndexType), indices, baseVertex);
 }
 
 void RenderContext::multiDrawElements(const GLsizei* count, const void* const* indices,
                                      GLsizei drawCount) {
   glMultiDrawElements(m_currentPipelineState.inputAssembly.topology,
-                     count, m_currentIndexType, indices, drawCount);
+                     count, cast_enum(m_currentIndexType), indices, drawCount);
 }
 
 void RenderContext::multiDrawElementsBaseVertex(const GLsizei* count,
                                                const void* const* indices,
                                                GLsizei drawCount, const GLint* baseVertex) {
   glMultiDrawElementsBaseVertex(m_currentPipelineState.inputAssembly.topology,
-                               count, m_currentIndexType, indices, drawCount, baseVertex);
+                               count, cast_enum(m_currentIndexType), indices, drawCount, baseVertex);
 }
 
 void RenderContext::multiDrawElementsIndirect(const void* indirect, GLsizei drawCount,
                                              GLsizei stride) {
   glMultiDrawElementsIndirect(m_currentPipelineState.inputAssembly.topology,
-                             m_currentIndexType, indirect, drawCount, stride);
+                             cast_enum(m_currentIndexType), indirect, drawCount, stride);
 }
 
 } // namespace paimon

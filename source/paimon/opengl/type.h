@@ -94,7 +94,7 @@ enum class DataType : GLenum {
   Byte = GL_BYTE,
   UShort = GL_UNSIGNED_SHORT,
   Short = GL_SHORT,
-  UIint = GL_UNSIGNED_INT,
+  UInt = GL_UNSIGNED_INT,
   Int = GL_INT,
   Float = GL_FLOAT,
   Double = GL_DOUBLE,
@@ -154,14 +154,14 @@ enum class TextureTarget : GLenum {
   TextureRectangle = GL_TEXTURE_RECTANGLE,
 };
 
-enum class TextureWrap : GLenum {
+enum class TextureWrapMode : GLenum {
   ClampToEdge = GL_CLAMP_TO_EDGE,
   MirroredRepeat = GL_MIRRORED_REPEAT,
   Repeat = GL_REPEAT,
   ClampToBorder = GL_CLAMP_TO_BORDER,
 };
 
-enum class TextureFilter : GLenum {
+enum class TextureFilterMode : GLenum {
   Nearest = GL_NEAREST,
   Linear = GL_LINEAR,
   NearestMipmapNearest = GL_NEAREST_MIPMAP_NEAREST,
@@ -183,7 +183,7 @@ enum class FramebufferTarget : GLenum {
   ReadFramebuffer = GL_READ_FRAMEBUFFER,
 };
 
-enum class FramebufferAttachment : GLenum {
+enum class FramebufferAttachmentPoint : GLenum {
   ColorAttachment0 = GL_COLOR_ATTACHMENT0,
   ColorAttachment1 = GL_COLOR_ATTACHMENT1,
   ColorAttachment2 = GL_COLOR_ATTACHMENT2,
@@ -212,7 +212,7 @@ enum class ProgramStages : GLbitfield {
   ComputeShaderBit = GL_COMPUTE_SHADER_BIT,
 };
 
-enum class DrawMode : GLenum {
+enum class PrimitiveTopology : GLenum {
   Points = GL_POINTS,
   Lines = GL_LINES,
   LineAdjacency = GL_LINES_ADJACENCY,
