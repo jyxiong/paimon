@@ -1,15 +1,17 @@
 #include "paimon/core/io/gltf.h"
 
+#include <memory>
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <memory>
+#include <glm/gtx/matrix_decompose.hpp>
 
 #include "glm/fwd.hpp"
 #include "paimon/core/ecs/components.h"
 #include "paimon/core/ecs/entity.h"
 #include "paimon/core/log_system.h"
+#include "paimon/core/sg/mesh.h"
 #include "paimon/core/sg/texture.h"
 #include "paimon/opengl/sampler.h"
 #include "paimon/opengl/texture.h"
@@ -160,16 +162,16 @@ std::shared_ptr<Texture> parse(const tinygltf::Image& image) {
 }
 
 glm::vec4 parseVec4(const std::vector<double> data) {
-  return glm::vec4(static_cast<float>(data[0]),
-                   static_cast<float>(data[1]),
-                   static_cast<float>(data[2]),
-                   static_cast<float>(data[3]));
+  return glm::vec4(data[0], data[1], data[2], data[3]);
 }
 
 glm::vec3 parseVec3(const std::vector<double> data) {
-  return glm::vec3(static_cast<float>(data[0]),
-                   static_cast<float>(data[1]),
-                   static_cast<float>(data[2]));
+  return glm::vec3(data[0], data[1], data[2]);
+}
+
+glm::quat parseQuat(const std::vector<double> data) {
+  return glm::quat(static_cast<float>(data[3]), static_cast<float>(data[0]),
+                   static_cast<float>(data[1]), static_cast<float>(data[2]));
 }
 
 sg::AlphaMode parseAlphaMode(const std::string &modeStr) {
@@ -182,6 +184,13 @@ sg::AlphaMode parseAlphaMode(const std::string &modeStr) {
   } else {
     return sg::AlphaMode::Opaque;
   }
+}
+
+glm::mat4 parseMat4(const std::vector<double> data) {
+  glm::mat4 mat{data[0],  data[1],  data[2],  data[3], data[4],  data[5],
+                data[6],  data[7],  data[8],  data[9], data[10], data[11],
+                data[12], data[13], data[14], data[15]};
+  return mat;
 }
 
 } // namespace
@@ -211,141 +220,225 @@ GltfLoader::GltfLoader(const std::filesystem::path &filepath) {
     return;
   }
 
-  processTextures(m_model);
-  processMaterials(m_model);
-  processMeshes(m_model);
 }
 
-void GltfLoader::loadScene(ecs::Scene &scene, int scene_index) {
-  // Assume model is already loaded in constructor
+void GltfLoader::load(ecs::Scene &scene) {
+  parseBuffers();
+  parseBufferViews();
+  parseTextures();
+  parseMaterials();
+  parseScene(m_model.scenes[m_model.defaultScene], scene);
+}
 
-  processNodes(m_model, scene);
-  processScenes(m_model, scene, scene_index);
+void GltfLoader::load(ecs::Scene &scene, int scene_index) {
+  parseBuffers();
+  parseBufferViews();
+  parseTextures();
+  parseMaterials();
+  parseScene(m_model.scenes[scene_index], scene);
 }
 
 // ============================================================================
 // Processing functions
 // ============================================================================
 
-void GltfLoader::parseTexture(const tinygltf::Texture &texture) {
-  auto sg_texture = std::make_shared<sg::Texture>();
-
-  sg_texture->image = parse(m_model.images[texture.source]);
-
-  sg_texture->sampler = parse(m_model.samplers[texture.sampler]);
-
-  m_textures.push_back(std::move(sg_texture));
-}
-
-void GltfLoader::pasrseMaterial(const tinygltf::Material &material) {
-  auto sg_material = std::make_shared<sg::Material>();
-
-  sg_material->pbrMetallicRoughness = {
-    .baseColorFactor = parseVec4(material.pbrMetallicRoughness.baseColorFactor),
-    .baseColorTexture = m_textures[material.pbrMetallicRoughness.baseColorTexture.index],
-    .metallicFactor = static_cast<float>(material.pbrMetallicRoughness.metallicFactor),
-    .roughnessFactor = static_cast<float>(material.pbrMetallicRoughness.roughnessFactor),
-    .metallicRoughnessTexture = m_textures[material.pbrMetallicRoughness.metallicRoughnessTexture.index],
-  };
-
-  sg_material->normalTexture = m_textures[material.normalTexture.index];
-  sg_material->normalScale = material.normalTexture.scale;
-
-  sg_material->occlusionTexture = m_textures[material.occlusionTexture.index];
-  sg_material->occlusionStrength = material.occlusionTexture.strength;
-
-  sg_material->emissiveTexture = m_textures[material.emissiveTexture.index];
-  sg_material->emissiveFactor = parseVec3(material.emissiveFactor);
-
-  sg_material->doubleSided = material.doubleSided;
-  sg_material->alphaMode = parseAlphaMode(material.alphaMode);
-  sg_material->alphaCutoff = static_cast<float>(material.alphaCutoff);
-
-  m_materials.push_back(std::move(sg_material));
-}
-
-void GltfLoader::parseMesh(const tinygltf::Mesh &mesh) {
-  auto sg_mesh = std::make_shared<sg::Mesh>();
-
-  for (const auto &primitive : mesh.primitives) {
-    auto &sg_primitive = sg_mesh->primitives.emplace_back();
-
-    // Primitive topology
-    sg_primitive.mode = castPrimitiveMode(primitive.mode);
-
-    for (const auto &[attributeName, accessorIndex] : primitive.attributes) {
-      const auto &accessor = m_model.accessors[accessorIndex];
-      const auto &bufferView = m_model.bufferViews[accessor.bufferView];
-      const auto &buffer = m_model.buffers[bufferView.buffer];
-
-      auto gl_buffer = std::make_shared<Buffer>();
-      gl_buffer->set_storage(bufferView.byteLength, 
-                             buffer.data.data() + bufferView.byteOffset + accessor.byteOffset);
-
-      m_buffers.push_back(std::move(gl_buffer));
-    }
-
-    sg_primitive.material = m_materials[primitive.material];
-  }
-  m_meshes.push_back(std::move(sg_mesh));
-}
-
-void GltfLoader::parseLight(const tinygltf::Light &light) {
-  std::shared_ptr<sg::PunctualLight> sg_light = nullptr;
-
-  if (light.type == "directional") {
-    sg_light = std::make_shared<sg::DirectionalLight>();
-  } else if (light.type == "point") {
-    sg_light = std::make_shared<sg::PointLight>();
-  } else if (light.type == "spot") {
-    sg_light = std::make_shared<sg::SpotLight>();
-  } else {
-    LOG_WARN("Unsupported light type: {}", light.type);
-    return;
-  }
-
-  sg_light->color = parseVec3(light.color);
-  sg_light->intensity = static_cast<float>(light.intensity);
-  sg_light->range = static_cast<float>(light.range);
-
-  if (light.type == "spot") {
-    auto spot_light = std::dynamic_pointer_cast<sg::SpotLight>(sg_light);
-    spot_light->innerConeAngle =
-        static_cast<float>(light.spot.innerConeAngle);
-    spot_light->outerConeAngle =
-        static_cast<float>(light.spot.outerConeAngle);
-  }
-
-  m_lights.push_back(std::move(sg_light));
-}
-
-void GltfLoader::processNodes(const tinygltf::Model &model, ecs::Scene &scene) {
-  for (size_t i = 0; i < model.nodes.size(); ++i) {
-
+void GltfLoader::parseBuffers() {
+  for (const auto &buffer : m_model.buffers) {
+    auto gl_buffer = std::make_shared<Buffer>();
+    gl_buffer->set_storage(buffer.data.size(), buffer.data.data());
+    m_buffers.push_back(std::move(gl_buffer));
   }
 }
 
-void GltfLoader::processScenes(const tinygltf::Model &model, ecs::Scene &scene) {
-  // Use default scene or first scene
-  int scene_index = model.defaultScene >= 0 ? model.defaultScene : 0;
+void GltfLoader::parseBufferViews() {
+  for (const auto &bufferView : m_model.bufferViews) {
+    auto gl_buffer = std::make_shared<Buffer>();
+    gl_buffer->set_storage(bufferView.byteLength, nullptr);
+    gl_buffer->copy_sub_data(*m_buffers[bufferView.buffer], bufferView.byteOffset, 0, bufferView.byteLength);
+    m_bufferViews.push_back(std::move(gl_buffer));
+  }
+}
 
-  if (scene_index >= 0 &&
-      static_cast<size_t>(scene_index) < model.scenes.size()) {
-    const auto &gltf_scene = model.scenes[scene_index];
-    
-    // Root nodes in glTF are those listed in the scene
-    // Their hierarchy components should already have parent = entt::null
-    // which indicates they are root nodes
-    
-    // Optional: You could tag root nodes with a special component if needed
-    for (int node_index : gltf_scene.nodes) {
-      if (m_node2entity.find(node_index) != m_node2entity.end()) {
-        // The node entity is already created and configured
-        // Just verify it's a root node (parent should be null)
-        auto entity_handle = m_node2entity[node_index];
-        auto &hierarchy = scene.getRegistry().get<ecs::Hierarchy>(entity_handle);
-        // Root nodes should have parent = entt::null (which is the default)
+void GltfLoader::parseTextures() {
+  for (const auto &texture : m_model.textures) {
+    auto sg_texture = std::make_shared<sg::Texture>();
+    sg_texture->image = parse(m_model.images[texture.source]);
+    sg_texture->sampler = parse(m_model.samplers[texture.sampler]);
+    m_textures.push_back(std::move(sg_texture));
+  }
+}
+
+void GltfLoader::parseMaterials() {
+  for (const auto &material : m_model.materials) {
+    auto sg_material = std::make_shared<sg::Material>();
+    sg_material->pbrMetallicRoughness = {
+        .baseColorFactor =
+            parseVec4(material.pbrMetallicRoughness.baseColorFactor),
+        .baseColorTexture =
+            m_textures[material.pbrMetallicRoughness.baseColorTexture.index],
+        .metallicFactor =
+            static_cast<float>(material.pbrMetallicRoughness.metallicFactor),
+        .roughnessFactor =
+            static_cast<float>(material.pbrMetallicRoughness.roughnessFactor),
+        .metallicRoughnessTexture =
+            m_textures[material.pbrMetallicRoughness.metallicRoughnessTexture
+                           .index],
+    };
+
+    sg_material->normalTexture = m_textures[material.normalTexture.index];
+    sg_material->normalScale = material.normalTexture.scale;
+
+    sg_material->occlusionTexture = m_textures[material.occlusionTexture.index];
+    sg_material->occlusionStrength = material.occlusionTexture.strength;
+
+    sg_material->emissiveTexture = m_textures[material.emissiveTexture.index];
+    sg_material->emissiveFactor = parseVec3(material.emissiveFactor);
+
+    sg_material->doubleSided = material.doubleSided;
+    sg_material->alphaMode = parseAlphaMode(material.alphaMode);
+    sg_material->alphaCutoff = static_cast<float>(material.alphaCutoff);
+
+    m_materials.push_back(std::move(sg_material));
+  }
+}
+
+void GltfLoader::parseMeshes() {
+  for (const auto &mesh : m_model.meshes) {
+    auto sg_mesh = std::make_shared<sg::Mesh>();
+
+    for (const auto &primitive : mesh.primitives) {
+      auto &sg_primitive = sg_mesh->primitives.emplace_back();
+      // Primitive topology
+      sg_primitive.mode = castPrimitiveMode(primitive.mode);
+
+      // First handle attributes (vertex data)
+      for (const auto &[attributeName, accessorIndex] : primitive.attributes) {
+        const auto &accessor = m_model.accessors[accessorIndex];
+        const auto &bufferView = m_bufferViews[accessor.bufferView];
+
+        // Assign the GL buffer to the corresponding primitive attribute
+        if (attributeName == "POSITION") {
+          sg_primitive.positions = bufferView;
+        } else if (attributeName == "NORMAL") {
+          sg_primitive.normals = bufferView;
+        } else if (attributeName.rfind("TEXCOORD", 0) == 0) {
+          // assign first texcoord into texcoords (TEXCOORD_0)
+          if (attributeName == "TEXCOORD_0") {
+            sg_primitive.texcoords = bufferView;
+          }
+        } else if (attributeName.rfind("COLOR", 0) == 0) {
+          sg_primitive.colors = bufferView;
+        } else {
+          // other attributes can be ignored for now or handled later
+        }
       }
+
+      // Then handle indices (element buffer) if present
+      if (primitive.indices >= 0) {
+        const auto &accessor = m_model.accessors[primitive.indices];
+        sg_primitive.indices = m_bufferViews[accessor.bufferView];
+      }
+
+      sg_primitive.material = m_materials[primitive.material];
     }
+    m_meshes.push_back(std::move(sg_mesh));
+  }
+}
+
+void GltfLoader::parseLights() {
+  for (const auto &light : m_model.lights) {
+    auto sg_light = std::shared_ptr<sg::PunctualLight>();
+
+    if (light.type == "directional") {
+      sg_light = std::make_shared<sg::DirectionalLight>();
+    } else if (light.type == "point") {
+      sg_light = std::make_shared<sg::PointLight>();
+    } else if (light.type == "spot") {
+      sg_light = std::make_shared<sg::SpotLight>();
+    } else {
+      LOG_WARN("Unsupported light type: {}", light.type);
+      return;
+    }
+
+    sg_light->color = parseVec3(light.color);
+    sg_light->intensity = static_cast<float>(light.intensity);
+    sg_light->range = static_cast<float>(light.range);
+
+    if (light.type == "spot") {
+      auto spot_light = std::dynamic_pointer_cast<sg::SpotLight>(sg_light);
+      spot_light->innerConeAngle =
+          static_cast<float>(light.spot.innerConeAngle);
+      spot_light->outerConeAngle =
+          static_cast<float>(light.spot.outerConeAngle);
+    }
+
+    m_lights.push_back(std::move(sg_light));
+  }
+}
+
+void GltfLoader::parseNode(const tinygltf::Node &node, ecs::Entity parent, ecs::Scene &scene) {
+  // Create entity for this node
+  auto entity = scene.createEntity();
+
+  // Name component
+  entity.addComponent<ecs::Name>(node.name);
+
+  // Hierarchy Component
+  auto &hierarchy = entity.addComponent<ecs::Hierarchy>();
+  hierarchy.parent = parent;
+  auto &parentHierarchy = parent.getComponent<ecs::Hierarchy>();
+  parentHierarchy.children.push_back(entity);
+
+  // Transform component
+  auto &transform = entity.addComponent<ecs::Transform>();
+  if (node.matrix.empty()) {
+    // Use TRS
+    transform.translation = node.translation.empty()
+                                ? glm::vec3(0.0f)
+                                : parseVec3(node.translation);
+    transform.rotation = node.rotation.empty()
+                             ? glm::quat(1.0f, 0.0f, 0.0f, 0.0f)
+                             : parseQuat(node.rotation);
+    transform.scale = node.scale.empty() ? glm::vec3(1.0f)
+                                         : parseVec3(node.scale);
+
+    transform.matrix =
+        glm::translate(glm::mat4(1.0f), transform.translation) *
+        glm::mat4_cast(transform.rotation) *
+        glm::scale(glm::mat4(1.0f), transform.scale);
+  } else {
+    // Use matrix
+    transform.matrix = parseMat4(node.matrix);
+
+    // Decompose matrix into TRS
+    glm::vec3 skew;
+    glm::vec4 perspective;
+    glm::decompose(transform.matrix, transform.scale, transform.rotation,
+                   transform.translation, skew, perspective);
+  }
+
+  // Mesh Component
+  if (node.mesh >= 0) {
+    entity.addComponent<ecs::Mesh>(m_meshes[node.mesh]);
+  }
+
+  // Light Component (from KHR_lights_punctual extension)
+  if (node.light >= 0) {
+    entity.addComponent<ecs::PunctualLight>(m_lights[node.light]);
+  }
+
+  // Skin Component
+  if (node.skin >= 0) {
+    // Skins can be handled here if needed
+  }
+}
+
+void GltfLoader::parseScene(const tinygltf::Scene &scene, ecs::Scene &ecs_scene) {
+  // Implementation for parsing a glTF scene into an ECS scene
+  for (const auto nodeIndex : scene.nodes) {
+    const auto &node = m_model.nodes[nodeIndex];
+
+    auto rootEntity = ecs_scene.createEntity();
+    parseNode(node, rootEntity, ecs_scene);
   }
 }

@@ -14,11 +14,11 @@ namespace sg {
 struct Primitive {
   PrimitiveTopology mode = PrimitiveTopology::Triangles;
 
-  std::unique_ptr<Buffer> positions;
-  std::unique_ptr<Buffer> normals;
-  std::unique_ptr<Buffer> texcoords;
-  std::unique_ptr<Buffer> colors;
-  std::unique_ptr<Buffer> indices;
+  std::shared_ptr<Buffer> positions;
+  std::shared_ptr<Buffer> normals;
+  std::shared_ptr<Buffer> texcoords;
+  std::shared_ptr<Buffer> colors;
+  std::shared_ptr<Buffer> indices;
 
   std::shared_ptr<Material> material = nullptr;
 
