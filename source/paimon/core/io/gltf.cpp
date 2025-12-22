@@ -7,7 +7,6 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
 
-#include "glm/fwd.hpp"
 #include "paimon/core/ecs/components.h"
 #include "paimon/core/ecs/entity.h"
 #include "paimon/core/log_system.h"
@@ -208,10 +207,10 @@ GltfLoader::GltfLoader(const std::filesystem::path &filepath) {
   // Determine file type by extension
   if (filepath.extension() == ".glb") {
     result = m_loader.LoadBinaryFromFile(&m_model, &errorMessage,
-                                       &warningMessage, filepath);
+                                       &warningMessage, filepath.string());
   } else {
     result = m_loader.LoadASCIIFromFile(&m_model, &errorMessage,
-                                      &warningMessage, filepath);
+                                      &warningMessage, filepath.string());
   }
 
   if (!result) {
@@ -227,15 +226,12 @@ void GltfLoader::load(ecs::Scene &scene) {
   parseBufferViews();
   parseTextures();
   parseMaterials();
-  parseScene(m_model.scenes[m_model.defaultScene], scene);
-}
+  parseMeshes();
+  parseLights();
+  parseCameras();
 
-void GltfLoader::load(ecs::Scene &scene, int scene_index) {
-  parseBuffers();
-  parseBufferViews();
-  parseTextures();
-  parseMaterials();
-  parseScene(m_model.scenes[scene_index], scene);
+  int sceneIndex = m_model.defaultScene >= 0 ? m_model.defaultScene : 0;
+  parseScene(m_model.scenes[sceneIndex], scene);
 }
 
 // ============================================================================
@@ -314,20 +310,21 @@ void GltfLoader::parseMeshes() {
       // First handle attributes (vertex data)
       for (const auto &[attributeName, accessorIndex] : primitive.attributes) {
         const auto &accessor = m_model.accessors[accessorIndex];
-        const auto &bufferView = m_bufferViews[accessor.bufferView];
+
+        sg_primitive.vertexCount = accessor.count;
 
         // Assign the GL buffer to the corresponding primitive attribute
         if (attributeName == "POSITION") {
-          sg_primitive.positions = bufferView;
+          sg_primitive.positions = m_bufferViews[accessor.bufferView];
         } else if (attributeName == "NORMAL") {
-          sg_primitive.normals = bufferView;
+          sg_primitive.normals = m_bufferViews[accessor.bufferView];
         } else if (attributeName.rfind("TEXCOORD", 0) == 0) {
           // assign first texcoord into texcoords (TEXCOORD_0)
           if (attributeName == "TEXCOORD_0") {
-            sg_primitive.texcoords = bufferView;
+            sg_primitive.texcoords = m_bufferViews[accessor.bufferView];
           }
         } else if (attributeName.rfind("COLOR", 0) == 0) {
-          sg_primitive.colors = bufferView;
+          sg_primitive.colors = m_bufferViews[accessor.bufferView];
         } else {
           // other attributes can be ignored for now or handled later
         }
@@ -336,6 +333,7 @@ void GltfLoader::parseMeshes() {
       // Then handle indices (element buffer) if present
       if (primitive.indices >= 0) {
         const auto &accessor = m_model.accessors[primitive.indices];
+        sg_primitive.indexCount = accessor.count;
         sg_primitive.indices = m_bufferViews[accessor.bufferView];
       }
 
@@ -347,7 +345,7 @@ void GltfLoader::parseMeshes() {
 
 void GltfLoader::parseLights() {
   for (const auto &light : m_model.lights) {
-    auto sg_light = std::shared_ptr<sg::PunctualLight>();
+   std::shared_ptr<sg::PunctualLight> sg_light;
 
     if (light.type == "directional") {
       sg_light = std::make_shared<sg::DirectionalLight>();
@@ -376,6 +374,36 @@ void GltfLoader::parseLights() {
   }
 }
 
+void GltfLoader::parseCameras() {
+  for (const auto &camera : m_model.cameras) {
+    std::shared_ptr<sg::Camera> sg_camera;
+
+    if (camera.type == "perspective") {
+      auto perspective = std::make_shared<sg::PerspectiveCamera>();
+      perspective->yfov = static_cast<float>(camera.perspective.yfov);
+      perspective->znear = static_cast<float>(camera.perspective.znear);
+      perspective->zfar = static_cast<float>(camera.perspective.zfar);
+      if (camera.perspective.aspectRatio > 0.0) {
+        perspective->aspectRatio =
+            static_cast<float>(camera.perspective.aspectRatio);
+      }
+      sg_camera = perspective;
+    } else if (camera.type == "orthographic") {
+      auto orthographic = std::make_shared<sg::OrthographicCamera>();
+      orthographic->xmag = static_cast<float>(camera.orthographic.xmag);
+      orthographic->ymag = static_cast<float>(camera.orthographic.ymag);
+      orthographic->znear = static_cast<float>(camera.orthographic.znear);
+      orthographic->zfar = static_cast<float>(camera.orthographic.zfar);
+      sg_camera = orthographic;
+    } else {
+      LOG_WARN("Unsupported camera type: {}", camera.type);
+      continue;
+    }
+
+    m_cameras.push_back(std::move(sg_camera));
+  }
+}
+
 void GltfLoader::parseNode(const tinygltf::Node &node, ecs::Entity parent, ecs::Scene &scene) {
   // Create entity for this node
   auto entity = scene.createEntity();
@@ -383,11 +411,16 @@ void GltfLoader::parseNode(const tinygltf::Node &node, ecs::Entity parent, ecs::
   // Name component
   entity.addComponent<ecs::Name>(node.name);
 
-  // Hierarchy Component
-  auto &hierarchy = entity.addComponent<ecs::Hierarchy>();
-  hierarchy.parent = parent;
-  auto &parentHierarchy = parent.getComponent<ecs::Hierarchy>();
-  parentHierarchy.children.push_back(entity);
+  // Parent / Children components
+  auto &parentComp = entity.addComponent<ecs::Parent>();
+  parentComp.parent = parent;
+
+  // Ensure this entity has a Children component to hold its children
+  entity.addComponent<ecs::Children>();
+
+  // Parent should have a Children component; append this child
+  auto &parentChildren = parent.getComponent<ecs::Children>();
+  parentChildren.children.push_back(entity);
 
   // Transform component
   auto &transform = entity.addComponent<ecs::Transform>();
@@ -420,11 +453,17 @@ void GltfLoader::parseNode(const tinygltf::Node &node, ecs::Entity parent, ecs::
   // Mesh Component
   if (node.mesh >= 0) {
     entity.addComponent<ecs::Mesh>(m_meshes[node.mesh]);
+    entity.addComponent<ecs::GlobalTransform>();
   }
 
   // Light Component (from KHR_lights_punctual extension)
   if (node.light >= 0) {
     entity.addComponent<ecs::PunctualLight>(m_lights[node.light]);
+    entity.addComponent<ecs::GlobalTransform>();
+  }
+
+  if (node.camera >= 0) {
+    // Camera Component can be handled here if needed
   }
 
   // Skin Component
@@ -439,6 +478,10 @@ void GltfLoader::parseScene(const tinygltf::Scene &scene, ecs::Scene &ecs_scene)
     const auto &node = m_model.nodes[nodeIndex];
 
     auto rootEntity = ecs_scene.createEntity();
+    rootEntity.addComponent<ecs::Name>("RootNode");
+    // Root has no parent, but needs a Children component
+    rootEntity.addComponent<ecs::Children>();
+
     parseNode(node, rootEntity, ecs_scene);
   }
 }

@@ -1,6 +1,7 @@
 #include "paimon/rendering/render_context.h"
 
 #include "paimon/opengl/shader_program.h"
+#include <cstdint>
 
 namespace paimon {
 
@@ -145,9 +146,17 @@ void RenderContext::bindIndexBuffer(const Buffer& buffer, DataType indexType) {
   m_currentIndexType = indexType;
 }
 
+void RenderContext::bindUniformBuffer(uint32_t binding, const Buffer& buffer) {
+  buffer.bind_base(GL_UNIFORM_BUFFER, binding);
+}
+
 void RenderContext::bindUniformBuffer(uint32_t binding, const Buffer& buffer,
                                       GLintptr offset, GLsizeiptr size) {
   buffer.bind_range(GL_UNIFORM_BUFFER, binding, offset, size);
+}
+
+void RenderContext::bindStorageBuffer(uint32_t binding, const Buffer& buffer) {
+  buffer.bind_base(GL_SHADER_STORAGE_BUFFER, binding);
 }
 
 void RenderContext::bindStorageBuffer(uint32_t binding, const Buffer& buffer,

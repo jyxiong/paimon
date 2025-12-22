@@ -6,7 +6,7 @@ namespace paimon {
 namespace sg {
 
 glm::mat4 PerspectiveCamera::getProjection() const {
-  return glm::perspective(yfov, aspect, znear, zfar == 0.0f ? std::numeric_limits<float>::infinity() : zfar);
+  return glm::perspective(yfov, aspectRatio, znear, zfar == 0.0f ? std::numeric_limits<float>::infinity() : zfar);
 }
 
 glm::mat4 OrthographicCamera::getProjection() const {

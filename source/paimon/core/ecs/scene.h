@@ -12,7 +12,7 @@ class Entity;
 
 class Scene {
 public:
-  Scene() = default;
+  Scene();
   ~Scene() = default;
 
   Scene(const Scene &) = delete;
@@ -25,6 +25,12 @@ public:
   // Access to the registry
   entt::registry &getRegistry();
   const entt::registry &getRegistry() const;
+
+  Entity getMainCamera() { return m_mainCamera; }
+  const Entity &getMainCamera() const { return m_mainCamera; }
+
+  Entity getDirectionalLight() { return m_directionalLight; }
+  const Entity &getDirectionalLight() const { return m_directionalLight; }
 
   // View and iteration
   template <typename... Components>
@@ -55,7 +61,6 @@ private:
   std::vector<std::unique_ptr<System>> m_systems;
 
   Entity m_mainCamera;
-  Entity m_ambientLight;
   Entity m_directionalLight;
 };
 

@@ -22,6 +22,9 @@ struct Primitive {
 
   std::shared_ptr<Material> material = nullptr;
 
+  size_t indexCount = 0;
+  size_t vertexCount = 0;
+
   bool hasIndices() const { return indices != nullptr; }
 };
 

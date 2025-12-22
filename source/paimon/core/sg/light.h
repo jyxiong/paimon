@@ -16,14 +16,16 @@ struct PunctualLight {
   };
 
   virtual ~PunctualLight() = default;
+  // Get light type
+  virtual Type getType() const = 0;
 
   // Light properties
   glm::vec3 color = glm::vec3(1.0f); // RGB color
   float intensity = 1.0f;            // Brightness multiplier
   float range = 0.0f;                // 0.0 = infinite range
 
-  // Get light type
-  virtual Type getType() const = 0;
+  glm::vec3 direction = glm::vec3(0.0f, 1.0f, 0.0f); // Light direction
+  glm::vec3 position = glm::vec3(0.0f);
 };
 
 /// Directional light (infinite distance, parallel rays)

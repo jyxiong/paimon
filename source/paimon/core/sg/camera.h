@@ -15,11 +15,14 @@ struct Camera {
   virtual Type getType() const = 0;
 
   virtual glm::mat4 getProjection() const = 0;
+
+  glm::vec3 position = glm::vec3(0.0f);
+  glm::vec3 direction = glm::vec3(0.0f, 1.0f, 0.0f);
 };
 
 /// Perspective camera
 struct PerspectiveCamera : public Camera {
-  float aspect = 0.0f;        // width/height, 0 = use viewport aspect
+  float aspectRatio = 0.0f;        // width/height, 0 = use viewport aspect
   float yfov = glm::radians(45.0f); // Vertical field of view in radians
   float znear = 0.1f;
   float zfar = 0.0f; // 0 = infinite

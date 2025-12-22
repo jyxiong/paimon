@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <glad/gl.h>
 
 #include "paimon/opengl/buffer.h"
@@ -63,10 +64,12 @@ public:
   void bindIndexBuffer(const Buffer& buffer, DataType indexType);
 
   // Bind Uniform Buffer
+  void bindUniformBuffer(uint32_t binding, const Buffer& buffer);
   void bindUniformBuffer(uint32_t binding, const Buffer& buffer,
                          GLintptr offset, GLsizeiptr size);
 
   // Bind Shader Storage Buffer
+  void bindStorageBuffer(uint32_t binding, const Buffer& buffer);
   void bindStorageBuffer(uint32_t binding, const Buffer& buffer,
                          GLintptr offset, GLsizeiptr size);
 

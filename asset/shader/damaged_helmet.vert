@@ -19,9 +19,15 @@ out gl_PerVertex {
 layout(std140, binding = 0) uniform TransformUBO
 {
   mat4 model;
+} u_transform;
+
+// UBO for camera
+layout(std140, binding = 1) uniform CameraUBO
+{
   mat4 view;
   mat4 projection;
-} u_transform;
+  vec3 position;
+} u_camera;
 
 void main()
 {
@@ -30,5 +36,5 @@ void main()
   v_texcoord = a_texcoord;
   // Compute clip-space position directly from model * position to avoid
   // any possible mismatch between varying and clip-space transforms.
-  gl_Position = u_transform.projection * u_transform.view * (u_transform.model * vec4(a_position, 1.0));
+  gl_Position = u_camera.projection * u_camera.view * (u_transform.model * vec4(a_position, 1.0));
 }
