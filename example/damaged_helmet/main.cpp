@@ -1,5 +1,5 @@
 #include <filesystem>
-#include <map>
+#include <memory>
 
 #include <GLFW/glfw3.h>
 #include <glad/gl.h>
@@ -10,57 +10,24 @@
 #include "paimon/app/window.h"
 #include "paimon/core/io/gltf.h"
 #include "paimon/core/log_system.h"
+#include "paimon/core/sg/light.h"
+#include "paimon/core/sg/material.h"
 #include "paimon/opengl/buffer.h"
 #include "paimon/opengl/texture.h"
 #include "paimon/rendering/render_context.h"
 #include "paimon/rendering/shader_manager.h"
+#include "paimon/core/ecs/scene.h"
+#include "paimon/core/ecs/components.h"
 
-#include "renderer.h"
-#include "mesh_data.h"
+#include "color_pass.h"
+#include "final_pass.h"
 
 
 using namespace paimon;
 
 namespace {
 
-// Camera state is now provided by Renderer::Camera
-Camera g_camera;
 glm::ivec2 g_size = {1280, 720};
-
-// Helper function to create OpenGL texture from sg::Image
-Texture createTextureFromImage(const std::shared_ptr<sg::Image> &image) {
-  Texture texture(GL_TEXTURE_2D);
-
-  if (!image || image->data.empty()) {
-    // Create a default 1x1 white texture
-    std::vector<unsigned char> white = {255, 255, 255, 255};
-    texture.set_storage_2d(1, GL_RGBA8, 1, 1);
-    texture.set_sub_image_2d(0, 0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE,
-                             white.data());
-    return texture;
-  }
-
-  GLenum internalFormat = GL_RGBA8;
-  GLenum format = GL_RGBA;
-
-  if (image->components == 1) {
-    internalFormat = GL_R8;
-    format = GL_RED;
-  } else if (image->components == 2) {
-    internalFormat = GL_RG8;
-    format = GL_RG;
-  } else if (image->components == 3) {
-    internalFormat = GL_RGB8;
-    format = GL_RGB;
-  }
-
-  texture.set_storage_2d(1, internalFormat, image->width, image->height);
-  texture.set_sub_image_2d(0, 0, 0, image->width, image->height, format,
-                           GL_UNSIGNED_BYTE, image->data.data());
-  texture.generate_mipmap();
-
-  return texture;
-}
 
 } // namespace
 
@@ -98,74 +65,45 @@ int main() {
   auto &shaderManager = ShaderManager::getInstance();
   shaderManager.load(shaderPath);
 
+  // Create ECS scene
+  ecs::Scene scene;
+  
+  // Create camera entity
+  {
+    auto entity = scene.getMainCamera();
+    auto &transform = entity.getComponent<ecs::Transform>();
+    transform.translation = glm::vec3(0.0f, 0.0f, 3.0f);
+    auto &camera = entity.getComponent<ecs::Camera>().camera;
+    auto perspCamera = std::make_shared<sg::PerspectiveCamera>();
+    perspCamera->aspectRatio = static_cast<float>(g_size.x) / static_cast<float>(g_size.y);
+    perspCamera->yfov = glm::radians(45.0f);
+    perspCamera->znear = 0.1f;
+    perspCamera->zfar = 100.0f;
+    camera = perspCamera;
+  }
+
+  // Create directional light entity
+  {
+    auto  entity = scene.getDirectionalLight();
+    auto &light = entity.getComponent<ecs::PunctualLight>().light;
+    light = std::make_shared<sg::DirectionalLight>();
+    light->color = glm::vec3(1.0f);
+    light->intensity = 3.0f;
+    light->direction = glm::vec3(-1.0f, -1.0f, -1.0f);
+    light->range = 100.0f;
+  }
+
+  
   // Load glTF model
-  GltfLoader loader;
-  sg::Scene scene;
+  GltfLoader loader(assetPath / "model/DamagedHelmet/glTF/DamagedHelmet.gltf");
+  loader.load(scene);
 
-  auto assetPModelath = assetPath / "model";
+  // Create FBO textures for color and depth attachments
+  Texture fbo_color_texture(GL_TEXTURE_2D);
+  fbo_color_texture.set_storage_2d(1, GL_RGBA8, g_size.x, g_size.y);
 
-  std::string model_path =
-      (assetPModelath / "DamagedHelmet/glTF/DamagedHelmet.gltf").string();
-  if (!loader.LoadFromFile(model_path, scene)) {
-    LOG_ERROR("Failed to load glTF model: {}", loader.GetError());
-    return -1;
-  }
-
-  if (!loader.GetWarning().empty()) {
-    LOG_WARN("glTF warnings: {}", loader.GetWarning());
-  }
-
-  std::vector<MeshData> mesh_data_list;
-
-  for (const auto &mesh : scene.meshes) {
-    for (const auto &primitive : mesh->primitives) {
-      MeshData mesh_data;
-
-      // Setup buffers
-      if (primitive.attributes.HasPositions()) {
-        mesh_data.position_buffer.set_storage(
-            sizeof(glm::vec3) * primitive.attributes.positions.size(),
-            primitive.attributes.positions.data(), GL_DYNAMIC_STORAGE_BIT);
-      }
-
-      if (primitive.attributes.HasNormals()) {
-        mesh_data.normal_buffer.set_storage(
-            sizeof(glm::vec3) * primitive.attributes.normals.size(),
-            primitive.attributes.normals.data(), GL_DYNAMIC_STORAGE_BIT);
-      }
-
-      if (primitive.attributes.HasTexCoords0()) {
-        mesh_data.texcoord_buffer.set_storage(
-            sizeof(glm::vec2) * primitive.attributes.texcoords_0.size(),
-            primitive.attributes.texcoords_0.data(), GL_DYNAMIC_STORAGE_BIT);
-      }
-
-      if (primitive.HasIndices()) {
-        mesh_data.index_buffer.set_storage(
-            sizeof(uint32_t) * primitive.indices.size(),
-            primitive.indices.data(), GL_DYNAMIC_STORAGE_BIT);
-        mesh_data.index_count = primitive.indices.size();
-      }
-
-      mesh_data.material = primitive.material;
-      mesh_data_list.push_back(std::move(mesh_data));
-    }
-  }
-
-  // Create textures from materials
-  std::map<std::shared_ptr<sg::Texture>, std::unique_ptr<Texture>> texture_map;
-
-  for (const auto &tex_pair : scene.textures) {
-    if (tex_pair && tex_pair->image) {
-      texture_map[tex_pair] =
-          std::make_unique<Texture>(createTextureFromImage(tex_pair->image));
-    }
-  }
-
-  std::map<std::shared_ptr<sg::Texture>, Texture *> texturePtrMap;
-  for (const auto &[key, value] : texture_map) {
-    texturePtrMap[key] = value.get();
-  }
+  Texture fbo_depth_texture(GL_TEXTURE_2D);
+  fbo_depth_texture.set_storage_2d(1, GL_DEPTH_COMPONENT32, g_size.x, g_size.y);
 
   // Create render context
   RenderContext ctx;
@@ -194,17 +132,21 @@ int main() {
     
     // Calculate camera position rotating around the origin
     float radius = 3.0f;
-    g_camera.position.x = radius * sin(glm::radians(rotation));
-    g_camera.position.z = radius * cos(glm::radians(rotation));
-    g_camera.position.y = 0.0f;
 
-    // Setup lighting
-    LightingUBO lightingData;
-    lightingData.lightPos = glm::vec3(5.0f, 5.0f, 5.0f);
-    // Renderer will copy viewPos from camera
+    // Update camera matrices
+    {
+      auto entity = scene.getMainCamera();
+      auto &transform = entity.getComponent<ecs::Transform>();
+      transform.translation.x = radius * sin(glm::radians(rotation));
+      transform.translation.z = radius * cos(glm::radians(rotation));
+      transform.translation.y = 0.0f;
+    }
 
-    // Render (Renderer handles UBOs and multi-pass internals)
-    renderer.draw(g_size, g_camera, lightingData, mesh_data_list);
+    // ===== First Pass: Render to FBO =====
+    color_pass.draw(ctx, g_size, scene);
+
+    // ===== Second Pass: Render FBO texture to screen =====
+    final_pass.draw(ctx, *color_pass.getColorTexture(), g_size);
 
     // Swap buffers
     window->swapBuffers();

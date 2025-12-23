@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <glad/gl.h>
 
 #include "paimon/opengl/buffer.h"
@@ -8,6 +9,7 @@
 #include "paimon/opengl/shader_program.h"
 #include "paimon/opengl/state.h"
 #include "paimon/opengl/texture.h"
+#include "paimon/opengl/type.h"
 #include "paimon/opengl/vertex_array.h"
 #include "paimon/rendering/framebuffer_cache.h"
 #include "paimon/rendering/graphics_pipeline.h"
@@ -59,13 +61,15 @@ public:
                        GLintptr offset, GLsizei stride);
 
   // Bind index buffer
-  void bindIndexBuffer(const Buffer& buffer, GLenum indexType);
+  void bindIndexBuffer(const Buffer& buffer, DataType indexType);
 
   // Bind Uniform Buffer
+  void bindUniformBuffer(uint32_t binding, const Buffer& buffer);
   void bindUniformBuffer(uint32_t binding, const Buffer& buffer,
                          GLintptr offset, GLsizeiptr size);
 
   // Bind Shader Storage Buffer
+  void bindStorageBuffer(uint32_t binding, const Buffer& buffer);
   void bindStorageBuffer(uint32_t binding, const Buffer& buffer,
                          GLintptr offset, GLsizeiptr size);
 
@@ -129,7 +133,8 @@ private:
   Framebuffer* m_currentFbo = nullptr;
   VertexArray* m_currentVao = nullptr;
 
-  GLenum m_currentIndexType = GL_UNSIGNED_INT;
+  
+  DataType m_currentIndexType = DataType::UInt;
 
   PipelineState m_currentPipelineState;
 

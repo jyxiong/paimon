@@ -2,6 +2,7 @@
 
 #include <glad/gl.h>
 
+#include "paimon/core/ecs/components.h"
 #include "paimon/core/log_system.h"
 #include "paimon/rendering/render_context.h"
 #include "paimon/rendering/shader_manager.h"
@@ -54,6 +55,7 @@ ColorPass::ColorPass(RenderContext &renderContext)
       {.binding = 0, .stride = sizeof(glm::vec3)}, // Position
       {.binding = 1, .stride = sizeof(glm::vec3)}, // Normal
       {.binding = 2, .stride = sizeof(glm::vec2)}, // TexCoord
+      {.binding = 3, .stride = sizeof(glm::vec3)}, // Color
   };
   pipelineInfo.state.vertexInput.attributes = {
       {
@@ -77,6 +79,13 @@ ColorPass::ColorPass(RenderContext &renderContext)
           .size = 2, // vec2
           .offset = 0,
       },
+      {
+          .location = 3,
+          .binding = 3,
+          .format = GL_FLOAT,
+          .size = 3, // vec3
+          .offset = 0,
+      },
   };
 
   m_pipeline = std::make_unique<GraphicsPipeline>(pipelineInfo);
@@ -86,99 +95,201 @@ ColorPass::ColorPass(RenderContext &renderContext)
 
   m_color_texture = std::make_unique<Texture>(GL_TEXTURE_2D);
   m_depth_texture = std::make_unique<Texture>(GL_TEXTURE_2D);
+
+  // Create uniform buffers
+  m_transform_ubo.set_storage(sizeof(TransformUBO), nullptr,
+                              GL_DYNAMIC_STORAGE_BIT);
+  m_camera_ubo.set_storage(sizeof(CameraUBO), nullptr, GL_DYNAMIC_STORAGE_BIT);
+  m_lighting_ubo.set_storage(sizeof(LightingUBO), nullptr,
+                             GL_DYNAMIC_STORAGE_BIT);
+  m_material_ubo.set_storage(sizeof(MaterialUBO), nullptr,
+                             GL_DYNAMIC_STORAGE_BIT);
+
+  // Bind UBOs once for all meshes
+  m_transform_ubo.bind_base(GL_UNIFORM_BUFFER, 0);
+  m_camera_ubo.bind_base(GL_UNIFORM_BUFFER, 1);
+  m_lighting_ubo.bind_base(GL_UNIFORM_BUFFER, 2);
+  m_material_ubo.bind_base(GL_UNIFORM_BUFFER, 3);
 }
 
-void ColorPass::draw(
-    RenderContext &ctx, const glm::ivec2 &g_size,
-    const std::vector<MeshData> &mesh_data_list,
-    const std::map<std::shared_ptr<sg::Texture>, Texture *> &texturePtrMap,
-    Buffer &transform_ubo, Buffer &material_ubo, Buffer &lighting_ubo) {
+void ColorPass::draw(RenderContext &ctx, const glm::ivec2 &g_size,
+                     ecs::Scene &scene) {
+  // Update GlobalTransform for all entities (DFS order guaranteed by entity
+  // creation) Transform uses TRS (easy to edit), GlobalTransform uses Matrix
+  // (efficient for rendering)
+  {
+    auto view = scene.view<ecs::Transform, ecs::GlobalTransform>();
+    for (auto [entity, local, global] : view.each()) {
 
-    m_color_texture->set_storage_2d(1, GL_RGBA8, g_size.x, g_size.y);
-    m_depth_texture->set_storage_2d(1, GL_DEPTH_COMPONENT32, g_size.x, g_size.y);
+      auto *parentComp = scene.getRegistry().try_get<ecs::Parent>(entity);
+      if (parentComp && parentComp->parent.isValid()) {
+        // Child: Global = Parent_Global × Local
+        auto &parentGlobal =
+            parentComp->parent.getComponent<ecs::GlobalTransform>();
+        global.matrix = parentGlobal.matrix * local.matrix();
+      } else {
+        // Root: Global = Local
+        global.matrix = local.matrix();
+      }
+    }
+  }
 
-    {
-      // Setup rendering info for FBO
-      RenderingInfo renderingInfo;
-      renderingInfo.renderAreaOffset = {0, 0};
-      renderingInfo.renderAreaExtent = {g_size.x, g_size.y};
+  {
+    // Get camera entity and build transform UBO
+    auto entity = scene.getMainCamera();
+    auto &camera = entity.getComponent<ecs::Camera>().camera;
+    auto &transform = entity.getComponent<ecs::GlobalTransform>();
 
-      // Setup color attachment
-      renderingInfo.colorAttachments.emplace_back(
-          *m_color_texture, AttachmentLoadOp::Clear, AttachmentStoreOp::Store,
-          ClearValue::Color(0.1f, 0.1f, 0.1f, 1.0f));
+    // Extract position from transform matrix
+    glm::vec3 position = glm::vec3(transform.matrix[3]);
+    
+    // Camera looks at origin (0, 0, 0)
+    glm::vec3 target = glm::vec3(0.0f, 0.0f, 0.0f);
+    glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
 
-      // Setup depth attachment
-      renderingInfo.depthAttachment.emplace(
-          *m_depth_texture, AttachmentLoadOp::Clear, AttachmentStoreOp::Store,
-          ClearValue::DepthStencil(1.0f, 0));
+    CameraUBO cameraData;
+    cameraData.view = glm::lookAt(position, target, up);
+    cameraData.projection = camera->getProjection();
+    cameraData.position = position;
+    m_camera_ubo.set_sub_data(0, sizeof(CameraUBO), &cameraData);
+  }
 
-      // Begin rendering to FBO
-      ctx.beginRendering(renderingInfo);
+  {
+    // Get directional light entity and build lighting UBO
+    auto entity = scene.getDirectionalLight();
+    auto &transform = entity.getComponent<ecs::GlobalTransform>();
+    auto &light = entity.getComponent<ecs::PunctualLight>().light;
 
-      // Bind pipeline (this applies depth test and other states)
-      ctx.bindPipeline(*m_pipeline);
+    LightingUBO lightingData;
 
-      // Set viewport
-      ctx.setViewport(0, 0, g_size.x, g_size.y);
+    // For directional light, use forward direction from transform
+    lightingData.color = light->color;
+    lightingData.intensity = light->intensity;
+    lightingData.direction = glm::normalize(
+        glm::vec3(transform.matrix * glm::vec4(light->direction, 0.0f)));
+    lightingData.range = light->range;
+    lightingData.position =
+        glm::vec3(transform.matrix * glm::vec4(light->position, 1.0f));
+    // TODO: light types
+    // lightingData.innerConeAngle = light
+    m_lighting_ubo.set_sub_data(0, sizeof(LightingUBO), &lightingData);
+  }
 
-      // Render each mesh
-      int meshCount = 0;
-      for (const auto &mesh_data : mesh_data_list) {
+  m_color_texture->set_storage_2d(1, GL_RGBA8, g_size.x, g_size.y);
+  m_depth_texture->set_storage_2d(1, GL_DEPTH_COMPONENT32, g_size.x, g_size.y);
 
-        ctx.bindVertexBuffer(0, mesh_data.position_buffer, 0,
-                             sizeof(glm::vec3));
-        ctx.bindVertexBuffer(1, mesh_data.normal_buffer, 0, sizeof(glm::vec3));
-        ctx.bindVertexBuffer(2, mesh_data.texcoord_buffer, 0,
-                             sizeof(glm::vec2));
-        ctx.bindIndexBuffer(mesh_data.index_buffer, GL_UNSIGNED_INT);
+  {
+    // Setup rendering info for FBO
+    RenderingInfo renderingInfo;
+    renderingInfo.renderAreaOffset = {0, 0};
+    renderingInfo.renderAreaExtent = {g_size.x, g_size.y};
+
+    // Setup color attachment
+    renderingInfo.colorAttachments.emplace_back(
+        *m_color_texture, AttachmentLoadOp::Clear, AttachmentStoreOp::Store,
+        ClearValue::Color(0.1f, 0.1f, 0.1f, 1.0f));
+
+    // Setup depth attachment
+    renderingInfo.depthAttachment.emplace(
+        *m_depth_texture, AttachmentLoadOp::Clear, AttachmentStoreOp::Store,
+        ClearValue::DepthStencil(1.0f, 0));
+
+    // Begin rendering to FBO
+    ctx.beginRendering(renderingInfo);
+
+    // Bind pipeline (this applies depth test and other states)
+    ctx.bindPipeline(*m_pipeline);
+
+    // Set viewport
+    ctx.setViewport(0, 0, g_size.x, g_size.y);
+
+    // Iterate over entities with Mesh component
+    auto meshView = scene.view<ecs::Mesh, ecs::GlobalTransform>();
+    int meshCount = 0;
+
+    for (auto entity : meshView) {
+      auto &mesh = meshView.get<ecs::Mesh>(entity).mesh;
+      auto &transform = meshView.get<ecs::GlobalTransform>(entity);
+
+      if (!mesh)
+        continue;
+
+      // Update uniform buffers
+      TransformUBO transformData;
+      transformData.model = transform.matrix;
+      m_transform_ubo.set_sub_data(0, sizeof(TransformUBO), &transformData);
+
+      // Render each primitive in the mesh
+      for (const auto &primitive : mesh->primitives) {
+        // Bind vertex buffers
+        if (primitive.positions) {
+          ctx.bindVertexBuffer(0, *primitive.positions, 0, sizeof(glm::vec3));
+        }
+        if (primitive.normals) {
+          ctx.bindVertexBuffer(1, *primitive.normals, 0, sizeof(glm::vec3));
+        }
+        if (primitive.texcoords) {
+          ctx.bindVertexBuffer(2, *primitive.texcoords, 0, sizeof(glm::vec2));
+        }
+        if (primitive.colors) {
+          ctx.bindVertexBuffer(3, *primitive.colors, 0, sizeof(glm::vec3));
+        }
+
+        // Bind index buffer if present
+        if (primitive.indices) {
+          ctx.bindIndexBuffer(*primitive.indices, primitive.indexType);
+        }
 
         // Update material UBO and bind textures
-        if (mesh_data.material) {
-          const auto &mat = mesh_data.material;
-          const auto &pbr = mat->pbr_metallic_roughness;
+        if (primitive.material) {
+          const auto &mat = primitive.material;
+          const auto &pbr = mat->pbrMetallicRoughness;
 
           // Prepare material data
           MaterialUBO materialData;
-          materialData.baseColorFactor = pbr.base_color_factor;
-          materialData.emissiveFactor = mat->emissive_factor;
-          materialData.metallicFactor = pbr.metallic_factor;
-          materialData.roughnessFactor = pbr.roughness_factor;
-          material_ubo.set_sub_data(0, sizeof(MaterialUBO), &materialData);
+          materialData.baseColorFactor = pbr.baseColorFactor;
+          materialData.emissiveFactor = mat->emissiveFactor;
+          materialData.metallicFactor = pbr.metallicFactor;
+          materialData.roughnessFactor = pbr.roughnessFactor;
+          m_material_ubo.set_sub_data(0, sizeof(MaterialUBO), &materialData);
 
-          transform_ubo.bind_base(GL_UNIFORM_BUFFER, 0);
-          material_ubo.bind_base(GL_UNIFORM_BUFFER, 1);
-          lighting_ubo.bind_base(GL_UNIFORM_BUFFER, 2);
-
-          // Bind textures with sampler
-          // Base color (unit 0)
-          ctx.bindTexture(0, *texturePtrMap.at(pbr.base_color_texture),
-                          *m_sampler);
-
-          // Metallic roughness (unit 1)
-
-          ctx.bindTexture(1, *texturePtrMap.at(pbr.metallic_roughness_texture),
-                          *m_sampler);
-
-          // Normal (unit 2)
-          ctx.bindTexture(2, *texturePtrMap.at(mat->normal_texture), *m_sampler);
-
-          // Emissive (unit 3)
-          ctx.bindTexture(3, *texturePtrMap.at(mat->emissive_texture), *m_sampler);
-
-          // Occlusion (unit 4)
-          ctx.bindTexture(4, *texturePtrMap.at(mat->occlusion_texture),
-                          *m_sampler);
+          // Bind textures with sampler - directly from material
+          if (pbr.baseColorTexture && pbr.baseColorTexture->image) {
+            ctx.bindTexture(0, *pbr.baseColorTexture->image, *m_sampler);
+          }
+          if (pbr.metallicRoughnessTexture &&
+              pbr.metallicRoughnessTexture->image) {
+            ctx.bindTexture(1, *pbr.metallicRoughnessTexture->image,
+                            *m_sampler);
+          }
+          if (mat->normalTexture && mat->normalTexture->image) {
+            ctx.bindTexture(2, *mat->normalTexture->image, *m_sampler);
+          }
+          if (mat->emissiveTexture && mat->emissiveTexture->image) {
+            ctx.bindTexture(3, *mat->emissiveTexture->image, *m_sampler);
+          }
+          if (mat->occlusionTexture && mat->occlusionTexture->image) {
+            ctx.bindTexture(4, *mat->occlusionTexture->image, *m_sampler);
+          }
         }
 
-        // Draw indexed
-        if (mesh_data.index_count > 0) {
-          ctx.drawElements(mesh_data.index_count, nullptr);
+        ctx.bindUniformBuffer(0, m_transform_ubo);
+        ctx.bindUniformBuffer(1, m_camera_ubo);
+        ctx.bindUniformBuffer(2, m_lighting_ubo);
+        ctx.bindUniformBuffer(3, m_material_ubo);
+
+        // Draw the primitive
+        if (primitive.hasIndices()) {
+          ctx.drawElements(primitive.indexCount, nullptr);
+          meshCount++;
+        } else if (primitive.positions) {
+          ctx.drawArrays(0, primitive.vertexCount);
           meshCount++;
         }
       }
-
-      // End rendering to FBO
-      ctx.endRendering();
     }
+
+    // End rendering to FBO
+    ctx.endRendering();
   }
+}

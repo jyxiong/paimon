@@ -1,24 +1,19 @@
 #pragma once
 
 #include <memory>
-#include <string>
+
+#include "paimon/opengl/texture.h"
+#include "paimon/opengl/sampler.h"
 
 namespace paimon {
 namespace sg {
 
-struct Image;
-struct Sampler;
-
-/// Texture combining image and sampler
+/// Texture combining OpenGL texture and sampler
 struct Texture {
-  std::string name;
+  // OpenGL texture and sampler objects
+  std::shared_ptr<paimon::Texture> image = nullptr;
+  std::shared_ptr<paimon::Sampler> sampler = nullptr;
 
-  // References to image and sampler
-  std::shared_ptr<Image> image = nullptr;
-  std::shared_ptr<Sampler> sampler = nullptr;
-
-  Texture() = default;
-  Texture(const std::string &name) : name(name) {}
 };
 
 } // namespace sg
