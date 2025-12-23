@@ -1,66 +1,36 @@
 #pragma once
 
 #include <memory>
-#include <string>
-#include <vector>
 
 #include <glm/glm.hpp>
 
+#include "paimon/core/sg/material.h"
+#include "paimon/opengl/buffer.h"
+#include "paimon/opengl/type.h"
+
 namespace paimon {
 namespace sg {
-
-struct Material;
-
 /// Mesh primitive (single draw call unit)
 struct Primitive {
-  /// Vertex attribute data
-  struct Attribute {
-    std::vector<glm::vec3> positions;
-    std::vector<glm::vec3> normals;
-    std::vector<glm::vec4> tangents; // xyz = tangent, w = handedness
-    std::vector<glm::vec2> texcoords_0;
-    std::vector<glm::vec2> texcoords_1;
-    std::vector<glm::vec4> colors_0;
-    std::vector<glm::vec4> joints_0;  // For skinning (not used yet)
-    std::vector<glm::vec4> weights_0; // For skinning (not used yet)
+  PrimitiveTopology mode = PrimitiveTopology::Triangles;
 
-    bool HasPositions() const { return !positions.empty(); }
-    bool HasNormals() const { return !normals.empty(); }
-    bool HasTangents() const { return !tangents.empty(); }
-    bool HasTexCoords0() const { return !texcoords_0.empty(); }
-    bool HasTexCoords1() const { return !texcoords_1.empty(); }
-    bool HasColors() const { return !colors_0.empty(); }
+  size_t vertexCount = 0;
+  std::shared_ptr<Buffer> positions;
+  std::shared_ptr<Buffer> normals;
+  std::shared_ptr<Buffer> texcoords;
+  std::shared_ptr<Buffer> colors;
 
-    size_t GetVertexCount() const { return positions.size(); }
-  };
-
-  Attribute attributes;
-  std::vector<uint32_t> indices;
+  size_t indexCount = 0;
+  DataType indexType = DataType::UInt;
+  std::shared_ptr<Buffer> indices;
 
   std::shared_ptr<Material> material = nullptr;
 
-  // Primitive topology
-  enum class Mode {
-    Points = 0,
-    Lines = 1,
-    LineLoop = 2,
-    LineStrip = 3,
-    Triangles = 4,
-    TriangleStrip = 5,
-    TriangleFan = 6
-  };
-  Mode mode = Mode::Triangles;
-
-  bool HasIndices() const { return !indices.empty(); }
+  bool hasIndices() const { return indices != nullptr; }
 };
 
-/// Mesh containing one or more primitives
 struct Mesh {
-  std::string name;
   std::vector<Primitive> primitives;
-
-  Mesh() = default;
-  Mesh(const std::string &name) : name(name) {}
 };
 
 } // namespace sg

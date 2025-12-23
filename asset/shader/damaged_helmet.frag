@@ -5,6 +5,7 @@
 in vec3 v_position;
 in vec3 v_normal;
 in vec2 v_texcoord;
+in vec3 v_color;
 
 out vec4 FragColor;
 
@@ -14,8 +15,29 @@ layout(binding = 2) uniform sampler2D u_normalTexture;
 layout(binding = 3) uniform sampler2D u_emissiveTexture;
 layout(binding = 4) uniform sampler2D u_occlusionTexture;
 
+// UBO for camera
+layout(std140, binding = 1) uniform CameraUBO
+{
+  mat4 view;
+  mat4 projection;
+  vec3 position;
+} u_camera;
+
+// UBO for lighting
+layout(std140, binding = 2) uniform LightingUBO
+{
+  vec3 color;
+  float intensity;
+  vec3 direction;
+  float range;
+  vec3 position;
+  float innerConeAngle;
+  float outerConeAngle;
+  int type;
+} u_lighting;
+
 // UBO for material properties
-layout(std140, binding = 1) uniform MaterialUBO
+layout(std140, binding = 3) uniform MaterialUBO
 {
   vec4 baseColorFactor;
   vec3 emissiveFactor;
@@ -23,15 +45,6 @@ layout(std140, binding = 1) uniform MaterialUBO
   float roughnessFactor;
   float _padding[3]; // alignment
 } u_material;
-
-// UBO for lighting
-layout(std140, binding = 2) uniform LightingUBO
-{
-  vec3 lightPos;
-  float _padding1;
-  vec3 viewPos;
-  float _padding2;
-} u_lighting;
 
 void main()
 {
@@ -45,8 +58,8 @@ void main()
 
   // Normal from normal map
   vec3 N = normalize(v_normal);
-  vec3 V = normalize(u_lighting.viewPos - v_position);
-  vec3 L = normalize(u_lighting.lightPos - v_position);
+  vec3 V = normalize(u_camera.position - v_position);
+  vec3 L = normalize(u_lighting.position - v_position);
 
   // Calculate PBR lighting
   vec3 radiance = vec3(1.0); // Light color/intensity

@@ -30,6 +30,7 @@ if(NOT TARGET glm)
     option(GLM_ENABLE_CXX_20 "" ON)
     add_subdirectory(glm)
     set_target_properties(glm PROPERTIES FOLDER ${EXTERNAL_DIR}/glm)
+    target_compile_definitions(glm INTERFACE GLM_ENABLE_EXPERIMENTAL)
 endif()
 
 if (NOT TARGET nlohmann_json)
