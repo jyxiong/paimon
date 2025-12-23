@@ -34,6 +34,7 @@ void main()
   v_position = vec3(u_transform.model * vec4(a_position, 1.0));
   v_normal = mat3(transpose(inverse(u_transform.model))) * a_normal;
   v_texcoord = a_texcoord;
+  v_color = a_color;
   // Compute clip-space position directly from model * position to avoid
   // any possible mismatch between varying and clip-space transforms.
   gl_Position = u_camera.projection * u_camera.view * (u_transform.model * vec4(a_position, 1.0));

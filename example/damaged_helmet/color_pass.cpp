@@ -4,7 +4,6 @@
 
 #include "paimon/core/ecs/components.h"
 #include "paimon/core/log_system.h"
-#include "paimon/opengl/type.h"
 #include "paimon/rendering/render_context.h"
 #include "paimon/rendering/shader_manager.h"
 
@@ -56,6 +55,7 @@ ColorPass::ColorPass(RenderContext &renderContext)
       {.binding = 0, .stride = sizeof(glm::vec3)}, // Position
       {.binding = 1, .stride = sizeof(glm::vec3)}, // Normal
       {.binding = 2, .stride = sizeof(glm::vec2)}, // TexCoord
+      {.binding = 3, .stride = sizeof(glm::vec3)}, // Color
   };
   pipelineInfo.state.vertexInput.attributes = {
       {
@@ -77,6 +77,13 @@ ColorPass::ColorPass(RenderContext &renderContext)
           .binding = 2,
           .format = GL_FLOAT,
           .size = 2, // vec2
+          .offset = 0,
+      },
+      {
+          .location = 3,
+          .binding = 3,
+          .format = GL_FLOAT,
+          .size = 3, // vec3
           .offset = 0,
       },
   };
@@ -107,87 +114,22 @@ ColorPass::ColorPass(RenderContext &renderContext)
 
 void ColorPass::draw(RenderContext &ctx, const glm::ivec2 &g_size,
                      ecs::Scene &scene) {
+  // Update GlobalTransform for all entities (DFS order guaranteed by entity
+  // creation) Transform uses TRS (easy to edit), GlobalTransform uses Matrix
+  // (efficient for rendering)
+  {
+    auto view = scene.view<ecs::Transform, ecs::GlobalTransform>();
+    for (auto [entity, local, global] : view.each()) {
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // GlobalTransform 更新策略详解与优化
-  // ═══════════════════════════════════════════════════════════════════════════
-  //
-  // 【核心问题】
-  // 父子变换必须按层级顺序更新：parent.global * child.local = child.global
-  // 父节点的GlobalTransform必须在子节点之前计算完成
-  //
-  // 【优化策略】
-  // 1. 使用迭代栈代替递归 - 避免std::function调用开销和栈溢出风险
-  // 2. 利用EnTT的group优化内存访问局部性
-  // 3. 预先收集根节点，避免重复查询
-  // 4. 显式管理遍历栈，实现深度优先遍历（DFS）
-  //
-  // 【时间复杂度】O(n) - 每个节点访问一次
-  // 【空间复杂度】O(h) - h为树的最大深度（栈空间）
-  // ═══════════════════════════════════════════════════════════════════════════
-
-  // Step 1: 使用EnTT group优化内存访问
-  // Group将Transform和GlobalTransform的数据紧密排列，提高缓存命中率
-  auto transformGroup = scene.getRegistry().group<ecs::GlobalTransform>(
-      entt::get<ecs::Transform>);
-
-  // Step 2: 收集所有根节点（没有父节点或父节点无效的Children实体）
-  auto childrenView = scene.view<ecs::Children>();
-  std::vector<entt::entity> roots;
-  roots.reserve(8); // 预分配常见场景的根节点数量
-  
-  for (auto entity : childrenView) {
-    auto *parentComp = scene.getRegistry().try_get<ecs::Parent>(entity);
-    if (!parentComp || !parentComp->parent.isValid()) {
-      roots.push_back(entity);
-    }
-  }
-
-  // Step 3: 使用显式栈进行迭代式深度优先遍历
-  // 避免递归调用开销，对深层级场景更稳定
-  struct TraversalNode {
-    entt::entity entity;
-    glm::mat4 parentMatrix; // 父节点的GlobalTransform矩阵
-  };
-
-  std::vector<TraversalNode> stack;
-  stack.reserve(64); // 预分配合理深度
-
-  // Step 4: 遍历每个根节点的子树
-  for (auto rootEntity : roots) {
-    // 根节点没有父变换，使用单位矩阵
-    stack.push_back({rootEntity, glm::mat4(1.0f)});
-
-    while (!stack.empty()) {
-      auto [currentEntity, parentMatrix] = stack.back();
-      stack.pop_back();
-
-      // 更新当前实体的GlobalTransform
-      auto *localTransform = scene.getRegistry().try_get<ecs::Transform>(currentEntity);
-      auto *globalTransform = scene.getRegistry().try_get<ecs::GlobalTransform>(currentEntity);
-
-      glm::mat4 currentGlobalMatrix = parentMatrix;
-      
-      if (localTransform && globalTransform) {
-        // 计算全局变换: Global = Parent_Global × Local
-        auto *parentComp = scene.getRegistry().try_get<ecs::Parent>(currentEntity);
-        if (parentComp && parentComp->parent.isValid()) {
-          currentGlobalMatrix = parentMatrix * localTransform->matrix;
-        } else {
-          // 根节点：Global = Local
-          currentGlobalMatrix = localTransform->matrix;
-        }
-        globalTransform->matrix = currentGlobalMatrix;
-      }
-
-      // 将子节点入栈（逆序入栈保证正序遍历）
-      auto *childrenComp = scene.getRegistry().try_get<ecs::Children>(currentEntity);
-      if (childrenComp && !childrenComp->children.empty()) {
-        // 逆序入栈，使得第一个子节点先被处理
-        for (auto it = childrenComp->children.rbegin(); 
-             it != childrenComp->children.rend(); ++it) {
-          stack.push_back({it->getHandle(), currentGlobalMatrix});
-        }
+      auto *parentComp = scene.getRegistry().try_get<ecs::Parent>(entity);
+      if (parentComp && parentComp->parent.isValid()) {
+        // Child: Global = Parent_Global × Local
+        auto &parentGlobal =
+            parentComp->parent.getComponent<ecs::GlobalTransform>();
+        global.matrix = parentGlobal.matrix * local.matrix();
+      } else {
+        // Root: Global = Local
+        global.matrix = local.matrix();
       }
     }
   }
@@ -198,11 +140,17 @@ void ColorPass::draw(RenderContext &ctx, const glm::ivec2 &g_size,
     auto &camera = entity.getComponent<ecs::Camera>().camera;
     auto &transform = entity.getComponent<ecs::GlobalTransform>();
 
+    // Extract position from transform matrix
+    glm::vec3 position = glm::vec3(transform.matrix[3]);
+    
+    // Camera looks at origin (0, 0, 0)
+    glm::vec3 target = glm::vec3(0.0f, 0.0f, 0.0f);
+    glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+
     CameraUBO cameraData;
-    cameraData.view = glm::inverse(transform.matrix);
+    cameraData.view = glm::lookAt(position, target, up);
     cameraData.projection = camera->getProjection();
-    cameraData.position =
-        glm::vec3(transform.matrix * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+    cameraData.position = position;
     m_camera_ubo.set_sub_data(0, sizeof(CameraUBO), &cameraData);
   }
 
@@ -283,10 +231,13 @@ void ColorPass::draw(RenderContext &ctx, const glm::ivec2 &g_size,
         if (primitive.texcoords) {
           ctx.bindVertexBuffer(2, *primitive.texcoords, 0, sizeof(glm::vec2));
         }
+        if (primitive.colors) {
+          ctx.bindVertexBuffer(3, *primitive.colors, 0, sizeof(glm::vec3));
+        }
 
         // Bind index buffer if present
         if (primitive.indices) {
-          ctx.bindIndexBuffer(*primitive.indices, DataType::UInt);
+          ctx.bindIndexBuffer(*primitive.indices, primitive.indexType);
         }
 
         // Update material UBO and bind textures

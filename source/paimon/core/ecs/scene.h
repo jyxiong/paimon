@@ -19,7 +19,7 @@ public:
   Scene &operator=(const Scene &) = delete;
 
   // Create and destroy entities
-  Entity createEntity();
+  Entity createEntity(const std::string &name = std::string());
   void destroyEntity(Entity entity);
 
   // Access to the registry

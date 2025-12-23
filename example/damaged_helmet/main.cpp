@@ -1,4 +1,5 @@
 #include <filesystem>
+#include <memory>
 
 #include <GLFW/glfw3.h>
 #include <glad/gl.h>
@@ -10,6 +11,7 @@
 #include "paimon/core/io/gltf.h"
 #include "paimon/core/log_system.h"
 #include "paimon/core/sg/light.h"
+#include "paimon/core/sg/material.h"
 #include "paimon/opengl/buffer.h"
 #include "paimon/opengl/texture.h"
 #include "paimon/rendering/render_context.h"
@@ -67,18 +69,30 @@ int main() {
   ecs::Scene scene;
   
   // Create camera entity
-  auto cameraEntity = scene.getMainCamera();
-  auto &cameraTransform = cameraEntity.getComponent<ecs::GlobalTransform>();
-  cameraTransform.translation = glm::vec3(0.0f, 0.0f, 3.0f);
-  auto &cameraComp = cameraEntity.getComponent<ecs::Camera>();
-  cameraComp.camera = std::make_shared<sg::PerspectiveCamera>();
+  {
+    auto entity = scene.getMainCamera();
+    auto &transform = entity.getComponent<ecs::Transform>();
+    transform.translation = glm::vec3(0.0f, 0.0f, 3.0f);
+    auto &camera = entity.getComponent<ecs::Camera>().camera;
+    auto perspCamera = std::make_shared<sg::PerspectiveCamera>();
+    perspCamera->aspectRatio = static_cast<float>(g_size.x) / static_cast<float>(g_size.y);
+    perspCamera->yfov = glm::radians(45.0f);
+    perspCamera->znear = 0.1f;
+    perspCamera->zfar = 100.0f;
+    camera = perspCamera;
+  }
 
   // Create directional light entity
-  auto lightEntity = scene.getDirectionalLight();
-  auto &lightComp = lightEntity.getComponent<ecs::PunctualLight>();
-  lightComp.light = std::make_shared<sg::DirectionalLight>();
-  lightComp.light->color = glm::vec3(1.0f);
-  lightComp.light->intensity = 3.0f;
+  {
+    auto  entity = scene.getDirectionalLight();
+    auto &light = entity.getComponent<ecs::PunctualLight>().light;
+    light = std::make_shared<sg::DirectionalLight>();
+    light->color = glm::vec3(1.0f);
+    light->intensity = 3.0f;
+    light->direction = glm::vec3(-1.0f, -1.0f, -1.0f);
+    light->range = 100.0f;
+  }
+
   
   // Load glTF model
   GltfLoader loader(assetPath / "model/DamagedHelmet/glTF/DamagedHelmet.gltf");
@@ -120,34 +134,20 @@ int main() {
     // Calculate camera position rotating around the origin
     float radius = 3.0f;
 
+    // Update camera matrices
     {
-      auto &transform = cameraEntity.getComponent<ecs::Transform>();
+      auto entity = scene.getMainCamera();
+      auto &transform = entity.getComponent<ecs::Transform>();
       transform.translation.x = radius * sin(glm::radians(rotation));
       transform.translation.z = radius * cos(glm::radians(rotation));
       transform.translation.y = 0.0f;
-
-      // Update camera matrices
-
-
-      auto &cameraComp = cameraEntity.getComponent<ecs::Camera>();
-      cameraComp.view = glm::lookAt(transform.translation,
-                                    glm::vec3(0.0f, 0.0f, 0.0f),
-                                    glm::vec3(0.0f, 1.0f, 0.0f));
-      cameraComp.projection = glm::perspective(glm::radians(45.0f),
-                                              static_cast<float>(g_size.x) / g_size.y,
-                                              0.1f, 100.0f);
     }
 
     // ===== First Pass: Render to FBO =====
-    color_pass.draw(
-        ctx, g_size, 
-        scene);
+    color_pass.draw(ctx, g_size, scene);
 
     // ===== Second Pass: Render FBO texture to screen =====
-    {
-      // Use screen quad to render FBO texture
-      final_pass.draw(ctx, *color_pass.getColorTexture(), g_size);
-    }
+    final_pass.draw(ctx, *color_pass.getColorTexture(), g_size);
 
     // Swap buffers
     window->swapBuffers();

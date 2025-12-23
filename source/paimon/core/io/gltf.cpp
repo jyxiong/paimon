@@ -19,7 +19,7 @@
 using namespace paimon;
 
 namespace {
-PrimitiveTopology castPrimitiveMode(int primitiveMode) {
+PrimitiveTopology parsePrimitiveMode(int primitiveMode) {
   switch (primitiveMode) {
   case TINYGLTF_MODE_POINTS:
     return PrimitiveTopology::Points;
@@ -40,7 +40,7 @@ PrimitiveTopology castPrimitiveMode(int primitiveMode) {
   }
 }
 
-DataType castCompnentType(int componentType) {
+DataType parseCompnentType(int componentType) {
   switch (componentType) {
   case TINYGLTF_COMPONENT_TYPE_BYTE:
     return DataType::Byte;
@@ -63,7 +63,7 @@ DataType castCompnentType(int componentType) {
   }
 }
 
-TextureFilterMode castFilterMode(int filter) {
+TextureFilterMode parseFilterMode(int filter) {
   switch (filter) {
   case TINYGLTF_TEXTURE_FILTER_NEAREST:
     return TextureFilterMode::Nearest;
@@ -82,7 +82,7 @@ TextureFilterMode castFilterMode(int filter) {
   }
 }
 
-TextureWrapMode castWrapMode(int wrap) {
+TextureWrapMode parseWrapMode(int wrap) {
   switch (wrap) {
   case TINYGLTF_TEXTURE_WRAP_CLAMP_TO_EDGE:
     return TextureWrapMode::ClampToEdge;
@@ -249,7 +249,7 @@ void GltfLoader::parseBuffers() {
 void GltfLoader::parseBufferViews() {
   for (const auto &bufferView : m_model.bufferViews) {
     auto gl_buffer = std::make_shared<Buffer>();
-    gl_buffer->set_storage(bufferView.byteLength, nullptr);
+    gl_buffer->set_storage(bufferView.byteLength, nullptr, GL_DYNAMIC_STORAGE_BIT);
     gl_buffer->copy_sub_data(*m_buffers[bufferView.buffer], bufferView.byteOffset, 0, bufferView.byteLength);
     m_bufferViews.push_back(std::move(gl_buffer));
   }
@@ -305,7 +305,7 @@ void GltfLoader::parseMeshes() {
     for (const auto &primitive : mesh.primitives) {
       auto &sg_primitive = sg_mesh->primitives.emplace_back();
       // Primitive topology
-      sg_primitive.mode = castPrimitiveMode(primitive.mode);
+      sg_primitive.mode = parsePrimitiveMode(primitive.mode);
 
       // First handle attributes (vertex data)
       for (const auto &[attributeName, accessorIndex] : primitive.attributes) {
@@ -334,6 +334,7 @@ void GltfLoader::parseMeshes() {
       if (primitive.indices >= 0) {
         const auto &accessor = m_model.accessors[primitive.indices];
         sg_primitive.indexCount = accessor.count;
+        sg_primitive.indexType = parseCompnentType(accessor.componentType);
         sg_primitive.indices = m_bufferViews[accessor.bufferView];
       }
 
@@ -406,26 +407,20 @@ void GltfLoader::parseCameras() {
 
 void GltfLoader::parseNode(const tinygltf::Node &node, ecs::Entity parent, ecs::Scene &scene) {
   // Create entity for this node
-  auto entity = scene.createEntity();
+  auto entity = scene.createEntity(node.name);
 
-  // Name component
-  entity.addComponent<ecs::Name>(node.name);
-
-  // Parent / Children components
-  auto &parentComp = entity.addComponent<ecs::Parent>();
+  // Parent components
+  auto &parentComp = entity.getComponent<ecs::Parent>();
   parentComp.parent = parent;
-
-  // Ensure this entity has a Children component to hold its children
-  entity.addComponent<ecs::Children>();
 
   // Parent should have a Children component; append this child
   auto &parentChildren = parent.getComponent<ecs::Children>();
   parentChildren.children.push_back(entity);
 
-  // Transform component
-  auto &transform = entity.addComponent<ecs::Transform>();
+  // Transform component (TRS only)
+  auto &transform = entity.getComponent<ecs::Transform>();
   if (node.matrix.empty()) {
-    // Use TRS
+    // Use TRS directly
     transform.translation = node.translation.empty()
                                 ? glm::vec3(0.0f)
                                 : parseVec3(node.translation);
@@ -434,41 +429,41 @@ void GltfLoader::parseNode(const tinygltf::Node &node, ecs::Entity parent, ecs::
                              : parseQuat(node.rotation);
     transform.scale = node.scale.empty() ? glm::vec3(1.0f)
                                          : parseVec3(node.scale);
-
-    transform.matrix =
-        glm::translate(glm::mat4(1.0f), transform.translation) *
-        glm::mat4_cast(transform.rotation) *
-        glm::scale(glm::mat4(1.0f), transform.scale);
   } else {
-    // Use matrix
-    transform.matrix = parseMat4(node.matrix);
-
     // Decompose matrix into TRS
+    auto matrix = parseMat4(node.matrix);
     glm::vec3 skew;
     glm::vec4 perspective;
-    glm::decompose(transform.matrix, transform.scale, transform.rotation,
+    glm::decompose(matrix, transform.scale, transform.rotation,
                    transform.translation, skew, perspective);
   }
 
   // Mesh Component
   if (node.mesh >= 0) {
     entity.addComponent<ecs::Mesh>(m_meshes[node.mesh]);
-    entity.addComponent<ecs::GlobalTransform>();
   }
 
   // Light Component (from KHR_lights_punctual extension)
   if (node.light >= 0) {
     entity.addComponent<ecs::PunctualLight>(m_lights[node.light]);
-    entity.addComponent<ecs::GlobalTransform>();
   }
 
   if (node.camera >= 0) {
     // Camera Component can be handled here if needed
+    entity.addComponent<ecs::Camera>(m_cameras[node.camera]);
   }
 
   // Skin Component
   if (node.skin >= 0) {
     // Skins can be handled here if needed
+  }
+
+  // Recursively parse child nodes (depth-first order)
+  // This ensures parent entities are created before their children,
+  // which simplifies GlobalTransform computation later
+  for (int childIndex : node.children) {
+    const auto &childNode = m_model.nodes[childIndex];
+    parseNode(childNode, entity, scene);
   }
 }
 
@@ -477,11 +472,7 @@ void GltfLoader::parseScene(const tinygltf::Scene &scene, ecs::Scene &ecs_scene)
   for (const auto nodeIndex : scene.nodes) {
     const auto &node = m_model.nodes[nodeIndex];
 
-    auto rootEntity = ecs_scene.createEntity();
-    rootEntity.addComponent<ecs::Name>("RootNode");
-    // Root has no parent, but needs a Children component
-    rootEntity.addComponent<ecs::Children>();
-
+    auto rootEntity = ecs_scene.createEntity("RootNode");
     parseNode(node, rootEntity, ecs_scene);
   }
 }

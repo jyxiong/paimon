@@ -7,20 +7,24 @@ namespace ecs {
 
 Scene::Scene() {
   // Initialize main camera entity
-  m_mainCamera = createEntity();
-  m_mainCamera.addComponent<Name>("MainCamera");
+  m_mainCamera = createEntity("MainCamera");
   m_mainCamera.addComponent<Camera>();
-  m_mainCamera.addComponent<GlobalTransform>();
 
   // Initialize directional light entity
-  m_directionalLight = createEntity();
-  m_directionalLight.addComponent<Name>("DirectionalLight");
-  m_directionalLight.addComponent<GlobalTransform>();
+  m_directionalLight = createEntity("DirectionalLight");
   m_directionalLight.addComponent<PunctualLight>();
 }
 
-Entity Scene::createEntity() {
-  return Entity{ this, m_registry.create() };
+Entity Scene::createEntity(const std::string &name) {
+  auto entity = Entity{ this, m_registry.create() };
+
+  entity.addComponent<Name>(name.empty() ? "Entity_" + std::to_string(static_cast<uint32_t>(entity.getHandle())) : name);
+  entity.addComponent<Transform>();
+  entity.addComponent<GlobalTransform>();
+  entity.addComponent<Parent>();
+  entity.addComponent<Children>();
+
+  return entity;
 }
 
 void Scene::destroyEntity(Entity entity) {

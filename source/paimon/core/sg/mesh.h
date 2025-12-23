@@ -14,16 +14,17 @@ namespace sg {
 struct Primitive {
   PrimitiveTopology mode = PrimitiveTopology::Triangles;
 
+  size_t vertexCount = 0;
   std::shared_ptr<Buffer> positions;
   std::shared_ptr<Buffer> normals;
   std::shared_ptr<Buffer> texcoords;
   std::shared_ptr<Buffer> colors;
+
+  size_t indexCount = 0;
+  DataType indexType = DataType::UInt;
   std::shared_ptr<Buffer> indices;
 
   std::shared_ptr<Material> material = nullptr;
-
-  size_t indexCount = 0;
-  size_t vertexCount = 0;
 
   bool hasIndices() const { return indices != nullptr; }
 };
