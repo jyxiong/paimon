@@ -8,11 +8,8 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "paimon/app/window.h"
-#include "paimon/core/io/gltf.h"
 #include "paimon/core/log_system.h"
 #include "paimon/core/sg/light.h"
-#include "paimon/core/sg/material.h"
-#include "paimon/opengl/buffer.h"
 #include "paimon/opengl/texture.h"
 #include "paimon/rendering/render_context.h"
 #include "paimon/rendering/shader_manager.h"
@@ -95,8 +92,7 @@ int main() {
 
   
   // Load glTF model
-  GltfLoader loader(assetPath / "model/DamagedHelmet/glTF/DamagedHelmet.gltf");
-  loader.load(scene);
+  auto rootEntity = scene.load(assetPath / "model/DamagedHelmet/glTF/DamagedHelmet.gltf");
 
   // Create FBO textures for color and depth attachments
   Texture fbo_color_texture(GL_TEXTURE_2D);
@@ -134,13 +130,19 @@ int main() {
     // Calculate camera position rotating around the origin
     float radius = 3.0f;
 
-    // Update camera matrices
+    // // Update camera matrices
+    // {
+    //   auto entity = scene.getMainCamera();
+    //   auto &transform = entity.getComponent<ecs::Transform>();
+    //   transform.translation.x = radius * sin(glm::radians(rotation));
+    //   transform.translation.z = radius * cos(glm::radians(rotation));
+    //   transform.translation.y = 0.0f;
+    // }
+
+    // Rotate the model
     {
-      auto entity = scene.getMainCamera();
-      auto &transform = entity.getComponent<ecs::Transform>();
-      transform.translation.x = radius * sin(glm::radians(rotation));
-      transform.translation.z = radius * cos(glm::radians(rotation));
-      transform.translation.y = 0.0f;
+      auto &transform = rootEntity.getComponent<ecs::Transform>();
+      transform.rotation = glm::quat(glm::vec3(0.0f, glm::radians(rotation), 0.0f));
     }
 
     // ===== First Pass: Render to FBO =====

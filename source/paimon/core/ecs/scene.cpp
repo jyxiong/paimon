@@ -1,6 +1,7 @@
 #include "paimon/core/ecs/scene.h"
 
 #include "paimon/core/ecs/components.h"
+#include "paimon/core/io/gltf.h"
 
 namespace paimon {
 namespace ecs {
@@ -47,6 +48,12 @@ void Scene::clear() {
 
 bool Scene::valid(entt::entity entity) const {
   return m_registry.valid(entity);
+}
+
+Entity Scene::load(const std::filesystem::path &filepath) {
+  GltfLoader loader(filepath);
+  loader.load(*this);
+  return loader.getRootEntity();
 }
 
 } // namespace ecs

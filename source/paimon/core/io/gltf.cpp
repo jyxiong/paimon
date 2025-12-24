@@ -200,16 +200,17 @@ glm::mat4 parseMat4(const std::vector<double> data) {
 
 GltfLoader::GltfLoader(const std::filesystem::path &filepath) {
 
+  tinygltf::TinyGLTF loader;
   std::string errorMessage;
   std::string warningMessage;
 
   bool result = false;
   // Determine file type by extension
   if (filepath.extension() == ".glb") {
-    result = m_loader.LoadBinaryFromFile(&m_model, &errorMessage,
+    result = loader.LoadBinaryFromFile(&m_model, &errorMessage,
                                        &warningMessage, filepath.string());
   } else {
-    result = m_loader.LoadASCIIFromFile(&m_model, &errorMessage,
+    result = loader.LoadASCIIFromFile(&m_model, &errorMessage,
                                       &warningMessage, filepath.string());
   }
 
@@ -503,10 +504,9 @@ void GltfLoader::parseNode(const tinygltf::Node &node, ecs::Entity parent, ecs::
 
 void GltfLoader::parseScene(const tinygltf::Scene &scene, ecs::Scene &ecs_scene) {
   // Implementation for parsing a glTF scene into an ECS scene
+  m_rootEntity = ecs_scene.createEntity("RootNode");
   for (const auto nodeIndex : scene.nodes) {
     const auto &node = m_model.nodes[nodeIndex];
-
-    auto rootEntity = ecs_scene.createEntity("RootNode");
-    parseNode(node, rootEntity, ecs_scene);
+    parseNode(node, m_rootEntity, ecs_scene);
   }
 }
