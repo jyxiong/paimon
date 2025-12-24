@@ -222,11 +222,12 @@ GltfLoader::GltfLoader(const std::filesystem::path &filepath) {
 }
 
 void GltfLoader::load(ecs::Scene &scene) {
-  parseBuffers();
-  parseBufferViews();
+  parseBuffers();      // Step 1: buffer -> memory
+  parseBufferViews();  // Step 2: bufferView -> memory (access buffer memory)
+  parseAccessors();    // Step 3: accessor -> OpenGL Buffer (access bufferView memory)
   parseTextures();
   parseMaterials();
-  parseMeshes();
+  parseMeshes();       // Step 4: mesh primitives reference accessor Buffers
   parseLights();
   parseCameras();
 
@@ -239,19 +240,52 @@ void GltfLoader::load(ecs::Scene &scene) {
 // ============================================================================
 
 void GltfLoader::parseBuffers() {
+  LOG_INFO("Parsing {} buffers", m_model.buffers.size());
+  
   for (const auto &buffer : m_model.buffers) {
-    auto gl_buffer = std::make_shared<Buffer>();
-    gl_buffer->set_storage(buffer.data.size(), buffer.data.data());
-    m_buffers.push_back(std::move(gl_buffer));
+    std::vector<uint8_t> bufferData(buffer.data.begin(), buffer.data.end());    
+    m_buffers.push_back(std::move(bufferData));
   }
 }
 
 void GltfLoader::parseBufferViews() {
+  LOG_INFO("Parsing {} buffer views", m_model.bufferViews.size());
+
   for (const auto &bufferView : m_model.bufferViews) {
+    const auto &buffer = m_buffers[bufferView.buffer];
+    auto begin = buffer.begin() + bufferView.byteOffset;
+    std::vector<uint8_t> bufferViewData(begin, begin + bufferView.byteLength);
+    m_bufferViews.push_back(std::move(bufferViewData));
+  }
+}
+
+void GltfLoader::parseAccessors() {
+  LOG_INFO("Parsing {} accessors", m_model.accessors.size());
+  
+  for (const auto &accessor : m_model.accessors) {   
+    const auto &sourceBufferView = m_bufferViews[accessor.bufferView];
+    const auto &bufferView = m_model.bufferViews[accessor.bufferView];
+    
+    // Use tinygltf's ByteStride utility function
+    auto elementSize =
+        tinygltf::GetComponentSizeInBytes(accessor.componentType) *
+        tinygltf::GetNumComponentsInType(accessor.type);
+
+    // Extract tightly packed data from bufferView
+    std::vector<uint8_t> accessorData;
+    accessorData.reserve(accessor.count * elementSize);
+    
+    auto stride = accessor.ByteStride(bufferView);
+    for (size_t j = 0; j < accessor.count; ++j) {
+      auto offset = accessor.byteOffset + j * stride;
+      auto begin = sourceBufferView.begin() + offset;
+      accessorData.insert(accessorData.end(), begin, begin + elementSize);
+    }
+    
+    // Create OpenGL Buffer with tightly packed data
     auto gl_buffer = std::make_shared<Buffer>();
-    gl_buffer->set_storage(bufferView.byteLength, nullptr, GL_DYNAMIC_STORAGE_BIT);
-    gl_buffer->copy_sub_data(*m_buffers[bufferView.buffer], bufferView.byteOffset, 0, bufferView.byteLength);
-    m_bufferViews.push_back(std::move(gl_buffer));
+    gl_buffer->set_storage(accessorData.size(), accessorData.data(), 0);    
+    m_accessors.push_back(std::move(gl_buffer));
   }
 }
 
@@ -313,18 +347,18 @@ void GltfLoader::parseMeshes() {
 
         sg_primitive.vertexCount = accessor.count;
 
-        // Assign the GL buffer to the corresponding primitive attribute
+        // Assign the OpenGL buffer from accessor (independent buffer layout)
         if (attributeName == "POSITION") {
-          sg_primitive.positions = m_bufferViews[accessor.bufferView];
+          sg_primitive.positions = m_accessors[accessorIndex];
         } else if (attributeName == "NORMAL") {
-          sg_primitive.normals = m_bufferViews[accessor.bufferView];
+          sg_primitive.normals = m_accessors[accessorIndex];
         } else if (attributeName.rfind("TEXCOORD", 0) == 0) {
           // assign first texcoord into texcoords (TEXCOORD_0)
           if (attributeName == "TEXCOORD_0") {
-            sg_primitive.texcoords = m_bufferViews[accessor.bufferView];
+            sg_primitive.texcoords = m_accessors[accessorIndex];
           }
         } else if (attributeName.rfind("COLOR", 0) == 0) {
-          sg_primitive.colors = m_bufferViews[accessor.bufferView];
+          sg_primitive.colors = m_accessors[accessorIndex];
         } else {
           // other attributes can be ignored for now or handled later
         }
@@ -335,7 +369,7 @@ void GltfLoader::parseMeshes() {
         const auto &accessor = m_model.accessors[primitive.indices];
         sg_primitive.indexCount = accessor.count;
         sg_primitive.indexType = parseCompnentType(accessor.componentType);
-        sg_primitive.indices = m_bufferViews[accessor.bufferView];
+        sg_primitive.indices = m_accessors[primitive.indices];
       }
 
       sg_primitive.material = m_materials[primitive.material];
