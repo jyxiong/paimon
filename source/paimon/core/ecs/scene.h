@@ -1,5 +1,7 @@
 #pragma once
 
+#include <filesystem>
+
 #include <entt/entt.hpp>
 
 #include "paimon/core/ecs/entity.h"
@@ -54,6 +56,8 @@ public:
 
   // Check if entity is valid
   bool valid(entt::entity entity) const;
+
+  Entity load(const std::filesystem::path &filepath);
 
 private:
   entt::registry m_registry;
