@@ -36,6 +36,7 @@ public:
 private:
   void parseBuffers();
   void parseBufferViews();
+  void parseAccessors();
   void parseTextures();
   void parseMaterials();
   void parseMeshes();
@@ -51,9 +52,11 @@ private:
 
   std::vector<std::shared_ptr<Sampler>> m_samplers;
   std::vector<std::shared_ptr<Texture>> m_images;
-  std::vector<std::shared_ptr<Buffer>> m_buffers;
-
-  std::vector<std::shared_ptr<Buffer>> m_bufferViews;
+  
+  // Raw memory storage
+  std::vector<std::vector<uint8_t>> m_buffers;      // Buffer data in memory
+  std::vector<std::vector<uint8_t>> m_bufferViews; // BufferView data in memory
+  std::vector<std::shared_ptr<Buffer>> m_accessors; // Accessor -> OpenGL Buffer
 
   std::vector<std::shared_ptr<sg::Texture>> m_textures;
   std::vector<std::shared_ptr<sg::Material>> m_materials;

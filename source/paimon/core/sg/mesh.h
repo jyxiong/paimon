@@ -6,6 +6,7 @@
 
 #include "paimon/core/sg/material.h"
 #include "paimon/opengl/buffer.h"
+#include "paimon/opengl/state/vertex_input.h"
 #include "paimon/opengl/type.h"
 
 namespace paimon {
@@ -27,6 +28,10 @@ struct Primitive {
   std::shared_ptr<Material> material = nullptr;
 
   bool hasIndices() const { return indices != nullptr; }
+
+  static std::vector<VertexInputState::Binding> bindings();
+
+  static std::vector<VertexInputState::Attribute> attributes();
 };
 
 struct Mesh {
