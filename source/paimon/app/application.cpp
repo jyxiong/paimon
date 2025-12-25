@@ -6,29 +6,25 @@
 
 namespace paimon {
 
-Application& Application::getInstance() {
-  static Application instance;
-  return instance;
-}
-
-Application::Application() : m_running(false) {
+Application::Application(const ApplicationConfig& config) : m_running(false) {
   // Create window
-  WindowConfig config;
-  m_window = Window::create(config);
+  m_window = Window::create(config.windowConfig);
 
   // Set event callback
   m_window->setEventCallback([this](Event& event) {
     onEvent(event);
   });
 
+  m_imguiLayer = static_cast<ImGuiLayer*>(
+      pushLayer(std::make_unique<ImGuiLayer>("ImGuiLayer", *m_window)));
+
   m_running = true;
 }
 
-Application::~Application() {}
-
-void Application::pushLayer(std::unique_ptr<Layer> layer) {
+Layer* Application::pushLayer(std::unique_ptr<Layer> layer) {
   layer->onAttach();
   m_layers.push_back(std::move(layer));
+  return m_layers.back().get();
 }
 
 void Application::run() {
@@ -42,10 +38,12 @@ void Application::run() {
       layer->onUpdate();
     }
 
-    // // Render layers
-    // for (auto &layer : m_layers) {
-    //   layer->onImGuiRender();
-    // }
+    // Render layers
+    m_imguiLayer->begin();
+    for (auto &layer : m_layers) {
+      layer->onImGuiRender();
+    }
+    m_imguiLayer->end();
 
     // Swap buffers
     m_window->swapBuffers();
@@ -75,9 +73,12 @@ bool Application::onWindowClose(const WindowCloseEvent& event) {
 }
 
 bool Application::onWindowResize(const WindowResizeEvent& event) {
-  // TODO: Handle window resize (e.g., update viewport)
-  // For example: glViewport(0, 0, event.getWidth(), event.getHeight());
-  return false;
+
+  // for (auto& layer : m_layers) {
+  //   layer->onResize(event.getWidth(), event.getHeight());
+  // }
+
+  return true;
 }
 
 } // namespace paimon

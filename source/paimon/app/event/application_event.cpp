@@ -20,7 +20,7 @@ const char* WindowCloseEvent::getName() const { return "WindowClose"; }
 
 int WindowCloseEvent::getCategoryFlags() const { return EventCategoryApplication; }
 
-WindowResizeEvent::WindowResizeEvent(uint32_t width, uint32_t height)
+WindowResizeEvent::WindowResizeEvent(int32_t width, int32_t height)
     : m_width(width), m_height(height) {}
 
 std::string WindowResizeEvent::toString() const {
