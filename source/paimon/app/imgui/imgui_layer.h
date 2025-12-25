@@ -1,13 +1,12 @@
 #pragma once
 
 #include "paimon/app/layer.h"
-#include "paimon/app/window.h"
 
 namespace paimon {
 
 class ImGuiLayer : public Layer {
 public:
-  ImGuiLayer(const std::string &name, const Window &window);
+  ImGuiLayer(const std::string &name);
 
   ~ImGuiLayer() = default;
 
@@ -28,8 +27,6 @@ private:
   void showDockingDisabledMessage();
 
 private:
-  const Window &m_window;
-
   static bool s_showDockSpace;
 };
 } // namespace paimon

@@ -16,7 +16,7 @@ Application::Application(const ApplicationConfig& config) : m_running(false) {
   });
 
   m_imguiLayer = static_cast<ImGuiLayer*>(
-      pushLayer(std::make_unique<ImGuiLayer>("ImGuiLayer", *m_window)));
+      pushLayer(std::make_unique<ImGuiLayer>("ImGuiLayer")));
 
   m_running = true;
 }

@@ -1,5 +1,7 @@
 #include "paimon/app/imgui/imgui_layer.h"
 
+#include <GLFW/glfw3.h>
+
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_opengl3.h>
 #include <imgui.h>
@@ -8,8 +10,8 @@ using namespace paimon;
 
 bool ImGuiLayer::s_showDockSpace = true;
 
-ImGuiLayer::ImGuiLayer(const std::string &name, const Window &window)
-    : Layer(name), m_window(window) {}
+ImGuiLayer::ImGuiLayer(const std::string &name)
+    : Layer(name) {}
 
 void ImGuiLayer::onAttach() {
 
@@ -64,7 +66,8 @@ void ImGuiLayer::onAttach() {
   }
 
   // Setup Platform/Renderer backends
-  ImGui_ImplGlfw_InitForOpenGL(m_window.getNativeWindow(), true);
+  GLFWwindow *window = glfwGetCurrentContext();
+  ImGui_ImplGlfw_InitForOpenGL(window, true);
 #ifdef __EMSCRIPTEN__
   ImGui_ImplGlfw_InstallEmscriptenCallbacks(window, "#canvas");
 #endif
