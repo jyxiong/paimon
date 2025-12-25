@@ -33,6 +33,20 @@ if(NOT TARGET glm)
     target_compile_definitions(glm INTERFACE GLM_ENABLE_EXPERIMENTAL)
 endif()
 
+if (NOT TARGET imgui)
+    file(GLOB IMGUI_SOURCES CONFIGURE_DEPENDS imgui/*.cpp)
+    file(GLOB IMGUI_IMPL CONFIGURE_DEPENDS
+        imgui/backends/imgui_impl_glfw.cpp
+        imgui/backends/imgui_impl_glfw.h
+        imgui/backends/imgui_impl_opengl3.cpp
+        imgui/backends/imgui_impl_opengl3.h)
+
+    add_library(imgui STATIC ${IMGUI_SOURCES} ${IMGUI_IMPL})
+    target_include_directories(imgui PUBLIC imgui)
+    target_link_libraries(imgui PUBLIC glfw)
+    set_target_properties(imgui PROPERTIES FOLDER ${EXTERNAL_DIR}/imgui)
+endif()
+
 if (NOT TARGET nlohmann_json)
     add_subdirectory(json)
     set_target_properties(nlohmann_json PROPERTIES FOLDER ${EXTERNAL_DIR}/json)

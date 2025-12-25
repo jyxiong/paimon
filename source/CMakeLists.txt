@@ -31,6 +31,6 @@ endif()
 
 # target_compile_options(${TARGET_NAME})
 
-target_link_libraries(${TARGET_NAME} PUBLIC EnTT glad glfw glm spdlog stb tinygltf ${OPENGL_LIBRARIES} ${X11_LIBRARIES})
+target_link_libraries(${TARGET_NAME} PUBLIC EnTT glad glfw glm imgui spdlog stb tinygltf ${OPENGL_LIBRARIES} ${X11_LIBRARIES})
 
 # target_link_options(${TARGET_NAME})
