@@ -42,6 +42,8 @@ public:
 
   void destroy();
 
+  GLFWwindow* getNativeWindow() const { return m_window; }
+
   static std::unique_ptr<Window> create(const WindowConfig &config);
 
   // Input functions
@@ -50,6 +52,8 @@ public:
   std::pair<double, double> getMousePosition() const;
 
   void setEventCallback(const std::function<void(Event&)>& callback) { m_eventCallback = callback; }
+
+  const std::function<void(Event&)>& getEventCallback() const { return m_eventCallback; }
 
 private:
   GLFWwindow *m_window = nullptr;
