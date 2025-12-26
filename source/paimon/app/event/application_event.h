@@ -20,10 +20,10 @@ public:
 
 class WindowResizeEvent : public Event {
 public:
-  WindowResizeEvent(uint32_t width, uint32_t height);
+  WindowResizeEvent(int32_t width, int32_t height);
 
-  uint32_t getWidth() const { return m_width; }
-  uint32_t getHeight() const { return m_height; }
+  int32_t getWidth() const { return m_width; }
+  int32_t getHeight() const { return m_height; }
 
   std::string toString() const override;
 
@@ -33,7 +33,7 @@ public:
   int getCategoryFlags() const override;
 
 private:
-  uint32_t m_width, m_height;
+  int32_t m_width, m_height;
 };
 
 class WindowFocusEvent : public Event {

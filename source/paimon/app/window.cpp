@@ -11,93 +11,93 @@ using namespace paimon;
 
 static void windowCloseCallback(GLFWwindow* window) {
   Window* win = static_cast<Window*>(glfwGetWindowUserPointer(window));
-  if (win->m_eventCallback) {
+  if (win->getEventCallback()) {
     WindowCloseEvent event;
-    win->m_eventCallback(event);
+    win->getEventCallback()(event);
   }
 }
 
 static void windowSizeCallback(GLFWwindow* window, int width, int height) {
   Window* win = static_cast<Window*>(glfwGetWindowUserPointer(window));
-  if (win->m_eventCallback) {
+  if (win->getEventCallback()) {
     WindowResizeEvent event(static_cast<uint32_t>(width), static_cast<uint32_t>(height));
-    win->m_eventCallback(event);
+    win->getEventCallback()(event);
   }
 }
 
 static void windowFocusCallback(GLFWwindow* window, int focused) {
   Window* win = static_cast<Window*>(glfwGetWindowUserPointer(window));
-  if (win->m_eventCallback) {
+  if (win->getEventCallback()) {
     if (focused) {
       WindowFocusEvent event;
-      win->m_eventCallback(event);
+      win->getEventCallback()(event);
     } else {
       WindowLostFocusEvent event;
-      win->m_eventCallback(event);
+      win->getEventCallback()(event);
     }
   }
 }
 
 static void windowPosCallback(GLFWwindow* window, int x, int y) {
   Window* win = static_cast<Window*>(glfwGetWindowUserPointer(window));
-  if (win->m_eventCallback) {
+  if (win->getEventCallback()) {
     WindowMovedEvent event(x, y);
-    win->m_eventCallback(event);
+    win->getEventCallback()(event);
   }
 }
 
 static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
   Window* win = static_cast<Window*>(glfwGetWindowUserPointer(window));
-  if (win->m_eventCallback) {
+  if (win->getEventCallback()) {
     KeyCode keyCode = static_cast<KeyCode>(key);
     if (action == GLFW_PRESS) {
       KeyPressedEvent event(keyCode, 0); // repeat count 0 for now
-      win->m_eventCallback(event);
+      win->getEventCallback()(event);
     } else if (action == GLFW_RELEASE) {
       KeyReleasedEvent event(keyCode);
-      win->m_eventCallback(event);
+      win->getEventCallback()(event);
     } else if (action == GLFW_REPEAT) {
       KeyPressedEvent event(keyCode, 1); // repeat
-      win->m_eventCallback(event);
+      win->getEventCallback()(event);
     }
   }
 }
 
 static void charCallback(GLFWwindow* window, unsigned int codepoint) {
   Window* win = static_cast<Window*>(glfwGetWindowUserPointer(window));
-  if (win->m_eventCallback) {
+  if (win->getEventCallback()) {
     KeyTypedEvent event(static_cast<KeyCode>(codepoint));
-    win->m_eventCallback(event);
+    win->getEventCallback()(event);
   }
 }
 
 static void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
   Window* win = static_cast<Window*>(glfwGetWindowUserPointer(window));
-  if (win->m_eventCallback) {
+  if (win->getEventCallback()) {
     MouseCode mouseCode = static_cast<MouseCode>(button);
     if (action == GLFW_PRESS) {
       MouseButtonPressedEvent event(mouseCode);
-      win->m_eventCallback(event);
+      win->getEventCallback()(event);
     } else if (action == GLFW_RELEASE) {
       MouseButtonReleasedEvent event(mouseCode);
-      win->m_eventCallback(event);
+      win->getEventCallback()(event);
     }
   }
 }
 
 static void cursorPosCallback(GLFWwindow* window, double x, double y) {
   Window* win = static_cast<Window*>(glfwGetWindowUserPointer(window));
-  if (win->m_eventCallback) {
+  if (win->getEventCallback()) {
     MouseMovedEvent event(static_cast<float>(x), static_cast<float>(y));
-    win->m_eventCallback(event);
+    win->getEventCallback()(event);
   }
 }
 
 static void scrollCallback(GLFWwindow* window, double xOffset, double yOffset) {
   Window* win = static_cast<Window*>(glfwGetWindowUserPointer(window));
-  if (win->m_eventCallback) {
+  if (win->getEventCallback()) {
     MouseScrolledEvent event(static_cast<float>(xOffset), static_cast<float>(yOffset));
-    win->m_eventCallback(event);
+    win->getEventCallback()(event);
   }
 }
 

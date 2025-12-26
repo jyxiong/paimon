@@ -87,9 +87,9 @@ public:
     // Cleanup resources (RAII handles most cleanup automatically)
   }
 
-  void onEvent(Event &event) override {
-    LOG_INFO("{}", event.toString());
-  }
+  void onEvent(Event &event) override { LOG_INFO("{}", event.toString()); }
+
+  void onImGuiRender() override {}
 
 private:
   Shader m_vertexShader{GL_VERTEX_SHADER};
@@ -101,7 +101,10 @@ private:
 
 int main() {
   LogSystem::init();
-  auto& app = Application::getInstance();
+  Application app({.windowConfig = {.title = "Triangle Example",
+                                    .width = 800,
+                                    .height = 600},
+                   .assetPath = "../assets/"});
   app.pushLayer(std::make_unique<TriangleLayer>());
   app.run();
   return 0;
