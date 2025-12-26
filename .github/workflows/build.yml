@@ -14,19 +14,34 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           submodules: recursive
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.x'
+      - name: Cache pip dependencies
+        uses: actions/cache@v5
+        with:
+          path: ~\AppData\Local\pip\Cache
+          key: ${{ runner.os }}-pip-${{ hashFiles('external/glad/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r external/glad/requirements.txt
+      - name: Cache CMake build
+        uses: actions/cache@v5
+        with:
+          path: build
+          key: ${{ runner.os }}-cmake-${{ hashFiles('**/CMakeLists.txt') }}-${{ hashFiles('**/*.cpp', '**/*.h') }}
+          restore-keys: |
+            ${{ runner.os }}-cmake-${{ hashFiles('**/CMakeLists.txt') }}-
+            ${{ runner.os }}-cmake-
       - name: Configure CMake
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
       - name: Build
@@ -36,11 +51,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           submodules: recursive
+      - name: Cache apt packages
+        uses: actions/cache@v5
+        with:
+          path: /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/build.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-apt-
       - name: Install dependencies
         run: sudo apt-get update && sudo apt-get install -y libwayland-dev libxkbcommon-dev xorg-dev
+      - name: Cache CMake build
+        uses: actions/cache@v5
+        with:
+          path: build
+          key: ${{ runner.os }}-cmake-${{ hashFiles('**/CMakeLists.txt') }}-${{ hashFiles('**/*.cpp', '**/*.h') }}
+          restore-keys: |
+            ${{ runner.os }}-cmake-${{ hashFiles('**/CMakeLists.txt') }}-
+            ${{ runner.os }}-cmake-
       - name: Configure CMake
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
       - name: Build
