@@ -9,8 +9,6 @@
 #include "paimon/app/imgui/imgui_layer.h"
 #include "paimon/app/layer.h"
 #include "paimon/app/window.h"
-#include "paimon/core/ecs/scene.h"
-#include "paimon/rendering/render_context.h"
 
 namespace paimon {
 
@@ -27,7 +25,13 @@ public:
   Application(const Application&) = delete;
   Application& operator=(const Application&) = delete;
 
-  Layer* pushLayer(std::unique_ptr<Layer> layer);
+  template <class T>
+    requires std::is_base_of<Layer, T>::value
+  T *pushLayer(std::unique_ptr<T> layer) {
+    layer->onAttach();
+    m_layers.push_back(std::move(layer));
+    return static_cast<T *>(m_layers.back().get());
+  }
 
   void run();
 

@@ -1,21 +1,39 @@
 #pragma once
 
+#include "glm/fwd.hpp"
+#include "paimon/core/ecs/entity.h"
 #include "paimon/rendering/render_context.h"
-#include "paimon/core/fg/transient_resources.h"
+#include "paimon/core/ecs/scene.h"
+#include "paimon/app/layer.h"
+
+#include "color_pass.h"
+#include "final_pass.h"
 
 namespace paimon {
 
-class Renderer {
+class Renderer : public Layer {
 public:
-  Renderer(RenderContext &renderContext);
+  Renderer();
 
-  void render();
+  void onAttach() override {}
+  void onDetach() override {}
+  void onUpdate() override;
+  void onEvent(Event &event) override {}
+  void onImGuiRender() override {}
+
+  void onResize(int32_t width, int32_t height);
+
+  ecs::Entity loadScene(const std::filesystem::path &scenePath);
 
 private:
-  RenderContext &m_renderContext;
-  TransientResources m_transientResources;
+  std::unique_ptr<RenderContext> m_renderContext;
 
-  
-  float m_rotation = 0.0f;
+  std::unique_ptr<ecs::Scene> m_scene;
+
+  glm::ivec2 m_resolution;
+
+  ColorPass m_color_pass;
+  FinalPass m_final_pass;
+
 };
 }

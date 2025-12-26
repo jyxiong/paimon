@@ -15,7 +15,7 @@ ImGuiLayer::ImGuiLayer(const std::string &name)
 
 void ImGuiLayer::onAttach() {
 
-  const char *glsl_version = "#version 130";
+  const char *glsl_version = "#version 460";
   float main_scale = ImGui_ImplGlfw_GetContentScaleForMonitor(glfwGetPrimaryMonitor()); // Valid on GLFW 3.3+ only
 
   // Initialize ImGui context and setup here

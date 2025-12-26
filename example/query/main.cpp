@@ -21,8 +21,8 @@ int main() {
               .minorVersion = 5,
               .profile = ContextProfile::Core,
           },
-      .width = static_cast<uint32_t>(g_size.x),
-      .height = static_cast<uint32_t>(g_size.y),
+      .width = g_size.x,
+      .height = g_size.y,
   });
 
   Query query(GL_TIME_ELAPSED);

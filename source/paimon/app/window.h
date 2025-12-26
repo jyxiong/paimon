@@ -17,8 +17,8 @@ namespace paimon {
 struct WindowConfig {
   std::string title = "Paimon Window";
   ContextFormat format;
-  uint32_t width = 800;
-  uint32_t height = 600;
+  int32_t width = 800;
+  int32_t height = 600;
   bool resizable = false;
   bool visible = true;
   bool fullscreen = false;
@@ -32,7 +32,7 @@ public:
 
   ~Window();
 
-  void resize(uint32_t width, uint32_t height);
+  void resize(int32_t width, int32_t height);
 
   void pollEvents();
 

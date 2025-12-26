@@ -475,6 +475,8 @@ void GltfLoader::parseNode(const tinygltf::Node &node, ecs::Entity parent, ecs::
 
   // Mesh Component
   if (node.mesh >= 0) {
+    
+
     entity.addComponent<ecs::Mesh>(m_meshes[node.mesh]);
   }
 

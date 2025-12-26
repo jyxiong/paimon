@@ -1,6 +1,7 @@
-#include <glm/glm.hpp>
 #include <memory>
 #include <string>
+
+#include <glm/glm.hpp>
 
 #include "paimon/app/application.h"
 #include "paimon/app/layer.h"

@@ -12,13 +12,14 @@
 namespace paimon {
 
 struct TransformUBO {
-  alignas(16) glm::mat4 model;
+  glm::mat4 model;
 };
 
 struct CameraUBO {
-  alignas(16) glm::mat4 view;
-  alignas(16) glm::mat4 projection;
+  glm::mat4 view;
+  glm::mat4 projection;
   glm::vec3 position;
+  float _padding[1]; // alignment - vec3 needs to be aligned as vec4 in std140
 };
 
 struct LightingUBO {
@@ -30,21 +31,22 @@ struct LightingUBO {
   float innerConeAngle;
   float outerConeAngle;
   int type;
+  float _padding[2]; // alignment
 };
 
 struct MaterialUBO {
-  alignas(16) glm::vec4 baseColorFactor;
-  alignas(16) glm::vec3 emissiveFactor;
-  alignas(4) float metallicFactor;
-  alignas(4) float roughnessFactor;
-  alignas(4) float _padding[3]; // alignment
+  glm::vec4 baseColorFactor;
+  glm::vec3 emissiveFactor;
+  float metallicFactor;
+  float roughnessFactor;
+  float _padding[3]; // alignment
 };
 
 class ColorPass {
 public:
   ColorPass(RenderContext &renderContext);
 
-  void draw(RenderContext &ctx, const glm::ivec2 &g_size, ecs::Scene &scene);
+  void draw(RenderContext &ctx, const glm::ivec2 &resolution, ecs::Scene &scene);
 
   Texture* getColorTexture() const { return m_color_texture.get(); }
 
