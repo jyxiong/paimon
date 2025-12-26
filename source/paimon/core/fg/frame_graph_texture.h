@@ -26,6 +26,9 @@ public:
 
   void preWrite(void *context, const Descriptor &desc, uint32_t flags = 0);
 
+  Texture *getTexture() { return m_texture; }
+  const Texture *getTexture() const { return m_texture; }
+
 private:
   Texture *m_texture = nullptr;
 };

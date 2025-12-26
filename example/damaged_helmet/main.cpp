@@ -104,9 +104,8 @@ int main() {
   // Create render context
   RenderContext ctx;
 
-  // Create screen quad (it will load shaders internally from singleton)
-  ColorPass color_pass(ctx);
-  FinalPass final_pass(ctx);
+  // Create Renderer (it will own per-pass resources)
+  Renderer renderer(ctx, texturePtrMap);
 
 
   LOG_INFO("Setup complete, entering render loop");

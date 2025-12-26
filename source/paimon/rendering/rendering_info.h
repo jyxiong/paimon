@@ -29,6 +29,8 @@ struct ClearValue {
     struct {
       float r, g, b, a;
     } color;
+    float depth;
+    uint32_t stencil;
     struct {
       float depth;
       uint32_t stencil;
@@ -43,6 +45,18 @@ struct ClearValue {
     value.color.g = g;
     value.color.b = b;
     value.color.a = a;
+    return value;
+  }
+
+  static ClearValue Depth(float depth) {
+    ClearValue value;
+    value.depth = depth;
+    return value;
+  }
+
+  static ClearValue Stencil(uint32_t stencil) {
+    ClearValue value;
+    value.stencil = stencil;
     return value;
   }
 

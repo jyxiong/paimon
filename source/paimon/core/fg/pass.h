@@ -27,7 +27,7 @@ public:
   ~Pass() override = default;
 
   void execute(FrameGraphResources &resources, void *context) const override {
-    std::invoke(m_executor, resources, context);
+    std::invoke(m_executor, m_data, resources, context);
   }
 
   TData &get_data() { return m_data; }

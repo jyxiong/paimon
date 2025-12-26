@@ -6,6 +6,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "paimon/app/window.h"
+#include "paimon/core/log_system.h"
 #include "paimon/core/fg/frame_graph.h"
 #include "paimon/core/fg/frame_graph_texture.h"
 #include "paimon/core/fg/transient_resources.h"
@@ -388,6 +389,8 @@ void renderScene(RenderData &rd, Program &program, bool isShadowPass) {
 }
 
 int main() {
+  LogSystem::init();
+
   auto window = Window::create(WindowConfig{
       .title = "Frame Graph Shadow Mapping Example",
       .format =
@@ -403,6 +406,9 @@ int main() {
       .visible = true,
       .vsync = true,
   });
+
+  RenderContext rc;
+  TransientResources allocator(rc);
 
   RenderData renderData;
 
@@ -463,7 +469,7 @@ int main() {
             });
         data.shadow_map = builder.write(data.shadow_map);
       },
-      [&renderData](FrameGraphResources &resources, void *context) {
+      [&renderData](const ShadowPassData &data, FrameGraphResources &resources, void *context) {
         std::cout << "Executing Shadow Pass\n";
 
         // Bind shadow framebuffer
@@ -493,7 +499,7 @@ int main() {
       [&](FrameGraph::Builder &builder, ScenePassData &data) {
         data.shadow_input = builder.read(shadow_pass.shadow_map);
       },
-      [&renderData](FrameGraphResources &resources, void *context) {
+      [&renderData](const ScenePassData &data, FrameGraphResources &resources, void *context) {
         std::cout << "Executing Scene Pass\n";
 
         // Render to default framebuffer
@@ -548,8 +554,6 @@ int main() {
   while (!window->shouldClose()) {
     window->pollEvents();
 
-    RenderContext rc;
-    TransientResources allocator(rc);
     fg.execute(&rc, &allocator);
 
     window->swapBuffers();
