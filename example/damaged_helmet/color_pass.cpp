@@ -79,7 +79,7 @@ ColorPass::ColorPass(RenderContext &renderContext)
   m_material_ubo.bind_base(GL_UNIFORM_BUFFER, 3);
 }
 
-void ColorPass::draw(RenderContext &ctx, const glm::ivec2 &g_size,
+void ColorPass::draw(RenderContext &ctx, const glm::ivec2 &resolution,
                      ecs::Scene &scene) {
   // Update GlobalTransform for all entities (DFS order guaranteed by entity
   // creation) Transform uses TRS (easy to edit), GlobalTransform uses Matrix
@@ -115,7 +115,7 @@ void ColorPass::draw(RenderContext &ctx, const glm::ivec2 &g_size,
     glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
 
     CameraUBO cameraData;
-    cameraData.view = glm::lookAt(position, target, up);
+    cameraData.view = glm::lookAt(position, target, up);    
     cameraData.projection = camera->getProjection();
     cameraData.position = position;
     m_camera_ubo.set_sub_data(0, sizeof(CameraUBO), &cameraData);
@@ -142,14 +142,14 @@ void ColorPass::draw(RenderContext &ctx, const glm::ivec2 &g_size,
     m_lighting_ubo.set_sub_data(0, sizeof(LightingUBO), &lightingData);
   }
 
-  m_color_texture->set_storage_2d(1, GL_RGBA8, g_size.x, g_size.y);
-  m_depth_texture->set_storage_2d(1, GL_DEPTH_COMPONENT32, g_size.x, g_size.y);
+  m_color_texture->set_storage_2d(1, GL_RGBA8, resolution.x, resolution.y);
+  m_depth_texture->set_storage_2d(1, GL_DEPTH_COMPONENT32, resolution.x, resolution.y);
 
   {
     // Setup rendering info for FBO
     RenderingInfo renderingInfo;
     renderingInfo.renderAreaOffset = {0, 0};
-    renderingInfo.renderAreaExtent = {g_size.x, g_size.y};
+    renderingInfo.renderAreaExtent = {resolution.x, resolution.y};
 
     // Setup color attachment
     renderingInfo.colorAttachments.emplace_back(
@@ -168,12 +168,10 @@ void ColorPass::draw(RenderContext &ctx, const glm::ivec2 &g_size,
     ctx.bindPipeline(*m_pipeline);
 
     // Set viewport
-    ctx.setViewport(0, 0, g_size.x, g_size.y);
+    ctx.setViewport(0, 0, resolution.x, resolution.y);
 
     // Iterate over entities with Mesh component
     auto meshView = scene.view<ecs::Mesh, ecs::GlobalTransform>();
-    int meshCount = 0;
-
     for (auto entity : meshView) {
       auto &mesh = meshView.get<ecs::Mesh>(entity).mesh;
       auto &transform = meshView.get<ecs::GlobalTransform>(entity);
@@ -248,10 +246,8 @@ void ColorPass::draw(RenderContext &ctx, const glm::ivec2 &g_size,
         // Draw the primitive
         if (primitive.hasIndices()) {
           ctx.drawElements(primitive.indexCount, nullptr);
-          meshCount++;
         } else if (primitive.positions) {
           ctx.drawArrays(0, primitive.vertexCount);
-          meshCount++;
         }
       }
     }

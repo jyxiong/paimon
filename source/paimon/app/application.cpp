@@ -15,16 +15,9 @@ Application::Application(const ApplicationConfig& config) : m_running(false) {
     onEvent(event);
   });
 
-  m_imguiLayer = static_cast<ImGuiLayer*>(
-      pushLayer(std::make_unique<ImGuiLayer>("ImGuiLayer")));
+  m_imguiLayer = pushLayer(std::make_unique<ImGuiLayer>("ImGuiLayer"));
 
   m_running = true;
-}
-
-Layer* Application::pushLayer(std::unique_ptr<Layer> layer) {
-  layer->onAttach();
-  m_layers.push_back(std::move(layer));
-  return m_layers.back().get();
 }
 
 void Application::run() {
@@ -38,12 +31,12 @@ void Application::run() {
       layer->onUpdate();
     }
 
-    // Render layers
-    m_imguiLayer->begin();
-    for (auto &layer : m_layers) {
-      layer->onImGuiRender();
-    }
-    m_imguiLayer->end();
+    // // Render layers
+    // m_imguiLayer->begin();
+    // for (auto &layer : m_layers) {
+    //   layer->onImGuiRender();
+    // }
+    // m_imguiLayer->end();
 
     // Swap buffers
     m_window->swapBuffers();

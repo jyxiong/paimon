@@ -133,7 +133,7 @@ Window::~Window() {
   glfwTerminate();
 }
 
-void Window::resize(uint32_t width, uint32_t height) {
+void Window::resize(int32_t width, int32_t height) {
   glfwSetWindowSize(m_window, width, height);
 }
 
