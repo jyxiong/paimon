@@ -1,15 +1,8 @@
 #include "paimon/rendering/render_context.h"
 
-#include "paimon/opengl/shader_program.h"
 #include <cstdint>
 
 namespace paimon {
-
-ShaderProgram* RenderContext::createShaderProgram(const ShaderSource& source,
-                                            const std::vector<ShaderDefine>& defines) {
-
-  return m_shaderProgramCache.get(source, defines);
-}
 
 void RenderContext::beginRendering(const RenderingInfo& info) {
   m_insideRenderPass = true;

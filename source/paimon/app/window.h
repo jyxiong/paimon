@@ -16,7 +16,6 @@ namespace paimon {
 
 struct WindowConfig {
   std::string title = "Paimon Window";
-  ContextFormat format;
   int32_t width = 800;
   int32_t height = 600;
   bool resizable = false;
@@ -44,7 +43,7 @@ public:
 
   GLFWwindow* getNativeWindow() const { return m_window; }
 
-  static std::unique_ptr<Window> create(const WindowConfig &config);
+  static std::unique_ptr<Window> create(const WindowConfig &config, const ContextFormat &format = ContextFormat());
 
   // Input functions
   bool isKeyPressed(KeyCode key) const;

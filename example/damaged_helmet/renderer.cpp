@@ -1,12 +1,13 @@
 #include "renderer.h"
+
 #include "paimon/core/ecs/entity.h"
 #include "paimon/core/ecs/scene.h"
-#include <memory>
 
 using namespace paimon;
 
 Renderer::Renderer()
-    : Layer("Renderer"), m_renderContext(std::make_unique<RenderContext>()),
+    : Layer("Renderer"), 
+      m_renderContext(std::make_unique<RenderContext>()),
       m_scene(std::make_unique<ecs::Scene>()),
       m_color_pass(*m_renderContext), m_final_pass(*m_renderContext) {}
 
