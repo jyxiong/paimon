@@ -3,17 +3,13 @@
 #include <algorithm>
 #include <unordered_map>
 
-#include "glad/gl.h"
+#include <glad/gl.h>
+
 #include "paimon/core/io/file.h"
 #include "paimon/core/log_system.h"
 #include "paimon/rendering/shader_source.h"
 
 using namespace paimon;
-
-ShaderManager& ShaderManager::getInstance() {
-  static ShaderManager instance;
-  return instance;
-}
 
 ShaderManager::ShaderManager() {}
 
@@ -42,8 +38,9 @@ void ShaderManager::load(const std::filesystem::path &directory) {
   }
 }
 
-const ShaderSource &ShaderManager::getShaderSource(const std::string &name) const {
-  return m_shaderSources.at(name);
+ShaderProgram* ShaderManager::createShaderProgram(const std::string &name,
+                                            const std::vector<ShaderDefine>& defines) {
+  return m_shaderProgramCache.get(m_shaderSources.at(name), defines);
 }
 
 void ShaderManager::loadShaderFile(const std::filesystem::path &filePath) {

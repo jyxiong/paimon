@@ -7,18 +7,18 @@ using namespace paimon;
 int main() {
   LogSystem::init();
 
-  auto window = Window::create(WindowConfig{
-      .title = "Debug Message Example",
-      .format =
-          ContextFormat{
-              .majorVersion = 4,
-              .minorVersion = 5,
-              .profile = ContextProfile::Core,
-          },
-      .width = 800,
-      .height = 600,
-
-  });
+  auto window = Window::create(
+      WindowConfig{
+          .title = "Debug Message Example",
+          .width = 800,
+          .height = 600,
+      },
+      ContextFormat{
+          .majorVersion = 4,
+          .minorVersion = 6,
+          .profile = ContextProfile::Core,
+          .debug = true,
+      });
 
   DebugMessage::enable();
   DebugMessage::setSynchronous(true);

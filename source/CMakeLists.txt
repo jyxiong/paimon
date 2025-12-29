@@ -14,7 +14,16 @@ add_library(${TARGET_NAME})
 
 target_sources(${TARGET_NAME} PUBLIC ${APP_SOURCES} ${CORE_SOURCES} ${OPENGL_SOURCES} ${PLATFORM_SOURCES} ${RENDERING_SOURCES})
 
-target_include_directories(${TARGET_NAME} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
+# Generate configuration header with absolute paths
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/paimon/config.h.in
+    ${CMAKE_CURRENT_BINARY_DIR}/paimon/config.h
+)
+
+target_include_directories(${TARGET_NAME} PUBLIC 
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+)
 
 target_compile_definitions(${TARGET_NAME} PUBLIC GLFW_INCLUDE_NONE)
 if(WIN32)
@@ -28,8 +37,6 @@ elseif(UNIX)
         target_compile_definitions(${TARGET_NAME} PUBLIC PAIMON_PLATFORM_EGL)
     endif()
 endif()
-
-# target_compile_options(${TARGET_NAME})
 
 target_link_libraries(${TARGET_NAME} PUBLIC EnTT glad glfw glm imgui spdlog stb tinygltf ${OPENGL_LIBRARIES} ${X11_LIBRARIES})
 

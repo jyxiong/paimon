@@ -2,9 +2,9 @@
 
 #include <glad/gl.h>
 
+#include "paimon/app/application.h"
 #include "paimon/core/log_system.h"
 #include "paimon/rendering/render_context.h"
-#include "paimon/rendering/shader_manager.h"
 
 using namespace paimon;
 
@@ -20,12 +20,10 @@ FinalPass::FinalPass(RenderContext &renderContext)
   m_sampler->set(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   m_sampler->set(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-  // Load shaders from ShaderManager singleton
-  auto &shaderManager = ShaderManager::getInstance();
-  auto *vert_program = m_renderContext.createShaderProgram(
-      shaderManager.getShaderSource("screen_quad.vert"));
-  auto *frag_program = m_renderContext.createShaderProgram(
-      shaderManager.getShaderSource("screen_quad.frag"));
+  // Load shaders from Application's ShaderManager
+  auto &shaderManager = Application::getInstance().getShaderManager();
+  auto *vert_program = shaderManager.createShaderProgram("screen_quad.vert");
+  auto *frag_program = shaderManager.createShaderProgram("screen_quad.frag");
 
   if (!vert_program || !frag_program) {
     LOG_ERROR("Failed to load screen quad shaders");

@@ -148,15 +148,17 @@ void Window::destroy() {
   m_window = nullptr;
 }
 
-std::unique_ptr<Window> Window::create(const WindowConfig &config) {
+std::unique_ptr<Window> Window::create(const WindowConfig &config, const ContextFormat &format) {
   auto window = std::make_unique<Window>();
 
   glfwDefaultWindowHints();
+
   glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
-  glfwWindowHint(GLFW_OPENGL_PROFILE, toGlfw(config.format.profile));
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, config.format.majorVersion);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, config.format.minorVersion);
-  glfwWindowHint(GLFW_CONTEXT_DEBUG, toGlfw(config.format.debug));
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, format.majorVersion);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, format.minorVersion);
+  glfwWindowHint(GLFW_CONTEXT_DEBUG, toGlfw(format.debug));
+  glfwWindowHint(GLFW_OPENGL_PROFILE, toGlfw(format.profile));
+
   glfwWindowHint(GLFW_RESIZABLE, toGlfw(config.resizable));
   glfwWindowHint(GLFW_VISIBLE, toGlfw(config.visible));
 

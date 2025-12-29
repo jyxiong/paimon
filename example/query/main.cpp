@@ -3,6 +3,7 @@
 #include "paimon/app/window.h"
 #include "paimon/core/log_system.h"
 #include "paimon/opengl/query.h"
+#include "paimon/platform/context.h"
 
 using namespace paimon;
 
@@ -13,17 +14,18 @@ glm::ivec2 g_size = {800, 600};
 int main() {
   LogSystem::init();
 
-  auto window = Window::create(WindowConfig{
-      .title = "Query Example",
-      .format =
-          ContextFormat{
-              .majorVersion = 4,
-              .minorVersion = 5,
-              .profile = ContextProfile::Core,
-          },
-      .width = g_size.x,
-      .height = g_size.y,
-  });
+  auto window = Window::create(
+      WindowConfig{
+          .title = "Query Example",
+          .width = g_size.x,
+          .height = g_size.y,
+      },
+      ContextFormat{
+          .majorVersion = 4,
+          .minorVersion = 6,
+          .profile = ContextProfile::Core,
+          .debug = false,
+      });
 
   Query query(GL_TIME_ELAPSED);
   if (!query.is_valid()) {

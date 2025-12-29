@@ -2,11 +2,11 @@
 
 #include <glad/gl.h>
 
+#include "paimon/app/application.h"
 #include "paimon/core/ecs/components.h"
 #include "paimon/core/log_system.h"
 #include "paimon/core/sg/mesh.h"
 #include "paimon/rendering/render_context.h"
-#include "paimon/rendering/shader_manager.h"
 
 using namespace paimon;
 
@@ -23,12 +23,12 @@ ColorPass::ColorPass(RenderContext &renderContext)
   m_sampler->set(GL_TEXTURE_WRAP_T, GL_REPEAT);
 
   // Get shader programs for main rendering (separable programs for pipeline)
-  auto &shaderManager = ShaderManager::getInstance();
+  auto &shaderManager = Application::getInstance().getShaderManager();
 
-  auto *vertex_program = m_renderContext.createShaderProgram(
-      shaderManager.getShaderSource("damaged_helmet.vert"));
-  auto *fragment_program = m_renderContext.createShaderProgram(
-      shaderManager.getShaderSource("damaged_helmet.frag"));
+  auto *vertex_program =
+      shaderManager.createShaderProgram("damaged_helmet.vert");
+  auto *fragment_program =
+      shaderManager.createShaderProgram("damaged_helmet.frag");
 
   if (!vertex_program || !fragment_program) {
     LOG_ERROR("Failed to load main shader programs");

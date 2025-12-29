@@ -4,9 +4,9 @@
 #include <string>
 #include <unordered_map>
 
-#include <glad/gl.h>
 #include "paimon/rendering/shader_source.h"
 #include "paimon/rendering/shader_includer.h"
+#include "paimon/rendering/shader_program_cache.h"
 
 namespace paimon {
 
@@ -15,15 +15,14 @@ class ShaderProgram;
 /**
  * @brief Shader Manager
  * Manages shader source files and creates/caches ShaderProgram instances
- * Singleton pattern for global shader management
+ * Should be managed by Application instance
  */
 class ShaderManager {
 public:
   /**
-   * @brief Get the singleton instance
-   * @return Reference to the ShaderManager instance
+   * @brief Construct a new Shader Manager
    */
-  static ShaderManager& getInstance();
+  ShaderManager();
 
   // Delete copy constructor and assignment operator
   ShaderManager(const ShaderManager&) = delete;
@@ -35,13 +34,16 @@ public:
    */
   void load(const std::filesystem::path &directory);
 
-  const ShaderSource& getShaderSource(const std::string &name) const;
+  /**
+   * @brief Create or get cached shader program with defines
+   * @param source Shader source
+   * @param defines Shader defines/macros
+   * @return Pointer to shader program
+   */
+  ShaderProgram* createShaderProgram(const std::string &name,
+                                     const std::vector<ShaderDefine>& defines = {});
 
 private:
-  /**
-   * @brief Construct a new Shader Manager (private for singleton)
-   */
-  ShaderManager();
 
   /**
    * @brief Load a single shader file
@@ -55,6 +57,9 @@ private:
 
   /// Shader includer for processing #include directives
   ShaderIncluder m_includer;
+
+  /// Cache for compiled shader programs with different defines
+  ShaderProgramCache m_shaderProgramCache;
 };
 
 } // namespace paimon

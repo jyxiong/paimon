@@ -181,17 +181,18 @@ glm::ivec2 g_size = {};
 int main() {
   LogSystem::init();
 
-  auto window = Window::create(WindowConfig{
-      .title = "Geometry Shader Example",
-      .format =
-          ContextFormat{
-              .majorVersion = 4,
-              .minorVersion = 6,
-              .profile = ContextProfile::Core,
-          },
-      .width = 800,
-      .height = 600,
-  });
+  auto window = Window::create(
+      WindowConfig{
+          .title = "Geometry Shader Example",
+          .width = 800,
+          .height = 600,
+      },
+      ContextFormat{
+          .majorVersion = 4,
+          .minorVersion = 6,
+          .profile = ContextProfile::Core,
+          .debug = false,
+      });
 
   // enable depth test for correct 3D rasterization
   glEnable(GL_DEPTH_TEST);

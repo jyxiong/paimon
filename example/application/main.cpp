@@ -104,8 +104,7 @@ int main() {
   LogSystem::init();
   Application app({.windowConfig = {.title = "Triangle Example",
                                     .width = 800,
-                                    .height = 600},
-                   .assetPath = "../assets/"});
+                                    .height = 600}});
   app.pushLayer(std::make_unique<TriangleLayer>());
   app.run();
   return 0;

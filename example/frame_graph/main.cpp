@@ -388,21 +388,21 @@ void renderScene(RenderData &rd, Program &program, bool isShadowPass) {
 }
 
 int main() {
-  auto window = Window::create(WindowConfig{
-      .title = "Frame Graph Shadow Mapping Example",
-      .format =
-          ContextFormat{
-              .majorVersion = 4,
-              .minorVersion = 6,
-              .profile = ContextProfile::Core,
-              .debug = false,
-          },
-      .width = 800,
-      .height = 600,
-      .resizable = false,
-      .visible = true,
-      .vsync = true,
-  });
+  auto window = Window::create(
+      WindowConfig{
+          .title = "Frame Graph Shadow Mapping Example",
+          .width = 800,
+          .height = 600,
+          .resizable = false,
+          .visible = true,
+          .vsync = true,
+      },
+      ContextFormat{
+          .majorVersion = 4,
+          .minorVersion = 6,
+          .profile = ContextProfile::Core,
+          .debug = false,
+      });
 
   RenderData renderData;
 

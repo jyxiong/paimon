@@ -1,19 +1,27 @@
 #include "paimon/app/application.h"
 
+#include "paimon/app/event/application_event.h"
 #include "paimon/app/event/event.h"
 #include "paimon/app/window.h"
-#include "paimon/app/event/application_event.h"
+#include "paimon/config.h"
 
 namespace paimon {
 
+Application* Application::s_instance = nullptr;
+
 Application::Application(const ApplicationConfig& config) : m_running(false) {
+
+  s_instance = this;
+
   // Create window
-  m_window = Window::create(config.windowConfig);
+  m_window = Window::create(config.windowConfig, config.contextFormat);
 
   // Set event callback
   m_window->setEventCallback([this](Event& event) {
     onEvent(event);
   });
+
+  m_shaderManager.load(PAIMON_SHADER_DIR);
 
   m_imguiLayer = pushLayer(std::make_unique<ImGuiLayer>("ImGuiLayer"));
 
