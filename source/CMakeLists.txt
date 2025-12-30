@@ -38,6 +38,6 @@ elseif(UNIX)
     endif()
 endif()
 
-target_link_libraries(${TARGET_NAME} PUBLIC EnTT glad glfw glm imgui spdlog stb tinygltf ${OPENGL_LIBRARIES} ${X11_LIBRARIES})
+target_link_libraries(${TARGET_NAME} PUBLIC EnTT glad glfw glm imgui nfd spdlog stb tinygltf ${OPENGL_LIBRARIES} ${X11_LIBRARIES})
 
 # target_link_options(${TARGET_NAME})

@@ -52,6 +52,11 @@ if (NOT TARGET nlohmann_json)
     set_target_properties(nlohmann_json PROPERTIES FOLDER ${EXTERNAL_DIR}/json)
 endif()
 
+if (NOT TARGET nfd)
+    add_subdirectory(nativefiledialog)
+    set_target_properties(nfd PROPERTIES FOLDER ${EXTERNAL_DIR}/nfd)
+endif()
+
 if(NOT TARGET spdlog)
     option(SPDLOG_BUILD_EXAMPLE "" OFF)
     option(SPDLOG_INSTALL "" OFF)
