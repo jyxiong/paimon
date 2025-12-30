@@ -16,9 +16,9 @@ namespace paimon {
 
 struct WindowConfig {
   std::string title = "Paimon Window";
-  int32_t width = 800;
-  int32_t height = 600;
-  bool resizable = false;
+  int32_t width = 2048;
+  int32_t height = 1280;
+  bool resizable = true;
   bool visible = true;
   bool fullscreen = false;
   bool vsync = true;

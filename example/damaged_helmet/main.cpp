@@ -1,28 +1,31 @@
-#include <filesystem>
+#include <memory>
 
 #include <GLFW/glfw3.h>
 #include <glad/gl.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <memory>
 
 #include "paimon/app/application.h"
-#include "paimon/config.h"
+#include "paimon/app/panel/editor_layer.h"
 #include "paimon/core/log_system.h"
 
 #include "renderer.h"
 
 using namespace paimon;
 
-const glm::ivec2 initialResolution = {800, 600};
-
 class HelmetApp : public Application {
 public:
   HelmetApp() : Application() {
+    // Get default scene from application
+    auto* scene = getScene();
+
+    // Setup editor layer first
+    auto* editorLayer = pushLayer(std::make_unique<EditorLayer>());
+
+    // Setup renderer with the scene and viewport
     auto *renderer = pushLayer(std::make_unique<Renderer>());
-    renderer->loadScene(PAIMON_MODEL_DIR "/DamagedHelmet/glTF/DamagedHelmet.gltf");
-    renderer->onResize(initialResolution.x, initialResolution.y);
+    renderer->setViewportPanel(&editorLayer->getViewportPanel());
   }
 };
 

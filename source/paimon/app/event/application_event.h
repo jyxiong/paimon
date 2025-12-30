@@ -36,6 +36,24 @@ private:
   int32_t m_width, m_height;
 };
 
+class ViewportResizeEvent : public Event {
+public:
+  ViewportResizeEvent(int32_t width, int32_t height);
+
+  int32_t getWidth() const { return m_width; }
+  int32_t getHeight() const { return m_height; }
+
+  std::string toString() const override;
+
+  static EventType getStaticType();
+  EventType getEventType() const override;
+  const char* getName() const override;
+  int getCategoryFlags() const override;
+
+private:
+  int32_t m_width, m_height;
+};
+
 class WindowFocusEvent : public Event {
 public:
   WindowFocusEvent();

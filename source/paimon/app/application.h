@@ -8,6 +8,7 @@
 #include "paimon/app/imgui/imgui_layer.h"
 #include "paimon/app/layer.h"
 #include "paimon/app/window.h"
+#include "paimon/core/ecs/scene.h"
 #include "paimon/platform/context.h"
 #include "paimon/rendering/shader_manager.h"
 
@@ -36,6 +37,8 @@ public:
     return static_cast<T *>(m_layers.back().get());
   }
 
+  void onEvent(Event& event);
+
   void run();
 
   Window* getWindow() const { return m_window.get(); }
@@ -43,8 +46,10 @@ public:
   ShaderManager& getShaderManager() { return m_shaderManager; }
   const ShaderManager& getShaderManager() const { return m_shaderManager; }
 
+  // Scene management
+  ecs::Scene* getScene() const { return m_scene.get(); }
+
 private:
-  void onEvent(Event& event);
   bool onWindowClose(const WindowCloseEvent& event);
   bool onWindowResize(const WindowResizeEvent& event);
 
@@ -57,6 +62,8 @@ private:
 
   std::vector<std::unique_ptr<Layer>> m_layers;
   ImGuiLayer *m_imguiLayer;
+
+  std::unique_ptr<ecs::Scene> m_scene;
 
   bool m_running;
 };
