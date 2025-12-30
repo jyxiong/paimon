@@ -1,9 +1,11 @@
 #include "paimon/app/application.h"
 
+#include "paimon/app/application.h"
 #include "paimon/app/event/application_event.h"
 #include "paimon/app/event/event.h"
 #include "paimon/app/window.h"
 #include "paimon/config.h"
+#include "paimon/core/ecs/scene.h"
 
 namespace paimon {
 
@@ -23,32 +25,12 @@ Application::Application(const ApplicationConfig& config) : m_running(false) {
 
   m_shaderManager.load(PAIMON_SHADER_DIR);
 
+  // Create default empty scene
+  m_scene = std::make_unique<ecs::Scene>();
+
   m_imguiLayer = pushLayer(std::make_unique<ImGuiLayer>("ImGuiLayer"));
 
   m_running = true;
-}
-
-void Application::run() {
-  while (m_running) {
-
-    // Poll events
-    m_window->pollEvents();
-
-    // Update layers
-    for (auto &layer : m_layers) {
-      layer->onUpdate();
-    }
-
-    // // Render layers
-    // m_imguiLayer->begin();
-    // for (auto &layer : m_layers) {
-    //   layer->onImGuiRender();
-    // }
-    // m_imguiLayer->end();
-
-    // Swap buffers
-    m_window->swapBuffers();
-  }
 }
 
 void Application::onEvent(Event& event) {
@@ -65,6 +47,29 @@ void Application::onEvent(Event& event) {
   for (auto& layer : m_layers) {
     layer->onEvent(event);
     if (event.handled) break;
+  }
+}
+
+void Application::run() {
+  while (m_running) {
+
+    // Poll events
+    m_window->pollEvents();
+
+    // Render layers
+    m_imguiLayer->begin();
+    for (auto &layer : m_layers) {
+      layer->onImGuiRender();
+    }
+    m_imguiLayer->end();
+
+    // Update layers
+    for (auto &layer : m_layers) {
+      layer->onUpdate();
+    }
+
+    // Swap buffers
+    m_window->swapBuffers();
   }
 }
 
