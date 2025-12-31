@@ -3,6 +3,7 @@
 #include <filesystem>
 
 #include <entt/entt.hpp>
+#include <memory>
 
 #include "paimon/core/ecs/entity.h"
 #include "paimon/core/ecs/system.h"
@@ -14,7 +15,7 @@ class Entity;
 
 class Scene {
 public:
-  Scene();
+  Scene() = default;
   ~Scene() = default;
 
   Scene(const Scene &) = delete;
@@ -28,8 +29,12 @@ public:
   entt::registry &getRegistry();
   const entt::registry &getRegistry() const;
 
+  void setMainCamera(Entity camera) { m_mainCamera = camera; }
+
   Entity getMainCamera() { return m_mainCamera; }
   const Entity &getMainCamera() const { return m_mainCamera; }
+
+  void setDirectionalLight(Entity light) { m_directionalLight = light; }
 
   Entity getDirectionalLight() { return m_directionalLight; }
   const Entity &getDirectionalLight() const { return m_directionalLight; }
@@ -58,6 +63,8 @@ public:
   bool valid(entt::entity entity) const;
 
   Entity load(const std::filesystem::path &filepath);
+
+  static std::unique_ptr<Scene> create();
 
 private:
   entt::registry m_registry;

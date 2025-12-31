@@ -3,7 +3,6 @@
 #include <memory>
 #include <vector>
 
-#include "paimon/app/event/application_event.h"
 #include "paimon/app/event/event.h"
 #include "paimon/app/imgui/imgui_layer.h"
 #include "paimon/app/layer.h"
@@ -47,25 +46,20 @@ public:
   const ShaderManager& getShaderManager() const { return m_shaderManager; }
 
   // Scene management
-  ecs::Scene* getScene() const { return m_scene.get(); }
-
-private:
-  bool onWindowClose(const WindowCloseEvent& event);
-  bool onWindowResize(const WindowResizeEvent& event);
+  ecs::Scene& getScene() { return *m_scene; }
+  const ecs::Scene& getScene() const { return *m_scene; }
 
 private:
   static Application* s_instance;
 
   std::unique_ptr<Window> m_window;
 
+  std::unique_ptr<ecs::Scene> m_scene;
+
   ShaderManager m_shaderManager;
 
   std::vector<std::unique_ptr<Layer>> m_layers;
   ImGuiLayer *m_imguiLayer;
-
-  std::unique_ptr<ecs::Scene> m_scene;
-
-  bool m_running;
 };
 
 } // namespace paimon

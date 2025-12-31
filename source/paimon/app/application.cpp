@@ -1,48 +1,26 @@
 #include "paimon/app/application.h"
 
-#include "paimon/app/application.h"
-#include "paimon/app/event/application_event.h"
-#include "paimon/app/event/event.h"
-#include "paimon/app/window.h"
 #include "paimon/config.h"
-#include "paimon/core/ecs/scene.h"
 
 namespace paimon {
 
 Application* Application::s_instance = nullptr;
 
-Application::Application(const ApplicationConfig& config) : m_running(false) {
+Application::Application(const ApplicationConfig& config) {
 
   s_instance = this;
 
   // Create window
   m_window = Window::create(config.windowConfig, config.contextFormat);
 
-  // Set event callback
-  m_window->setEventCallback([this](Event& event) {
-    onEvent(event);
-  });
+  m_scene = ecs::Scene::create();
 
   m_shaderManager.load(PAIMON_SHADER_DIR);
 
-  // Create default empty scene
-  m_scene = std::make_unique<ecs::Scene>();
-
   m_imguiLayer = pushLayer(std::make_unique<ImGuiLayer>("ImGuiLayer"));
-
-  m_running = true;
 }
 
 void Application::onEvent(Event& event) {
-  // Handle application-level events
-  EventDispatcher dispatcher(event);
-  dispatcher.dispatch<WindowCloseEvent>([this](WindowCloseEvent& e) {
-    return onWindowClose(e);
-  });
-  dispatcher.dispatch<WindowResizeEvent>([this](WindowResizeEvent& e) {
-    return onWindowResize(e);
-  });
-
   // Dispatch to layers
   for (auto& layer : m_layers) {
     layer->onEvent(event);
@@ -51,7 +29,7 @@ void Application::onEvent(Event& event) {
 }
 
 void Application::run() {
-  while (m_running) {
+  while (!m_window->shouldClose()) {
 
     // Poll events
     m_window->pollEvents();
@@ -71,20 +49,6 @@ void Application::run() {
     // Swap buffers
     m_window->swapBuffers();
   }
-}
-
-bool Application::onWindowClose(const WindowCloseEvent& event) {
-  m_running = false;
-  return true;
-}
-
-bool Application::onWindowResize(const WindowResizeEvent& event) {
-
-  // for (auto& layer : m_layers) {
-  //   layer->onResize(event.getWidth(), event.getHeight());
-  // }
-
-  return true;
 }
 
 } // namespace paimon

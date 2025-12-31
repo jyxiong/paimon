@@ -4,20 +4,18 @@
 
 namespace paimon {
 
-class Texture;
-
 class ViewportPanel {
 public:
   ViewportPanel();
   ~ViewportPanel();
 
   void onImGuiRender();
-
-  void setTexture(const Texture* texture) { m_texture = texture; }
+  
+  bool isFocused() const { return m_isFocused; }
   
 private:
-  const Texture* m_texture = nullptr;
-  glm::ivec2 m_viewportSize;
+  glm::ivec2 m_viewportSize = glm::ivec2(0);
+  bool m_isFocused = false;
 };
 
 } // namespace paimon

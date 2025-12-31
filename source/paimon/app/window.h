@@ -50,15 +50,8 @@ public:
   bool isMouseButtonPressed(MouseCode button) const;
   std::pair<double, double> getMousePosition() const;
 
-  void setEventCallback(const std::function<void(Event&)>& callback) { m_eventCallback = callback; }
-
-  const std::function<void(Event&)>& getEventCallback() const { return m_eventCallback; }
-
 private:
   GLFWwindow *m_window = nullptr;
-
-public:
-  std::function<void(Event&)> m_eventCallback;
 };
 
 } // namespace paimon

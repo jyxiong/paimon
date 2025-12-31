@@ -6,27 +6,6 @@
 namespace paimon {
 namespace ecs {
 
-Scene::Scene() {
-  // Initialize main camera entity
-  {
-    m_mainCamera = createEntity("MainCamera");
-    m_mainCamera.addComponent<Camera>(std::make_shared<sg::PerspectiveCamera>());
-    
-    // Set camera position to look at the origin
-    auto &transform = m_mainCamera.getComponent<ecs::Transform>();
-    transform.translation = glm::vec3(0.0f, 0.0f, 5.0f);
-  }
-
-  {
-    // Initialize directional light entity
-    m_directionalLight = createEntity("DirectionalLight");
-    m_directionalLight.addComponent<PunctualLight>(std::make_shared<sg::DirectionalLight>());
-
-    auto &transform = m_directionalLight.getComponent<ecs::Transform>();
-    transform.translation = glm::vec3(0.0f, 0.0f, 3.0f);
-  }
-}
-
 Entity Scene::createEntity(const std::string &name) {
   auto entity = Entity{this, m_registry.create()};
 
@@ -62,6 +41,35 @@ Entity Scene::load(const std::filesystem::path &filepath) {
   GltfLoader loader(filepath);
   loader.load(*this);
   return loader.getRootEntity();
+}
+
+std::unique_ptr<Scene> Scene::create() {
+  auto scene = std::make_unique<Scene>();
+
+    // Initialize main camera entity
+  {
+    auto mainCamera = scene->createEntity("MainCamera");
+    mainCamera.addComponent<Camera>(std::make_shared<sg::PerspectiveCamera>());
+    
+    // Set camera position to look at the origin
+    auto &transform = mainCamera.getComponent<ecs::Transform>();
+    transform.translation = glm::vec3(0.0f, 0.0f, 5.0f);
+
+    scene->setMainCamera(mainCamera);
+  }
+
+  {
+    // Initialize directional light entity
+    auto directionalLight = scene->createEntity("DirectionalLight");
+    directionalLight.addComponent<PunctualLight>(std::make_shared<sg::DirectionalLight>());
+
+    auto &transform = directionalLight.getComponent<ecs::Transform>();
+    transform.translation = glm::vec3(0.0f, 0.0f, 3.0f);
+
+    scene->setDirectionalLight(directionalLight);
+  }
+
+  return scene;
 }
 
 } // namespace ecs
