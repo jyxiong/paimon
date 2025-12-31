@@ -17,8 +17,6 @@ public:
   void onEvent(Event &event) override;
   void onImGuiRender() override;
   
-  ViewportPanel& getViewportPanel() { return m_viewportPanel; }
-  
 private:
   void setupDockingLayout();
   

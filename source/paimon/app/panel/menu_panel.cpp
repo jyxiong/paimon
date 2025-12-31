@@ -34,11 +34,9 @@ void MenuPanel::showMainMenuBar() {
 void MenuPanel::showFileMenu() {
   if (ImGui::BeginMenu("File")) {
     if (ImGui::MenuItem("New Scene", "Ctrl+N")) {
-      auto* scene = Application::getInstance().getScene();
-      if (scene) {
-        // Clear current scene
-        scene->clear();
-      }
+      auto& scene = Application::getInstance().getScene();
+      // Clear current scene
+      scene.clear();
     }
     
     if (ImGui::MenuItem("Load Model...", "Ctrl+O")) {
@@ -47,11 +45,9 @@ void MenuPanel::showFileMenu() {
       nfdresult_t result = NFD_OpenDialogU8(&outPath, filters, 2, nullptr);
       
       if (result == NFD_OKAY) {
-        auto* scene = Application::getInstance().getScene();
-        if (scene) {
-          LOG_INFO("Loading model: {}", outPath);
-          scene->load(outPath);
-        }
+        auto& scene = Application::getInstance().getScene();
+        LOG_INFO("Loading model: {}", outPath);
+        scene.load(outPath);
         NFD_FreePathU8(outPath);
       } else if (result == NFD_ERROR) {
         LOG_ERROR("Error opening file dialog: {}", NFD_GetError());

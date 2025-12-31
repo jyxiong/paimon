@@ -1,11 +1,9 @@
 #include "paimon/app/panel/viewport_panel.h"
 
-#include <glad/gl.h>
 #include <imgui.h>
 
 #include "paimon/app/application.h"
 #include "paimon/app/event/application_event.h"
-#include "paimon/opengl/texture.h"
 
 namespace paimon {
 
@@ -16,6 +14,9 @@ ViewportPanel::~ViewportPanel() = default;
 void ViewportPanel::onImGuiRender() {
   ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
   ImGui::Begin("Viewport");
+  
+  // Track focus state
+  m_isFocused = ImGui::IsWindowFocused();
   
   // Get available content region
   ImVec2 viewportSize = ImGui::GetContentRegionAvail();
@@ -30,24 +31,7 @@ void ViewportPanel::onImGuiRender() {
     Application::getInstance().onEvent(event);
   }
   
-  // Display the texture if available
-  if (m_texture) {
-    // Get texture ID (OpenGL texture handle)
-    GLuint textureId = m_texture->get_name();
-    
-    // Display the texture using ImGui::Image
-    // Note: ImGui uses bottom-left as origin, OpenGL uses top-left
-    // So we need to flip the UV coordinates
-    ImGui::Image(
-      (ImTextureID)(intptr_t)textureId,
-      viewportSize,
-      ImVec2(0, 1),  // UV top-left (flipped)
-      ImVec2(1, 0)   // UV bottom-right (flipped)
-    );
-  } else {
-    // Show placeholder when no texture
-    ImGui::Text("No viewport texture available");
-  }
+  // Viewport content will be rendered by Renderer in its onImGuiRender
   
   ImGui::End();
   ImGui::PopStyleVar();

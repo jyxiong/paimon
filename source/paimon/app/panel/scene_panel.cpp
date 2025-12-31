@@ -16,17 +16,15 @@ ScenePanel::~ScenePanel() {}
 void ScenePanel::onImGuiRender() {
   ImGui::Begin("Scene Hierarchy");
 
-  auto* scene = Application::getInstance().getScene();
+  auto& scene = Application::getInstance().getScene();
   
-  if (scene) {
-    // Iterate through all entities and find root entities (no parent)
-    auto view = scene->view<ecs::Name, ecs::Parent>();
-    
-    for (auto [entity, name, parent] : view.each()) {
-      // Only draw root entities (entities without valid parent)
-      if (!parent.parent.isValid()) {
-        drawEntityNode(ecs::Entity(scene, entity));
-      }
+  // Iterate through all entities and find root entities (no parent)
+  auto view = scene.view<ecs::Name, ecs::Parent>();
+  
+  for (auto [entity, name, parent] : view.each()) {
+    // Only draw root entities (entities without valid parent)
+    if (!parent.parent.isValid()) {
+      drawEntityNode(ecs::Entity(&scene, entity));
     }
   }
 
@@ -38,10 +36,8 @@ void ScenePanel::onImGuiRender() {
   // Right-click context menu for creating entities
   if (ImGui::BeginPopupContextWindow("SceneContextMenu", ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems)) {
     if (ImGui::MenuItem("Create Empty Entity")) {
-      if (scene) {
-        auto newEntity = scene->createEntity("New Entity");
-        m_selectedEntity = newEntity;
-      }
+      auto newEntity = scene.createEntity("New Entity");
+      m_selectedEntity = newEntity;
     }
     ImGui::EndPopup();
   }
@@ -114,20 +110,16 @@ void ScenePanel::drawEntityNode(ecs::Entity entity) {
   // Right-click context menu on entity
   if (ImGui::BeginPopupContextItem()) {
     if (ImGui::MenuItem("Create Child Entity")) {
-      auto* scene = Application::getInstance().getScene();
-      if (scene) {
-        auto child = scene->createEntity("Child Entity");
-        // TODO: Set parent-child relationship
-        // child.setParent(entity);
-      }
+      auto& scene = Application::getInstance().getScene();
+      auto child = scene.createEntity("Child Entity");
+      // TODO: Set parent-child relationship
+      // child.setParent(entity);
     }
     if (ImGui::MenuItem("Delete Entity")) {
-      auto* scene = Application::getInstance().getScene();
-      if (scene) {
-        scene->destroyEntity(entity);
-        if (m_selectedEntity == entity) {
-          m_selectedEntity = {};
-        }
+      auto& scene = Application::getInstance().getScene();
+      scene.destroyEntity(entity);
+      if (m_selectedEntity == entity) {
+        m_selectedEntity = {};
       }
     }
     ImGui::EndPopup();

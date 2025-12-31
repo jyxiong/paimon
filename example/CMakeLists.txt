@@ -30,6 +30,7 @@ function(add_example FOLDER_NAME)
     file(GLOB_RECURSE SOURCE_FILES ${FOLDER_NAME}/*.cpp ${FOLDER_NAME}/*.h)
     add_executable(${EXAMPLE_NAME} ${SOURCE_FILES})
     target_link_libraries(${EXAMPLE_NAME} PRIVATE paimon)
+    target_include_directories(${EXAMPLE_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/${FOLDER_NAME})
 
     # Set output directory to the example's folder
     set_target_properties(${EXAMPLE_NAME} PROPERTIES
@@ -40,7 +41,6 @@ function(add_example FOLDER_NAME)
     copy_example_assets(${FOLDER_NAME})
 endfunction()
 
-add_example(application)
 add_example(compute_shader)
 add_example(context)
 add_example(damaged_helmet)
