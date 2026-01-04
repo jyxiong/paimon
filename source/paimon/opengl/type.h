@@ -216,7 +216,7 @@ enum class PrimitiveTopology : GLenum {
   Points = GL_POINTS,
   Lines = GL_LINES,
   LineAdjacency = GL_LINES_ADJACENCY,
-  LinesLoop = GL_LINE_LOOP,
+  LineLoop = GL_LINE_LOOP,
   LineStrip = GL_LINE_STRIP,
   LineStripAdjacency = GL_LINE_STRIP_ADJACENCY,
   Triangles = GL_TRIANGLES,

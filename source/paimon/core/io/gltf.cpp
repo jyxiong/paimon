@@ -26,7 +26,7 @@ PrimitiveTopology parsePrimitiveMode(int primitiveMode) {
   case TINYGLTF_MODE_LINE:
     return PrimitiveTopology::Lines;
   case TINYGLTF_MODE_LINE_LOOP:
-    return PrimitiveTopology::LinesLoop;
+    return PrimitiveTopology::LineLoop;
   case TINYGLTF_MODE_LINE_STRIP:
     return PrimitiveTopology::LineStrip;
   case TINYGLTF_MODE_TRIANGLES:
@@ -442,18 +442,18 @@ void GltfLoader::parseCameras() {
 
 void GltfLoader::parseNode(const tinygltf::Node &node, ecs::Entity parent, ecs::Scene &scene) {
   // Create entity for this node
-  auto entity = scene.createEntity(node.name);
+  auto nodeEntity = scene.createEntity(node.name);
 
   // Parent components
-  auto &parentComp = entity.getComponent<ecs::Parent>();
+  auto &parentComp = nodeEntity.getComponent<ecs::Parent>();
   parentComp.parent = parent;
 
   // Parent should have a Children component; append this child
   auto &parentChildren = parent.getComponent<ecs::Children>();
-  parentChildren.children.push_back(entity);
+  parentChildren.children.push_back(nodeEntity);
 
   // Transform component (TRS only)
-  auto &transform = entity.getComponent<ecs::Transform>();
+  auto &transform = nodeEntity.getComponent<ecs::Transform>();
   if (node.matrix.empty()) {
     // Use TRS directly
     transform.translation = node.translation.empty()
@@ -473,21 +473,36 @@ void GltfLoader::parseNode(const tinygltf::Node &node, ecs::Entity parent, ecs::
                    transform.translation, skew, perspective);
   }
 
-  // Mesh Component
+  // Mesh Component - create child entities for each primitive
   if (node.mesh >= 0) {
+    const auto& sg_mesh = m_meshes[node.mesh];
     
-
-    entity.addComponent<ecs::Mesh>(m_meshes[node.mesh]);
+    for (size_t i = 0; i < sg_mesh->primitives.size(); ++i) {
+      // Create child entity for each primitive
+      auto primitiveEntity = scene.createEntity(node.name + "_primitive_" + std::to_string(i));
+      
+      // Set parent relationship
+      auto& primitiveParentComp = primitiveEntity.getComponent<ecs::Parent>();
+      primitiveParentComp.parent = nodeEntity;
+      
+      // Add to parent's children
+      auto& nodeChildren = nodeEntity.getComponent<ecs::Children>();
+      nodeChildren.children.push_back(primitiveEntity);
+      
+      // Add Primitive component
+      auto primitive = std::make_shared<sg::Primitive>(sg_mesh->primitives[i]);
+      primitiveEntity.addComponent<ecs::Primitive>(primitive);
+    }
   }
 
   // Light Component (from KHR_lights_punctual extension)
   if (node.light >= 0) {
-    entity.addComponent<ecs::PunctualLight>(m_lights[node.light]);
+    nodeEntity.addComponent<ecs::PunctualLight>(m_lights[node.light]);
   }
 
   if (node.camera >= 0) {
     // Camera Component can be handled here if needed
-    entity.addComponent<ecs::Camera>(m_cameras[node.camera]);
+    nodeEntity.addComponent<ecs::Camera>(m_cameras[node.camera]);
   }
 
   // Skin Component

@@ -9,7 +9,6 @@
 #include "paimon/core/ecs/entity.h"
 #include "paimon/core/sg/camera.h"
 #include "paimon/core/sg/light.h"
-#include "paimon/core/sg/material.h"
 #include "paimon/core/sg/mesh.h"
 
 namespace paimon {
@@ -50,14 +49,9 @@ struct GlobalTransform {
   glm::mat4 matrix = glm::mat4(1.0f);
 };
 
-/// Mesh component - references mesh data
-struct Mesh {
-  std::shared_ptr<sg::Mesh> mesh;
-};
-
-/// Material component - references material data
-struct Material {
-  std::shared_ptr<sg::Material> material;
+/// Primitive component - references primitive data
+struct Primitive {
+  std::shared_ptr<sg::Primitive> primitive;
 };
 
 /// Perspective camera parameters
