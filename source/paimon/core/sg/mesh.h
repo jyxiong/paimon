@@ -4,7 +4,6 @@
 
 #include <glm/glm.hpp>
 
-#include "paimon/core/sg/material.h"
 #include "paimon/opengl/buffer.h"
 #include "paimon/opengl/state/vertex_input.h"
 #include "paimon/opengl/type.h"
@@ -24,8 +23,6 @@ struct Primitive {
   size_t indexCount = 0;
   DataType indexType = DataType::UInt;
   std::shared_ptr<Buffer> indices;
-
-  std::shared_ptr<Material> material = nullptr;
 
   bool hasIndices() const { return indices != nullptr; }
 

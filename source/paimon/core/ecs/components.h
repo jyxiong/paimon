@@ -9,6 +9,7 @@
 #include "paimon/core/ecs/entity.h"
 #include "paimon/core/sg/camera.h"
 #include "paimon/core/sg/light.h"
+#include "paimon/core/sg/material.h"
 #include "paimon/core/sg/mesh.h"
 
 namespace paimon {
@@ -52,6 +53,11 @@ struct GlobalTransform {
 /// Primitive component - references primitive data
 struct Primitive {
   std::shared_ptr<sg::Primitive> primitive;
+};
+
+/// Material component - references material data
+struct Material {
+  std::shared_ptr<sg::Material> material;
 };
 
 /// Perspective camera parameters

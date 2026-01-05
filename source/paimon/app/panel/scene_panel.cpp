@@ -221,68 +221,60 @@ void ScenePanel::drawComponents(ecs::Entity entity) {
     }
   }
   
-  // Mesh component
-  if (entity.hasComponent<ecs::Mesh>()) {
-    if (ImGui::CollapsingHeader("Mesh", ImGuiTreeNodeFlags_DefaultOpen)) {
-      auto &meshComp = entity.getComponent<ecs::Mesh>();
+  // Primitive component
+  if (entity.hasComponent<ecs::Primitive>()) {
+    if (ImGui::CollapsingHeader("Primitive", ImGuiTreeNodeFlags_DefaultOpen)) {
+      auto &primitiveComp = entity.getComponent<ecs::Primitive>();
       
-      if (meshComp.mesh) {
-        ImGui::Text("Primitives: %zu", meshComp.mesh->primitives.size());
+      if (primitiveComp.primitive) {
+        auto &primitive = *primitiveComp.primitive;
+        
+        // Topology
+        const char* topologyNames[] = { 
+          "Points", "Lines", "Line Loop", "Line Strip", 
+          "Triangles", "Triangle Strip", "Triangle Fan" 
+        };
+        int topologyIndex = static_cast<int>(primitive.mode);
+        ImGui::Text("Topology: %s", topologyNames[topologyIndex]);
         
         ImGui::Separator();
         
-        // Display each primitive
-        for (size_t i = 0; i < meshComp.mesh->primitives.size(); ++i) {
-          const auto &primitive = meshComp.mesh->primitives[i];
+        // Vertex data
+        ImGui::Text("Vertex Count: %zu", primitive.vertexCount);
+        
+        ImGui::Text("Attributes:");
+        ImGui::Indent();
+        ImGui::Text("Positions: %s", primitive.positions ? "✓" : "✗");
+        ImGui::Text("Normals: %s", primitive.normals ? "✓" : "✗");
+        ImGui::Text("Texcoords: %s", primitive.texcoords ? "✓" : "✗");
+        ImGui::Text("Colors: %s", primitive.colors ? "✓" : "✗");
+        ImGui::Unindent();
+        
+        ImGui::Separator();
+        
+        // Index data
+        if (primitive.hasIndices()) {
+          ImGui::Text("Index Count: %zu", primitive.indexCount);
           
-          if (ImGui::TreeNode((void*)(intptr_t)i, "Primitive %zu", i)) {
-            // Topology mode
-            const char* topologyName = "Unknown";
-            switch (primitive.mode) {
-              case PrimitiveTopology::Points: topologyName = "Points"; break;
-              case PrimitiveTopology::Lines: topologyName = "Lines"; break;
-              case PrimitiveTopology::LineLoop: topologyName = "Line Loop"; break;
-              case PrimitiveTopology::LineStrip: topologyName = "Line Strip"; break;
-              case PrimitiveTopology::Triangles: topologyName = "Triangles"; break;
-              case PrimitiveTopology::TriangleStrip: topologyName = "Triangle Strip"; break;
-              case PrimitiveTopology::TriangleFan: topologyName = "Triangle Fan"; break;
-              default: break;
-            }
-            ImGui::Text("Topology: %s", topologyName);
-            
-            // Vertex and index counts
-            ImGui::Text("Vertices: %zu", primitive.vertexCount);
-            if (primitive.hasIndices()) {
-              ImGui::Text("Indices: %zu", primitive.indexCount);
-            } else {
-              ImGui::Text("Indices: None");
-            }
-            
-            ImGui::Separator();
-            
-            // Vertex attributes
-            ImGui::Text("Vertex Attributes:");
-            ImGui::Indent();
-            ImGui::Text("Positions: %s", primitive.positions ? "Yes" : "No");
-            ImGui::Text("Normals: %s", primitive.normals ? "Yes" : "No");
-            ImGui::Text("Texcoords: %s", primitive.texcoords ? "Yes" : "No");
-            ImGui::Text("Colors: %s", primitive.colors ? "Yes" : "No");
-            ImGui::Unindent();
-            
-            ImGui::Separator();
-            
-            // Material
-            if (primitive.material) {
-              ImGui::Text("Material: Assigned");
-            } else {
-              ImGui::Text("Material: None");
-            }
-            
-            ImGui::TreePop();
+          // Map DataType enum to display string
+          const char* indexTypeName = "Unknown";
+          switch (primitive.indexType) {
+            case DataType::Byte: indexTypeName = "Byte"; break;
+            case DataType::UByte: indexTypeName = "UByte"; break;
+            case DataType::Short: indexTypeName = "Short"; break;
+            case DataType::UShort: indexTypeName = "UShort"; break;
+            case DataType::Int: indexTypeName = "Int"; break;
+            case DataType::UInt: indexTypeName = "UInt"; break;
+            case DataType::Float: indexTypeName = "Float"; break;
+            case DataType::Double: indexTypeName = "Double"; break;
           }
+          ImGui::Text("Index Type: %s", indexTypeName);
+        } else {
+          ImGui::Text("No Indices (Non-indexed rendering)");
         }
+        
       } else {
-        ImGui::Text("No mesh object assigned");
+        ImGui::Text("No primitive object assigned");
       }
     }
   }
@@ -496,9 +488,9 @@ void ScenePanel::drawAddComponentButton(ecs::Entity entity) {
       }
     }
     
-    if (!entity.hasComponent<ecs::Mesh>()) {
-      if (ImGui::MenuItem("Mesh")) {
-        entity.addComponent<ecs::Mesh>();
+    if (!entity.hasComponent<ecs::Primitive>()) {
+      if (ImGui::MenuItem("Primitive")) {
+        entity.addComponent<ecs::Primitive>();
       }
     }
     

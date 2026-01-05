@@ -372,8 +372,6 @@ void GltfLoader::parseMeshes() {
         sg_primitive.indexType = parseCompnentType(accessor.componentType);
         sg_primitive.indices = m_accessors[primitive.indices];
       }
-
-      sg_primitive.material = m_materials[primitive.material];
     }
     m_meshes.push_back(std::move(sg_mesh));
   }
@@ -476,6 +474,7 @@ void GltfLoader::parseNode(const tinygltf::Node &node, ecs::Entity parent, ecs::
   // Mesh Component - create child entities for each primitive
   if (node.mesh >= 0) {
     const auto& sg_mesh = m_meshes[node.mesh];
+    const auto& mesh = m_model.meshes[node.mesh];
     
     for (size_t i = 0; i < sg_mesh->primitives.size(); ++i) {
       // Create child entity for each primitive
@@ -486,12 +485,18 @@ void GltfLoader::parseNode(const tinygltf::Node &node, ecs::Entity parent, ecs::
       primitiveParentComp.parent = nodeEntity;
       
       // Add to parent's children
-      auto& nodeChildren = nodeEntity.getComponent<ecs::Children>();
-      nodeChildren.children.push_back(primitiveEntity);
+      auto& entityChildren = nodeEntity.getComponent<ecs::Children>();
+      entityChildren.children.push_back(primitiveEntity);
       
       // Add Primitive component
       auto primitive = std::make_shared<sg::Primitive>(sg_mesh->primitives[i]);
       primitiveEntity.addComponent<ecs::Primitive>(primitive);
+
+      // Add Material component if available
+      // Note: In glTF, a mesh primitive can reference a material
+      if (mesh.primitives[i].material >= 0) {
+        primitiveEntity.addComponent<ecs::Material>(m_materials[mesh.primitives[i].material]);
+      }
     }
   }
 
@@ -515,7 +520,7 @@ void GltfLoader::parseNode(const tinygltf::Node &node, ecs::Entity parent, ecs::
   // which simplifies GlobalTransform computation later
   for (int childIndex : node.children) {
     const auto &childNode = m_model.nodes[childIndex];
-    parseNode(childNode, entity, scene);
+    parseNode(childNode, nodeEntity, scene);
   }
 }
 

@@ -170,85 +170,81 @@ void ColorPass::draw(RenderContext &ctx, const glm::ivec2 &resolution,
     // Set viewport
     ctx.setViewport(0, 0, resolution.x, resolution.y);
 
-    // Iterate over entities with Mesh component
-    auto meshView = scene.view<ecs::Mesh, ecs::GlobalTransform>();
-    for (auto entity : meshView) {
-      auto &mesh = meshView.get<ecs::Mesh>(entity).mesh;
-      auto &transform = meshView.get<ecs::GlobalTransform>(entity);
-
-      if (!mesh)
+    // Iterate over entities with Primitive and Material components
+    auto primitiveView = scene.view<ecs::Primitive, ecs::Material, ecs::GlobalTransform>();
+    for (auto [entity, primitiveComp, materialComp, transform] : primitiveView.each()) {
+      if (!primitiveComp.primitive)
         continue;
 
-      // Update uniform buffers
+      const auto &primitive = *primitiveComp.primitive;
+
+      // Update transform uniform buffer
       TransformUBO transformData;
       transformData.model = transform.matrix;
       m_transform_ubo.set_sub_data(0, sizeof(TransformUBO), &transformData);
 
-      // Render each primitive in the mesh
-      for (const auto &primitive : mesh->primitives) {
-        // Bind vertex buffers
-        if (primitive.positions) {
-          ctx.bindVertexBuffer(0, *primitive.positions, 0, sizeof(glm::vec3));
-        }
-        if (primitive.normals) {
-          ctx.bindVertexBuffer(1, *primitive.normals, 0, sizeof(glm::vec3));
-        }
-        if (primitive.texcoords) {
-          ctx.bindVertexBuffer(2, *primitive.texcoords, 0, sizeof(glm::vec2));
-        }
-        if (primitive.colors) {
-          ctx.bindVertexBuffer(3, *primitive.colors, 0, sizeof(glm::vec3));
-        }
+      // Bind vertex buffers
+      if (primitive.positions) {
+        ctx.bindVertexBuffer(0, *primitive.positions, 0, sizeof(glm::vec3));
+      }
+      if (primitive.normals) {
+        ctx.bindVertexBuffer(1, *primitive.normals, 0, sizeof(glm::vec3));
+      }
+      if (primitive.texcoords) {
+        ctx.bindVertexBuffer(2, *primitive.texcoords, 0, sizeof(glm::vec2));
+      }
+      if (primitive.colors) {
+        ctx.bindVertexBuffer(3, *primitive.colors, 0, sizeof(glm::vec3));
+      }
 
-        // Bind index buffer if present
-        if (primitive.indices) {
-          ctx.bindIndexBuffer(*primitive.indices, primitive.indexType);
+      // Bind index buffer if present
+      if (primitive.indices) {
+        ctx.bindIndexBuffer(*primitive.indices, primitive.indexType);
+      }
+
+      // Update material UBO and bind textures from Material component
+      if (materialComp.material) {
+        const auto &mat = materialComp.material;
+        const auto &pbr = mat->pbrMetallicRoughness;
+
+        // Prepare material data
+        MaterialUBO materialData;
+        materialData.baseColorFactor = pbr.baseColorFactor;
+        materialData.emissiveFactor = mat->emissiveFactor;
+        materialData.metallicFactor = pbr.metallicFactor;
+        materialData.roughnessFactor = pbr.roughnessFactor;
+        m_material_ubo.set_sub_data(0, sizeof(MaterialUBO), &materialData);
+
+        // Bind textures with sampler
+        if (pbr.baseColorTexture && pbr.baseColorTexture->image) {
+          ctx.bindTexture(0, *pbr.baseColorTexture->image, *m_sampler);
         }
-
-        // Update material UBO and bind textures
-        if (primitive.material) {
-          const auto &mat = primitive.material;
-          const auto &pbr = mat->pbrMetallicRoughness;
-
-          // Prepare material data
-          MaterialUBO materialData;
-          materialData.baseColorFactor = pbr.baseColorFactor;
-          materialData.emissiveFactor = mat->emissiveFactor;
-          materialData.metallicFactor = pbr.metallicFactor;
-          materialData.roughnessFactor = pbr.roughnessFactor;
-          m_material_ubo.set_sub_data(0, sizeof(MaterialUBO), &materialData);
-
-          // Bind textures with sampler - directly from material
-          if (pbr.baseColorTexture && pbr.baseColorTexture->image) {
-            ctx.bindTexture(0, *pbr.baseColorTexture->image, *m_sampler);
-          }
-          if (pbr.metallicRoughnessTexture &&
-              pbr.metallicRoughnessTexture->image) {
-            ctx.bindTexture(1, *pbr.metallicRoughnessTexture->image,
-                            *m_sampler);
-          }
-          if (mat->normalTexture && mat->normalTexture->image) {
-            ctx.bindTexture(2, *mat->normalTexture->image, *m_sampler);
-          }
-          if (mat->emissiveTexture && mat->emissiveTexture->image) {
-            ctx.bindTexture(3, *mat->emissiveTexture->image, *m_sampler);
-          }
-          if (mat->occlusionTexture && mat->occlusionTexture->image) {
-            ctx.bindTexture(4, *mat->occlusionTexture->image, *m_sampler);
-          }
+        if (pbr.metallicRoughnessTexture &&
+            pbr.metallicRoughnessTexture->image) {
+          ctx.bindTexture(1, *pbr.metallicRoughnessTexture->image,
+                          *m_sampler);
         }
-
-        ctx.bindUniformBuffer(0, m_transform_ubo);
-        ctx.bindUniformBuffer(1, m_camera_ubo);
-        ctx.bindUniformBuffer(2, m_lighting_ubo);
-        ctx.bindUniformBuffer(3, m_material_ubo);
-
-        // Draw the primitive
-        if (primitive.hasIndices()) {
-          ctx.drawElements(primitive.indexCount, nullptr);
-        } else if (primitive.positions) {
-          ctx.drawArrays(0, primitive.vertexCount);
+        if (mat->normalTexture && mat->normalTexture->image) {
+          ctx.bindTexture(2, *mat->normalTexture->image, *m_sampler);
         }
+        if (mat->emissiveTexture && mat->emissiveTexture->image) {
+          ctx.bindTexture(3, *mat->emissiveTexture->image, *m_sampler);
+        }
+        if (mat->occlusionTexture && mat->occlusionTexture->image) {
+          ctx.bindTexture(4, *mat->occlusionTexture->image, *m_sampler);
+        }
+      }
+
+      ctx.bindUniformBuffer(0, m_transform_ubo);
+      ctx.bindUniformBuffer(1, m_camera_ubo);
+      ctx.bindUniformBuffer(2, m_lighting_ubo);
+      ctx.bindUniformBuffer(3, m_material_ubo);
+
+      // Draw the primitive
+      if (primitive.hasIndices()) {
+        ctx.drawElements(primitive.indexCount, nullptr);
+      } else if (primitive.positions) {
+        ctx.drawArrays(0, primitive.vertexCount);
       }
     }
 
