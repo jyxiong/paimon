@@ -50,9 +50,9 @@ struct GlobalTransform {
   glm::mat4 matrix = glm::mat4(1.0f);
 };
 
-/// Mesh component - references mesh data
-struct Mesh {
-  std::shared_ptr<sg::Mesh> mesh;
+/// Primitive component - references primitive data
+struct Primitive {
+  std::shared_ptr<sg::Primitive> primitive;
 };
 
 /// Material component - references material data

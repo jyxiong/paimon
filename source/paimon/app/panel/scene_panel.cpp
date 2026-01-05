@@ -155,32 +155,315 @@ void ScenePanel::drawComponents(ecs::Entity entity) {
   // Camera component
   if (entity.hasComponent<ecs::Camera>()) {
     if (ImGui::CollapsingHeader("Camera", ImGuiTreeNodeFlags_DefaultOpen)) {
-      ImGui::Text("Camera Component");
-      // TODO: Add camera properties editing
+      auto &cameraComp = entity.getComponent<ecs::Camera>();
+      
+      if (cameraComp.camera) {
+        auto cameraType = cameraComp.camera->getType();
+        
+        // Camera type dropdown
+        const char* types[] = { "Perspective", "Orthographic" };
+        int currentType = (cameraType == sg::Camera::Type::Perspective) ? 0 : 1;
+        
+        if (ImGui::Combo("Type", &currentType, types, 2)) {
+          // Switch camera type
+          if (currentType == 0 && cameraType != sg::Camera::Type::Perspective) {
+            cameraComp.camera = std::make_shared<sg::PerspectiveCamera>();
+          } else if (currentType == 1 && cameraType != sg::Camera::Type::Orthographic) {
+            cameraComp.camera = std::make_shared<sg::OrthographicCamera>();
+          }
+        }
+        
+        ImGui::Separator();
+        
+        // Perspective camera properties
+        if (cameraComp.camera->getType() == sg::Camera::Type::Perspective) {
+          auto* perspCamera = dynamic_cast<sg::PerspectiveCamera*>(cameraComp.camera.get());
+          if (perspCamera) {
+            // Convert FOV to degrees for display
+            float fovDegrees = glm::degrees(perspCamera->yfov);
+            if (ImGui::SliderFloat("Field of View", &fovDegrees, 1.0f, 120.0f, "%.1f°")) {
+              perspCamera->yfov = glm::radians(fovDegrees);
+            }
+            
+            ImGui::DragFloat("Aspect Ratio", &perspCamera->aspectRatio, 0.01f, 0.1f, 10.0f);
+            if (ImGui::IsItemHovered()) {
+              ImGui::SetTooltip("0 = use viewport aspect ratio");
+            }
+            
+            ImGui::DragFloat("Near Plane", &perspCamera->znear, 0.01f, 0.001f, 10.0f, "%.3f");
+            ImGui::DragFloat("Far Plane", &perspCamera->zfar, 1.0f, 1.0f, 1000.0f);
+            if (ImGui::IsItemHovered()) {
+              ImGui::SetTooltip("0 = infinite far plane");
+            }
+          }
+        }
+        // Orthographic camera properties
+        else if (cameraComp.camera->getType() == sg::Camera::Type::Orthographic) {
+          auto* orthoCamera = dynamic_cast<sg::OrthographicCamera*>(cameraComp.camera.get());
+          if (orthoCamera) {
+            ImGui::DragFloat("Horizontal Mag", &orthoCamera->xmag, 0.1f, 0.1f, 100.0f);
+            ImGui::DragFloat("Vertical Mag", &orthoCamera->ymag, 0.1f, 0.1f, 100.0f);
+            ImGui::DragFloat("Near Plane", &orthoCamera->znear, 0.01f, 0.001f, 10.0f, "%.3f");
+            ImGui::DragFloat("Far Plane", &orthoCamera->zfar, 1.0f, 1.0f, 1000.0f);
+          }
+        }
+        
+        ImGui::Separator();
+        
+        // Display camera vectors (read-only)
+        ImGui::Text("Position: (%.2f, %.2f, %.2f)", 
+                    cameraComp.position.x, cameraComp.position.y, cameraComp.position.z);
+        ImGui::Text("Direction: (%.2f, %.2f, %.2f)", 
+                    cameraComp.direction.x, cameraComp.direction.y, cameraComp.direction.z);
+      } else {
+        ImGui::Text("No camera object assigned");
+      }
     }
   }
   
-  // Mesh component
-  if (entity.hasComponent<ecs::Mesh>()) {
-    if (ImGui::CollapsingHeader("Mesh", ImGuiTreeNodeFlags_DefaultOpen)) {
-      ImGui::Text("Mesh Component");
-      // TODO: Add mesh properties
+  // Primitive component
+  if (entity.hasComponent<ecs::Primitive>()) {
+    if (ImGui::CollapsingHeader("Primitive", ImGuiTreeNodeFlags_DefaultOpen)) {
+      auto &primitiveComp = entity.getComponent<ecs::Primitive>();
+      
+      if (primitiveComp.primitive) {
+        auto &primitive = *primitiveComp.primitive;
+        
+        // Topology
+        const char* topologyNames[] = { 
+          "Points", "Lines", "Line Loop", "Line Strip", 
+          "Triangles", "Triangle Strip", "Triangle Fan" 
+        };
+        int topologyIndex = static_cast<int>(primitive.mode);
+        ImGui::Text("Topology: %s", topologyNames[topologyIndex]);
+        
+        ImGui::Separator();
+        
+        // Vertex data
+        ImGui::Text("Vertex Count: %zu", primitive.vertexCount);
+        
+        ImGui::Text("Attributes:");
+        ImGui::Indent();
+        ImGui::Text("Positions: %s", primitive.positions ? "✓" : "✗");
+        ImGui::Text("Normals: %s", primitive.normals ? "✓" : "✗");
+        ImGui::Text("Texcoords: %s", primitive.texcoords ? "✓" : "✗");
+        ImGui::Text("Colors: %s", primitive.colors ? "✓" : "✗");
+        ImGui::Unindent();
+        
+        ImGui::Separator();
+        
+        // Index data
+        if (primitive.hasIndices()) {
+          ImGui::Text("Index Count: %zu", primitive.indexCount);
+          
+          // Map DataType enum to display string
+          const char* indexTypeName = "Unknown";
+          switch (primitive.indexType) {
+            case DataType::Byte: indexTypeName = "Byte"; break;
+            case DataType::UByte: indexTypeName = "UByte"; break;
+            case DataType::Short: indexTypeName = "Short"; break;
+            case DataType::UShort: indexTypeName = "UShort"; break;
+            case DataType::Int: indexTypeName = "Int"; break;
+            case DataType::UInt: indexTypeName = "UInt"; break;
+            case DataType::Float: indexTypeName = "Float"; break;
+            case DataType::Double: indexTypeName = "Double"; break;
+          }
+          ImGui::Text("Index Type: %s", indexTypeName);
+        } else {
+          ImGui::Text("No Indices (Non-indexed rendering)");
+        }
+        
+      } else {
+        ImGui::Text("No primitive object assigned");
+      }
     }
   }
   
   // Material component
   if (entity.hasComponent<ecs::Material>()) {
     if (ImGui::CollapsingHeader("Material", ImGuiTreeNodeFlags_DefaultOpen)) {
-      ImGui::Text("Material Component");
-      // TODO: Add material properties editing
+      auto &materialComp = entity.getComponent<ecs::Material>();
+      
+      if (materialComp.material) {
+        auto &material = *materialComp.material;
+        
+        // PBR Metallic-Roughness
+        if (ImGui::TreeNodeEx("PBR Metallic-Roughness", ImGuiTreeNodeFlags_DefaultOpen)) {
+          auto &pbr = material.pbrMetallicRoughness;
+          
+          ImGui::ColorEdit4("Base Color", glm::value_ptr(pbr.baseColorFactor));
+          ImGui::Text("Base Color Texture: %s", pbr.baseColorTexture ? "Assigned" : "None");
+          
+          ImGui::SliderFloat("Metallic", &pbr.metallicFactor, 0.0f, 1.0f);
+          ImGui::SliderFloat("Roughness", &pbr.roughnessFactor, 0.0f, 1.0f);
+          ImGui::Text("Metallic-Roughness Texture: %s", 
+                      pbr.metallicRoughnessTexture ? "Assigned" : "None");
+          
+          ImGui::TreePop();
+        }
+        
+        // Normal Mapping
+        if (ImGui::TreeNodeEx("Normal Mapping", ImGuiTreeNodeFlags_DefaultOpen)) {
+          ImGui::Text("Normal Texture: %s", material.normalTexture ? "Assigned" : "None");
+          if (material.normalTexture) {
+            ImGui::SliderFloat("Normal Scale", &material.normalScale, 0.0f, 2.0f);
+          }
+          ImGui::TreePop();
+        }
+        
+        // Occlusion Mapping
+        if (ImGui::TreeNodeEx("Occlusion Mapping", ImGuiTreeNodeFlags_DefaultOpen)) {
+          ImGui::Text("Occlusion Texture: %s", material.occlusionTexture ? "Assigned" : "None");
+          if (material.occlusionTexture) {
+            ImGui::SliderFloat("Occlusion Strength", &material.occlusionStrength, 0.0f, 1.0f);
+          }
+          ImGui::TreePop();
+        }
+        
+        // Emissive
+        if (ImGui::TreeNodeEx("Emissive", ImGuiTreeNodeFlags_DefaultOpen)) {
+          ImGui::ColorEdit3("Emissive Factor", glm::value_ptr(material.emissiveFactor));
+          ImGui::Text("Emissive Texture: %s", material.emissiveTexture ? "Assigned" : "None");
+          ImGui::TreePop();
+        }
+        
+        ImGui::Separator();
+        
+        // Alpha Mode
+        const char* alphaModes[] = { "Opaque", "Mask", "Blend" };
+        int currentAlphaMode = static_cast<int>(material.alphaMode);
+        if (ImGui::Combo("Alpha Mode", &currentAlphaMode, alphaModes, 3)) {
+          material.alphaMode = static_cast<sg::AlphaMode>(currentAlphaMode);
+        }
+        
+        if (material.alphaMode == sg::AlphaMode::Mask) {
+          ImGui::SliderFloat("Alpha Cutoff", &material.alphaCutoff, 0.0f, 1.0f);
+        }
+        
+        ImGui::Checkbox("Double Sided", &material.doubleSided);
+        
+        // Anisotropy (KHR_materials_anisotropy)
+        if (ImGui::TreeNode("Anisotropy")) {
+          ImGui::SliderFloat("Strength##Aniso", &material.anisotropy.strength, 0.0f, 1.0f);
+          ImGui::SliderFloat("Rotation##Aniso", &material.anisotropy.rotation, 0.0f, 360.0f, "%.1f°");
+          ImGui::Text("Texture: %s", material.anisotropy.texture ? "Assigned" : "None");
+          ImGui::TreePop();
+        }
+        
+        // Clearcoat (KHR_materials_clearcoat)
+        if (ImGui::TreeNode("Clearcoat")) {
+          ImGui::SliderFloat("Factor##Clearcoat", &material.clearcoat.factor, 0.0f, 1.0f);
+          ImGui::Text("Texture: %s", material.clearcoat.texture ? "Assigned" : "None");
+          ImGui::SliderFloat("Roughness##Clearcoat", &material.clearcoat.roughnessFactor, 0.0f, 1.0f);
+          ImGui::Text("Roughness Texture: %s", 
+                      material.clearcoat.roughnessTexture ? "Assigned" : "None");
+          ImGui::Text("Normal Texture: %s", 
+                      material.clearcoat.normalTexture ? "Assigned" : "None");
+          if (material.clearcoat.normalTexture) {
+            ImGui::SliderFloat("Normal Scale##Clearcoat", &material.clearcoat.normalScale, 0.0f, 2.0f);
+          }
+          ImGui::TreePop();
+        }
+        
+      } else {
+        ImGui::Text("No material object assigned");
+      }
     }
   }
   
   // Light component
   if (entity.hasComponent<ecs::PunctualLight>()) {
     if (ImGui::CollapsingHeader("Light", ImGuiTreeNodeFlags_DefaultOpen)) {
-      ImGui::Text("Light Component");
-      // TODO: Add light properties editing
+      auto &lightComp = entity.getComponent<ecs::PunctualLight>();
+      
+      if (lightComp.light) {
+        auto lightType = lightComp.light->getType();
+        
+        // Light type dropdown
+        const char* types[] = { "Directional", "Point", "Spot" };
+        int currentType = static_cast<int>(lightType);
+        
+        if (ImGui::Combo("Type", &currentType, types, 3)) {
+          // Switch light type
+          switch (currentType) {
+            case 0: // Directional
+              if (lightType != sg::PunctualLight::Type::Directional) {
+                lightComp.light = std::make_shared<sg::DirectionalLight>();
+              }
+              break;
+            case 1: // Point
+              if (lightType != sg::PunctualLight::Type::Point) {
+                lightComp.light = std::make_shared<sg::PointLight>();
+              }
+              break;
+            case 2: // Spot
+              if (lightType != sg::PunctualLight::Type::Spot) {
+                lightComp.light = std::make_shared<sg::SpotLight>();
+              }
+              break;
+          }
+        }
+        
+        ImGui::Separator();
+        
+        // Common light properties
+        ImGui::ColorEdit3("Color", glm::value_ptr(lightComp.light->color));
+        ImGui::DragFloat("Intensity", &lightComp.light->intensity, 0.1f, 0.0f, 100.0f);
+        ImGui::DragFloat("Range", &lightComp.light->range, 0.1f, 0.0f, 1000.0f);
+        if (ImGui::IsItemHovered()) {
+          ImGui::SetTooltip("0 = infinite range");
+        }
+        
+        ImGui::Separator();
+        
+        // Type-specific properties
+        if (lightType == sg::PunctualLight::Type::Directional) {
+          ImGui::Text("Direction: (%.2f, %.2f, %.2f)",
+                      lightComp.direction.x, lightComp.direction.y, lightComp.direction.z);
+          ImGui::TextWrapped("Tip: Direction is controlled by Transform rotation");
+        }
+        else if (lightType == sg::PunctualLight::Type::Point) {
+          ImGui::Text("Position: (%.2f, %.2f, %.2f)",
+                      lightComp.position.x, lightComp.position.y, lightComp.position.z);
+          ImGui::TextWrapped("Tip: Position is controlled by Transform translation");
+        }
+        else if (lightType == sg::PunctualLight::Type::Spot) {
+          auto* spotLight = dynamic_cast<sg::SpotLight*>(lightComp.light.get());
+          if (spotLight) {
+            ImGui::Text("Position: (%.2f, %.2f, %.2f)",
+                        lightComp.position.x, lightComp.position.y, lightComp.position.z);
+            ImGui::Text("Direction: (%.2f, %.2f, %.2f)",
+                        lightComp.direction.x, lightComp.direction.y, lightComp.direction.z);
+            
+            ImGui::Separator();
+            
+            // Convert cone angles to degrees for display
+            float innerDegrees = glm::degrees(spotLight->innerConeAngle);
+            float outerDegrees = glm::degrees(spotLight->outerConeAngle);
+            
+            if (ImGui::SliderFloat("Inner Cone Angle", &innerDegrees, 0.0f, 90.0f, "%.1f°")) {
+              spotLight->innerConeAngle = glm::radians(innerDegrees);
+              // Ensure inner <= outer
+              if (spotLight->innerConeAngle > spotLight->outerConeAngle) {
+                spotLight->outerConeAngle = spotLight->innerConeAngle;
+              }
+            }
+            
+            if (ImGui::SliderFloat("Outer Cone Angle", &outerDegrees, 0.0f, 90.0f, "%.1f°")) {
+              spotLight->outerConeAngle = glm::radians(outerDegrees);
+              // Ensure outer >= inner
+              if (spotLight->outerConeAngle < spotLight->innerConeAngle) {
+                spotLight->innerConeAngle = spotLight->outerConeAngle;
+              }
+            }
+            
+            ImGui::TextWrapped("Tip: Position and direction are controlled by Transform");
+          }
+        }
+        
+      } else {
+        ImGui::Text("No light object assigned");
+      }
     }
   }
 }
@@ -205,9 +488,9 @@ void ScenePanel::drawAddComponentButton(ecs::Entity entity) {
       }
     }
     
-    if (!entity.hasComponent<ecs::Mesh>()) {
-      if (ImGui::MenuItem("Mesh")) {
-        entity.addComponent<ecs::Mesh>();
+    if (!entity.hasComponent<ecs::Primitive>()) {
+      if (ImGui::MenuItem("Primitive")) {
+        entity.addComponent<ecs::Primitive>();
       }
     }
     
