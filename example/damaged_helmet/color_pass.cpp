@@ -6,6 +6,7 @@
 #include "paimon/core/ecs/components.h"
 #include "paimon/core/log_system.h"
 #include "paimon/core/sg/mesh.h"
+#include "paimon/core/world.h"
 #include "paimon/rendering/render_context.h"
 
 using namespace paimon;
@@ -102,21 +103,18 @@ void ColorPass::draw(RenderContext &ctx, const glm::ivec2 &resolution,
   }
 
   {
-    // Get camera entity and build transform UBO
+    // Get camera entity and build camera UBO
     auto entity = scene.getMainCamera();
-    auto &camera = entity.getComponent<ecs::Camera>().camera;
+    auto &cameraComp = entity.getComponent<ecs::Camera>();
     auto &transform = entity.getComponent<ecs::GlobalTransform>();
 
     // Extract position from transform matrix
     glm::vec3 position = glm::vec3(transform.matrix[3]);
-    
-    // Camera looks at origin (0, 0, 0)
-    glm::vec3 target = glm::vec3(0.0f, 0.0f, 0.0f);
-    glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
 
     CameraUBO cameraData;
-    cameraData.view = glm::lookAt(position, target, up);    
-    cameraData.projection = camera->getProjection();
+    // Use view matrix calculated by OrbitCameraController
+    cameraData.view = cameraComp.view;
+    cameraData.projection = cameraComp.camera->getProjection();
     cameraData.position = position;
     m_camera_ubo.set_sub_data(0, sizeof(CameraUBO), &cameraData);
   }
@@ -133,10 +131,10 @@ void ColorPass::draw(RenderContext &ctx, const glm::ivec2 &resolution,
     lightingData.color = light->color;
     lightingData.intensity = light->intensity;
     lightingData.direction = glm::normalize(
-        glm::vec3(transform.matrix * glm::vec4(light->direction, 0.0f)));
+        glm::vec3(transform.matrix * glm::vec4(World::Forward, 0.0f)));
     lightingData.range = light->range;
     lightingData.position =
-        glm::vec3(transform.matrix * glm::vec4(light->position, 1.0f));
+        glm::vec3(transform.matrix * glm::vec4(World::Origin, 1.0f));
     // TODO: light types
     // lightingData.innerConeAngle = light
     m_lighting_ubo.set_sub_data(0, sizeof(LightingUBO), &lightingData);

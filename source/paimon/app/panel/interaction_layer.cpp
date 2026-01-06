@@ -1,7 +1,5 @@
 #include "paimon/app/panel/interaction_layer.h"
 
-#include "paimon/app/application.h"
-
 namespace paimon {
 
 InteractionLayer::InteractionLayer() 
@@ -10,12 +8,7 @@ InteractionLayer::InteractionLayer()
 
 InteractionLayer::~InteractionLayer() = default;
 
-void InteractionLayer::onAttach() {
-  // Bind camera to controller
-  auto& scene = Application::getInstance().getScene();
-  auto mainCamera = scene.getMainCamera();
-  m_cameraController->CameraController::setTarget(mainCamera);
-}
+void InteractionLayer::onAttach() {}
 
 void InteractionLayer::onDetach() {}
 

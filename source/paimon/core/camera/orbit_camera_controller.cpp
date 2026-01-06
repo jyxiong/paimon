@@ -3,17 +3,26 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/quaternion.hpp>
 
+#include "paimon/app/application.h"
 #include "paimon/app/event/application_event.h"
 #include "paimon/app/event/event.h"
 #include "paimon/app/event/mouse_event.h"
 #include "paimon/app/mouse_code.h"
 #include "paimon/core/ecs/components.h"
 #include "paimon/core/sg/camera.h"
+#include "paimon/core/world.h"
 
 namespace paimon {
 
 OrbitCameraController::OrbitCameraController()
-  : m_targetPosition(0.0f), m_distance(5.0f), m_yaw(0.0f), m_pitch(0.0f) {}
+    : m_yaw(0.0f), m_pitch(0.0f) {
+  auto &scene = Application::getInstance().getScene();
+  m_camera = scene.getMainCamera();
+
+  auto &transform = m_camera.getComponent<ecs::Transform>();
+  m_focusPoint = World::Origin;
+  m_distance = glm::length(transform.translation - m_focusPoint);
+}
 
 void OrbitCameraController::onEvent(Event& event) {
   if (!m_enabled || !m_camera.isValid()) {
@@ -101,7 +110,7 @@ void OrbitCameraController::onRotate(const glm::vec2& delta) {
 
 void OrbitCameraController::onPan(const glm::vec2& delta) {
   // Middle-click drag - pan view
-  m_targetPosition += calculatePanDelta(delta);
+  m_focusPoint += calculatePanDelta(delta);
 }
 
 void OrbitCameraController::onZoom(float scrollDelta) {
@@ -137,12 +146,11 @@ void OrbitCameraController::updateCameraTransform() {
     m_distance * cosPitch * sinYaw
   );
 
-  glm::vec3 cameraPosition = m_targetPosition + offset;
-  glm::vec3 direction = glm::normalize(m_targetPosition - cameraPosition);
+  glm::vec3 cameraPosition = m_focusPoint + offset;
+  glm::vec3 direction = glm::normalize(m_focusPoint - cameraPosition);
 
   // Calculate camera rotation (looking at target)
-  glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-  glm::vec3 right = glm::normalize(glm::cross(direction, up));
+  glm::vec3 right = glm::normalize(glm::cross(direction, World::Up));
   glm::vec3 cameraUp = glm::cross(right, direction);
 
   glm::mat3 rotationMatrix(right, cameraUp, -direction);
@@ -156,11 +164,8 @@ void OrbitCameraController::updateCameraTransform() {
   // Update Camera component
   if (m_camera.hasComponent<ecs::Camera>()) {
     auto& camera = m_camera.getComponent<ecs::Camera>();
-    camera.position = cameraPosition;
-    camera.direction = direction;
-    
     // Update view matrix
-    camera.view = glm::lookAt(cameraPosition, m_targetPosition, cameraUp);
+    camera.view = glm::lookAt(cameraPosition, m_focusPoint, cameraUp);
     camera.inverseView = glm::inverse(camera.view);
   }
 }
@@ -173,8 +178,8 @@ glm::vec3 OrbitCameraController::calculatePanDelta(const glm::vec2& delta) {
   auto& transform = m_camera.getComponent<ecs::Transform>();
   
   // Get camera's right and up directions
-  glm::vec3 forward = glm::normalize(m_targetPosition - transform.translation);
-  glm::vec3 right = glm::normalize(glm::cross(forward, glm::vec3(0, 1, 0)));
+  glm::vec3 forward = glm::normalize(m_focusPoint - transform.translation);
+  glm::vec3 right = glm::normalize(glm::cross(forward, World::Up));
   glm::vec3 up = glm::cross(right, forward);
 
   // Adjust pan speed based on distance (move faster when farther away)
