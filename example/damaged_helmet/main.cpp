@@ -1,38 +1,12 @@
-#include <memory>
-
-#include <GLFW/glfw3.h>
-#include <glad/gl.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
 #include "paimon/app/application.h"
-#include "paimon/app/panel/editor_layer.h"
-#include "paimon/app/panel/interaction_layer.h"
 #include "paimon/core/log_system.h"
 
-#include "renderer.h"
-
 using namespace paimon;
-
-class HelmetApp : public Application {
-public:
-  HelmetApp() : Application() {
-    // Setup editor layer first
-    auto* editorLayer = pushLayer(std::make_unique<EditorLayer>());
-
-    // Setup interaction layer for camera control
-    auto* interactionLayer = pushLayer(std::make_unique<InteractionLayer>());
-
-    // Setup renderer with the scene and viewport
-    auto *renderer = pushLayer(std::make_unique<Renderer>());
-  }
-};
 
 int main() {
   LogSystem::init();
 
-  HelmetApp app;
+  Application app;
   app.run();
 
   return 0;

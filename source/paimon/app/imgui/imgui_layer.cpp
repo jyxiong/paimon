@@ -10,8 +10,8 @@ using namespace paimon;
 
 bool ImGuiLayer::s_showDockSpace = true;
 
-ImGuiLayer::ImGuiLayer(const std::string &name)
-    : Layer(name) {}
+ImGuiLayer::ImGuiLayer()
+    : Layer("ImGuiLayer") {}
 
 void ImGuiLayer::onAttach() {
 

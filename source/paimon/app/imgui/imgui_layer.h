@@ -6,7 +6,7 @@ namespace paimon {
 
 class ImGuiLayer : public Layer {
 public:
-  ImGuiLayer(const std::string &name);
+  ImGuiLayer();
 
   ~ImGuiLayer() = default;
 

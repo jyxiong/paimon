@@ -9,6 +9,7 @@
 #include "paimon/app/window.h"
 #include "paimon/core/ecs/scene.h"
 #include "paimon/platform/context.h"
+#include "paimon/rendering/renderer.h"
 #include "paimon/rendering/shader_manager.h"
 
 namespace paimon {
@@ -20,13 +21,13 @@ struct ApplicationConfig {
 
 class Application {
 public:
-  static Application& getInstance() { return *s_instance; }
+  static Application &getInstance() { return *s_instance; }
 
-  Application(const ApplicationConfig& config = {});
+  Application(const ApplicationConfig &config = {});
   virtual ~Application() = default;
 
-  Application(const Application&) = delete;
-  Application& operator=(const Application&) = delete;
+  Application(const Application &) = delete;
+  Application &operator=(const Application &) = delete;
 
   template <class T>
     requires std::is_base_of<Layer, T>::value
@@ -36,21 +37,28 @@ public:
     return static_cast<T *>(m_layers.back().get());
   }
 
-  void onEvent(Event& event);
+  void onEvent(Event &event);
 
   void run();
 
-  Window* getWindow() const { return m_window.get(); }
+  Window *getWindow() const { return m_window.get(); }
 
-  ShaderManager& getShaderManager() { return m_shaderManager; }
-  const ShaderManager& getShaderManager() const { return m_shaderManager; }
+  ShaderManager &getShaderManager() { return m_shaderManager; }
+  const ShaderManager &getShaderManager() const { return m_shaderManager; }
 
   // Scene management
-  ecs::Scene& getScene() { return *m_scene; }
-  const ecs::Scene& getScene() const { return *m_scene; }
+  ecs::Scene &getScene() { return *m_scene; }
+  const ecs::Scene &getScene() const { return *m_scene; }
+
+  void setScene(std::unique_ptr<ecs::Scene> scene) {
+    m_scene = std::move(scene);
+  }
+
+  Renderer& getRenderer() { return *m_renderer; }
+  const Renderer& getRenderer() const { return *m_renderer; }
 
 private:
-  static Application* s_instance;
+  static Application *s_instance;
 
   std::unique_ptr<Window> m_window;
 
@@ -60,6 +68,7 @@ private:
 
   std::vector<std::unique_ptr<Layer>> m_layers;
   ImGuiLayer *m_imguiLayer;
+  Renderer *m_renderer;
 };
 
 } // namespace paimon

@@ -1,4 +1,4 @@
-#include "color_pass.h"
+#include "paimon/rendering/render_pass/color_pass.h"
 
 #include <glad/gl.h>
 

@@ -2,12 +2,12 @@
 
 #include <memory>
 
+#include "paimon/core/ecs/scene.h"
 #include "paimon/opengl/buffer.h"
 #include "paimon/opengl/sampler.h"
 #include "paimon/opengl/texture.h"
 #include "paimon/rendering/graphics_pipeline.h"
 #include "paimon/rendering/render_context.h"
-#include "paimon/core/ecs/scene.h"
 
 namespace paimon {
 
