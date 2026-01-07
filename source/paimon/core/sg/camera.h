@@ -15,9 +15,6 @@ struct Camera {
   virtual Type getType() const = 0;
 
   virtual glm::mat4 getProjection() const = 0;
-
-  glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.3f);
-  glm::vec3 direction = glm::vec3(0.0f, 1.0f, 0.0f);
 };
 
 /// Perspective camera

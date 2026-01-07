@@ -24,7 +24,7 @@ private:
 
 private:
   // Camera parameters
-  glm::vec3 m_targetPosition = glm::vec3(0.0f);
+  glm::vec3 m_focusPoint = glm::vec3(0.0f);
   float m_distance = 5.0f;
   float m_yaw = 0.0f;      // Horizontal angle
   float m_pitch = 0.0f;    // Vertical angle

@@ -1,13 +1,11 @@
 #pragma once
 
-#include <functional>
 #include <memory>
 #include <string>
 #include <utility>
 
 #include <GLFW/glfw3.h>
 
-#include "paimon/app/event/event.h"
 #include "paimon/app/key_code.h"
 #include "paimon/app/mouse_code.h"
 #include "paimon/platform/context.h"

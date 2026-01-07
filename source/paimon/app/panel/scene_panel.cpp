@@ -211,10 +211,10 @@ void ScenePanel::drawComponents(ecs::Entity entity) {
         ImGui::Separator();
         
         // Display camera vectors (read-only)
-        ImGui::Text("Position: (%.2f, %.2f, %.2f)", 
-                    cameraComp.position.x, cameraComp.position.y, cameraComp.position.z);
-        ImGui::Text("Direction: (%.2f, %.2f, %.2f)", 
-                    cameraComp.direction.x, cameraComp.direction.y, cameraComp.direction.z);
+        // ImGui::Text("Position: (%.2f, %.2f, %.2f)", 
+        //             cameraComp.position.x, cameraComp.position.y, cameraComp.position.z);
+        // ImGui::Text("Direction: (%.2f, %.2f, %.2f)", 
+        //             cameraComp.direction.x, cameraComp.direction.y, cameraComp.direction.z);
       } else {
         ImGui::Text("No camera object assigned");
       }
@@ -418,22 +418,22 @@ void ScenePanel::drawComponents(ecs::Entity entity) {
         
         // Type-specific properties
         if (lightType == sg::PunctualLight::Type::Directional) {
-          ImGui::Text("Direction: (%.2f, %.2f, %.2f)",
-                      lightComp.direction.x, lightComp.direction.y, lightComp.direction.z);
-          ImGui::TextWrapped("Tip: Direction is controlled by Transform rotation");
+          // ImGui::Text("Direction: (%.2f, %.2f, %.2f)",
+          //             lightComp.direction.x, lightComp.direction.y, lightComp.direction.z);
+          // ImGui::TextWrapped("Tip: Direction is controlled by Transform rotation");
         }
         else if (lightType == sg::PunctualLight::Type::Point) {
-          ImGui::Text("Position: (%.2f, %.2f, %.2f)",
-                      lightComp.position.x, lightComp.position.y, lightComp.position.z);
-          ImGui::TextWrapped("Tip: Position is controlled by Transform translation");
+          // ImGui::Text("Position: (%.2f, %.2f, %.2f)",
+          //             lightComp.position.x, lightComp.position.y, lightComp.position.z);
+          // ImGui::TextWrapped("Tip: Position is controlled by Transform translation");
         }
         else if (lightType == sg::PunctualLight::Type::Spot) {
           auto* spotLight = dynamic_cast<sg::SpotLight*>(lightComp.light.get());
           if (spotLight) {
-            ImGui::Text("Position: (%.2f, %.2f, %.2f)",
-                        lightComp.position.x, lightComp.position.y, lightComp.position.z);
-            ImGui::Text("Direction: (%.2f, %.2f, %.2f)",
-                        lightComp.direction.x, lightComp.direction.y, lightComp.direction.z);
+            // ImGui::Text("Position: (%.2f, %.2f, %.2f)",
+            //             lightComp.position.x, lightComp.position.y, lightComp.position.z);
+            // ImGui::Text("Direction: (%.2f, %.2f, %.2f)",
+            //             lightComp.direction.x, lightComp.direction.y, lightComp.direction.z);
             
             ImGui::Separator();
             

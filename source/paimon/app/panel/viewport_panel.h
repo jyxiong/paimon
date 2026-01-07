@@ -10,12 +10,11 @@ public:
   ~ViewportPanel();
 
   void onImGuiRender();
-  
-  bool isFocused() const { return m_isFocused; }
-  
+    
 private:
   glm::ivec2 m_viewportSize = glm::ivec2(0);
-  bool m_isFocused = false;
+  bool m_isRightButtonPressed = false;
+  bool m_isMiddleButtonPressed = false;
 };
 
 } // namespace paimon

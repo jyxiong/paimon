@@ -13,7 +13,6 @@ public:
   virtual void onEvent(Event& event) = 0;
   virtual void update(float deltaTime) = 0;
 
-  void setTarget(ecs::Entity cameraEntity) { m_camera = cameraEntity; }
   void setEnabled(bool enabled) { m_enabled = enabled; }
   bool isEnabled() const { return m_enabled; }
 

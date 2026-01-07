@@ -127,11 +127,11 @@ std::unique_ptr<Window> Window::create(const WindowConfig &config, const Context
 
   glfwSetWindowUserPointer(window->m_window, window.get());
 
-  glfwSetKeyCallback(window->m_window, keyCallback);
-  glfwSetCharCallback(window->m_window, charCallback);
-  glfwSetMouseButtonCallback(window->m_window, mouseButtonCallback);
-  glfwSetCursorPosCallback(window->m_window, cursorPosCallback);
-  glfwSetScrollCallback(window->m_window, scrollCallback);
+  // glfwSetKeyCallback(window->m_window, keyCallback);
+  // glfwSetCharCallback(window->m_window, charCallback);
+  // glfwSetMouseButtonCallback(window->m_window, mouseButtonCallback);
+  // glfwSetCursorPosCallback(window->m_window, cursorPosCallback);
+  // glfwSetScrollCallback(window->m_window, scrollCallback);
 
   glfwMakeContextCurrent(window->m_window);
 
