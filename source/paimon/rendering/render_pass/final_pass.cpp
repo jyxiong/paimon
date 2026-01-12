@@ -1,4 +1,4 @@
-#include "final_pass.h"
+#include "paimon/rendering/render_pass/final_pass.h"
 
 #include <glad/gl.h>
 

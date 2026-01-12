@@ -2,9 +2,8 @@
 
 #include "paimon/app/layer.h"
 #include "paimon/rendering/render_context.h"
-
-#include "color_pass.h"
-#include "final_pass.h"
+#include "paimon/rendering/render_pass/color_pass.h"
+#include "paimon/rendering/render_pass/final_pass.h"
 
 namespace paimon {
 
@@ -17,6 +16,10 @@ public:
   void onUpdate() override;
   void onEvent(Event &event) override;
   void onImGuiRender() override;
+
+  const ColorPass &getColorPass() const { return m_color_pass; }
+  ColorPass &getColorPass() { return m_color_pass; }
+
 private:
   std::unique_ptr<RenderContext> m_renderContext;
   

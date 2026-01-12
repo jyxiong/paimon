@@ -1,5 +1,7 @@
 #include "paimon/app/application.h"
 
+#include "paimon/app/panel/editor_layer.h"
+#include "paimon/app/panel/interaction_layer.h"
 #include "paimon/config.h"
 
 namespace paimon {
@@ -17,7 +19,13 @@ Application::Application(const ApplicationConfig& config) {
 
   m_shaderManager.load(PAIMON_SHADER_DIR);
 
-  m_imguiLayer = pushLayer(std::make_unique<ImGuiLayer>("ImGuiLayer"));
+  m_imguiLayer = pushLayer(std::make_unique<ImGuiLayer>());
+
+  pushLayer(std::make_unique<EditorLayer>());
+
+  pushLayer(std::make_unique<InteractionLayer>());
+
+  m_renderer = pushLayer(std::make_unique<Renderer>());
 }
 
 void Application::onEvent(Event& event) {
