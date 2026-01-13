@@ -294,7 +294,14 @@ void GltfLoader::parseTextures() {
   for (const auto &texture : m_model.textures) {
     auto sg_texture = std::make_shared<sg::Texture>();
     sg_texture->image = parse(m_model.images[texture.source]);
-    sg_texture->sampler = parse(m_model.samplers[texture.sampler]);
+    
+    // Check if sampler is valid, use default if not
+    if (texture.sampler >= 0) {
+      sg_texture->sampler = parse(m_model.samplers[texture.sampler]);
+    } else {
+      sg_texture->sampler = getDefaultSampler();
+    }
+    
     m_textures.push_back(std::move(sg_texture));
   }
 }
@@ -306,23 +313,34 @@ void GltfLoader::parseMaterials() {
         .baseColorFactor =
             parseVec4(material.pbrMetallicRoughness.baseColorFactor),
         .baseColorTexture =
-            m_textures[material.pbrMetallicRoughness.baseColorTexture.index],
+            material.pbrMetallicRoughness.baseColorTexture.index >= 0
+                ? m_textures[material.pbrMetallicRoughness.baseColorTexture.index]
+                : nullptr,
         .metallicFactor =
             static_cast<float>(material.pbrMetallicRoughness.metallicFactor),
         .roughnessFactor =
             static_cast<float>(material.pbrMetallicRoughness.roughnessFactor),
         .metallicRoughnessTexture =
-            m_textures[material.pbrMetallicRoughness.metallicRoughnessTexture
-                           .index],
+            material.pbrMetallicRoughness.metallicRoughnessTexture.index >= 0
+                ? m_textures[material.pbrMetallicRoughness.metallicRoughnessTexture.index]
+                : nullptr,
     };
 
-    sg_material->normalTexture = m_textures[material.normalTexture.index];
+    sg_material->normalTexture = material.normalTexture.index >= 0
+                                     ? m_textures[material.normalTexture.index]
+                                     : nullptr;
     sg_material->normalScale = material.normalTexture.scale;
 
-    sg_material->occlusionTexture = m_textures[material.occlusionTexture.index];
+    sg_material->occlusionTexture =
+        material.occlusionTexture.index >= 0
+            ? m_textures[material.occlusionTexture.index]
+            : nullptr;
     sg_material->occlusionStrength = material.occlusionTexture.strength;
 
-    sg_material->emissiveTexture = m_textures[material.emissiveTexture.index];
+    sg_material->emissiveTexture =
+        material.emissiveTexture.index >= 0
+            ? m_textures[material.emissiveTexture.index]
+            : nullptr;
     sg_material->emissiveFactor = parseVec3(material.emissiveFactor);
 
     sg_material->doubleSided = material.doubleSided;
