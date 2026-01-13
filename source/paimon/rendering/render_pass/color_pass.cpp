@@ -64,20 +64,23 @@ ColorPass::ColorPass(RenderContext &renderContext)
   m_color_texture = std::make_unique<Texture>(GL_TEXTURE_2D);
   m_depth_texture = std::make_unique<Texture>(GL_TEXTURE_2D);
 
-  // Create uniform buffers
+  // Create uniform buffers and storage buffers
   m_transform_ubo.set_storage(sizeof(TransformUBO), nullptr,
                               GL_DYNAMIC_STORAGE_BIT);
   m_camera_ubo.set_storage(sizeof(CameraUBO), nullptr, GL_DYNAMIC_STORAGE_BIT);
-  m_lighting_ubo.set_storage(sizeof(LightingUBO), nullptr,
-                             GL_DYNAMIC_STORAGE_BIT);
+  // Lighting SSBO - will be reallocated dynamically based on actual light count
+  // For now, allocate for 1 main directional light
+  m_lighting_ssbo.set_storage(sizeof(PunctualLightData) * 1, nullptr,
+                              GL_DYNAMIC_STORAGE_BIT);
   m_material_ubo.set_storage(sizeof(MaterialUBO), nullptr,
                              GL_DYNAMIC_STORAGE_BIT);
 
-  // Bind UBOs once for all meshes
+  // Bind UBOs and SSBOs once for all meshes
   m_transform_ubo.bind_base(GL_UNIFORM_BUFFER, 0);
   m_camera_ubo.bind_base(GL_UNIFORM_BUFFER, 1);
-  m_lighting_ubo.bind_base(GL_UNIFORM_BUFFER, 2);
-  m_material_ubo.bind_base(GL_UNIFORM_BUFFER, 3);
+  m_material_ubo.bind_base(GL_UNIFORM_BUFFER, 2);
+  // SSBO uses separate binding point namespace
+  m_lighting_ssbo.bind_base(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
 void ColorPass::draw(RenderContext &ctx, const glm::ivec2 &resolution,
@@ -120,24 +123,27 @@ void ColorPass::draw(RenderContext &ctx, const glm::ivec2 &resolution,
   }
 
   {
-    // Get directional light entity and build lighting UBO
+    // Build lighting SSBO with all lights
+    // For now, only main directional light
     auto entity = scene.getDirectionalLight();
     auto &transform = entity.getComponent<ecs::GlobalTransform>();
     auto &light = entity.getComponent<ecs::PunctualLight>().light;
 
-    LightingUBO lightingData;
-
-    // For directional light, use forward direction from transform
-    lightingData.color = light->color;
-    lightingData.intensity = light->intensity;
-    lightingData.direction = glm::normalize(
-        glm::vec3(transform.matrix * glm::vec4(World::Forward, 0.0f)));
-    lightingData.range = light->range;
-    lightingData.position =
+    PunctualLightData lightData;
+    lightData.position =
         glm::vec3(transform.matrix * glm::vec4(World::Origin, 1.0f));
-    // TODO: light types
-    // lightingData.innerConeAngle = light
-    m_lighting_ubo.set_sub_data(0, sizeof(LightingUBO), &lightingData);
+    lightData.type = 0; // LIGHT_TYPE_DIRECTIONAL
+    lightData.direction = glm::normalize(
+        glm::vec3(transform.matrix * glm::vec4(World::Forward, 0.0f)));
+    lightData.range = light->range;
+    lightData.color = light->color;
+    lightData.intensity = light->intensity;
+    lightData.innerConeAngle = 0.0f;
+    lightData.outerConeAngle = 0.0f;
+    lightData._padding = glm::vec2(0.0f);
+
+    // Upload lighting data to SSBO (just the light array, no count)
+    m_lighting_ssbo.set_sub_data(0, sizeof(PunctualLightData), &lightData);
   }
 
   m_color_texture->set_storage_2d(1, GL_RGBA8, resolution.x, resolution.y);
@@ -235,8 +241,8 @@ void ColorPass::draw(RenderContext &ctx, const glm::ivec2 &resolution,
 
       ctx.bindUniformBuffer(0, m_transform_ubo);
       ctx.bindUniformBuffer(1, m_camera_ubo);
-      ctx.bindUniformBuffer(2, m_lighting_ubo);
-      ctx.bindUniformBuffer(3, m_material_ubo);
+      ctx.bindUniformBuffer(2, m_material_ubo);
+      ctx.bindStorageBuffer(0, m_lighting_ssbo);
 
       // Draw the primitive
       if (primitive.hasIndices()) {

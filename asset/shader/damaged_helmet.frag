@@ -1,6 +1,7 @@
 #version 460 core
 
-#include <pbr.glsl>
+#include <brdf.glsl>
+#include <punctual.glsl>
 
 in vec3 v_position;
 in vec3 v_normal;
@@ -23,21 +24,8 @@ layout(std140, binding = 1) uniform CameraUBO
   vec3 position;
 } u_camera;
 
-// UBO for lighting
-layout(std140, binding = 2) uniform LightingUBO
-{
-  vec3 color;
-  float intensity;
-  vec3 direction;
-  float range;
-  vec3 position;
-  float innerConeAngle;
-  float outerConeAngle;
-  int type;
-} u_lighting;
-
 // UBO for material properties
-layout(std140, binding = 3) uniform MaterialUBO
+layout(std140, binding = 2) uniform MaterialUBO
 {
   vec4 baseColorFactor;
   vec3 emissiveFactor;
@@ -45,6 +33,12 @@ layout(std140, binding = 3) uniform MaterialUBO
   float roughnessFactor;
   float _padding[3]; // alignment
 } u_material;
+
+// SSBO for all lighting
+layout(std430, binding = 0) buffer LightingSSBO
+{
+  PunctualLight lights[]; // lights[0] is main directional light
+} u_lighting;
 
 void main()
 {
@@ -59,11 +53,48 @@ void main()
   // Normal from normal map
   vec3 N = normalize(v_normal);
   vec3 V = normalize(u_camera.position - v_position);
-  vec3 L = normalize(u_lighting.position - v_position);
 
-  // Calculate PBR lighting
-  vec3 radiance = vec3(1.0); // Light color/intensity
-  vec3 Lo = calculatePBRLighting(N, V, L, baseColor.rgb, metallic, roughness, radiance);
+  // Initialize lighting accumulation
+  vec3 Lo = vec3(0.0);
+
+  // Calculate lighting contribution from all lights
+  // lights[0] is always the main directional light
+  for (int i = 0; i < u_lighting.lights.length(); ++i)
+  {
+    PunctualLight light = u_lighting.lights[i];
+    vec3 L;
+    vec3 radiance;
+
+    if (light.type == LIGHT_TYPE_DIRECTIONAL)
+    {
+      // Directional light
+      L = normalize(-light.direction);
+      radiance = light.color * light.intensity;
+    }
+    else if (light.type == LIGHT_TYPE_POINT)
+    {
+      // Point light
+      L = normalize(light.position - v_position);
+      float distance = length(light.position - v_position);
+      float attenuation = calculateAttenuation(distance, light.range);
+      radiance = light.color * light.intensity * attenuation;
+    }
+    else if (light.type == LIGHT_TYPE_SPOT)
+    {
+      // Spot light
+      L = normalize(light.position - v_position);
+      float distance = length(light.position - v_position);
+      float attenuation = calculateAttenuation(distance, light.range);
+      float spotEffect = calculateSpotEffect(L, light.direction, light.innerConeAngle, light.outerConeAngle);
+      radiance = light.color * light.intensity * attenuation * spotEffect;
+    }
+    else
+    {
+      continue; // Skip unknown light types
+    }
+
+    Lo += calculatePBRLighting(N, V, L, baseColor.rgb, metallic, roughness, radiance);
+  }
 
   // Ambient lighting (simplified)
   vec3 ambient = vec3(0.03) * baseColor.rgb * ao;
