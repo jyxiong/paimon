@@ -371,99 +371,66 @@ void ScenePanel::drawComponents(ecs::Entity entity) {
     }
   }
   
-  // Light component
-  if (entity.hasComponent<ecs::PunctualLight>()) {
-    if (ImGui::CollapsingHeader("Light", ImGuiTreeNodeFlags_DefaultOpen)) {
-      auto &lightComp = entity.getComponent<ecs::PunctualLight>();
+  // Directional Light component
+  if (entity.hasComponent<ecs::DirectionalLight>()) {
+    if (ImGui::CollapsingHeader("Directional Light", ImGuiTreeNodeFlags_DefaultOpen)) {
+      auto &light = entity.getComponent<ecs::DirectionalLight>();
       
-      if (lightComp.light) {
-        auto lightType = lightComp.light->getType();
-        
-        // Light type dropdown
-        const char* types[] = { "Directional", "Point", "Spot" };
-        int currentType = static_cast<int>(lightType);
-        
-        if (ImGui::Combo("Type", &currentType, types, 3)) {
-          // Switch light type
-          switch (currentType) {
-            case 0: // Directional
-              if (lightType != sg::PunctualLight::Type::Directional) {
-                lightComp.light = std::make_shared<sg::DirectionalLight>();
-              }
-              break;
-            case 1: // Point
-              if (lightType != sg::PunctualLight::Type::Point) {
-                lightComp.light = std::make_shared<sg::PointLight>();
-              }
-              break;
-            case 2: // Spot
-              if (lightType != sg::PunctualLight::Type::Spot) {
-                lightComp.light = std::make_shared<sg::SpotLight>();
-              }
-              break;
-          }
-        }
-        
-        ImGui::Separator();
-        
-        // Common light properties
-        ImGui::ColorEdit3("Color", glm::value_ptr(lightComp.light->color));
-        ImGui::DragFloat("Intensity", &lightComp.light->intensity, 0.1f, 0.0f, 100.0f);
-        ImGui::DragFloat("Range", &lightComp.light->range, 0.1f, 0.0f, 1000.0f);
-        if (ImGui::IsItemHovered()) {
-          ImGui::SetTooltip("0 = infinite range");
-        }
-        
-        ImGui::Separator();
-        
-        // Type-specific properties
-        if (lightType == sg::PunctualLight::Type::Directional) {
-          // ImGui::Text("Direction: (%.2f, %.2f, %.2f)",
-          //             lightComp.direction.x, lightComp.direction.y, lightComp.direction.z);
-          // ImGui::TextWrapped("Tip: Direction is controlled by Transform rotation");
-        }
-        else if (lightType == sg::PunctualLight::Type::Point) {
-          // ImGui::Text("Position: (%.2f, %.2f, %.2f)",
-          //             lightComp.position.x, lightComp.position.y, lightComp.position.z);
-          // ImGui::TextWrapped("Tip: Position is controlled by Transform translation");
-        }
-        else if (lightType == sg::PunctualLight::Type::Spot) {
-          auto* spotLight = dynamic_cast<sg::SpotLight*>(lightComp.light.get());
-          if (spotLight) {
-            // ImGui::Text("Position: (%.2f, %.2f, %.2f)",
-            //             lightComp.position.x, lightComp.position.y, lightComp.position.z);
-            // ImGui::Text("Direction: (%.2f, %.2f, %.2f)",
-            //             lightComp.direction.x, lightComp.direction.y, lightComp.direction.z);
-            
-            ImGui::Separator();
-            
-            // Convert cone angles to degrees for display
-            float innerDegrees = glm::degrees(spotLight->innerConeAngle);
-            float outerDegrees = glm::degrees(spotLight->outerConeAngle);
-            
-            if (ImGui::SliderFloat("Inner Cone Angle", &innerDegrees, 0.0f, 90.0f, "%.1f°")) {
-              spotLight->innerConeAngle = glm::radians(innerDegrees);
-              // Ensure inner <= outer
-              if (spotLight->innerConeAngle > spotLight->outerConeAngle) {
-                spotLight->outerConeAngle = spotLight->innerConeAngle;
-              }
-            }
-            
-            if (ImGui::SliderFloat("Outer Cone Angle", &outerDegrees, 0.0f, 90.0f, "%.1f°")) {
-              spotLight->outerConeAngle = glm::radians(outerDegrees);
-              // Ensure outer >= inner
-              if (spotLight->outerConeAngle < spotLight->innerConeAngle) {
-                spotLight->innerConeAngle = spotLight->outerConeAngle;
-              }
-            }
-            
-            ImGui::TextWrapped("Tip: Position and direction are controlled by Transform");
-          }
-        }
-        
-      } else {
-        ImGui::Text("No light object assigned");
+      ImGui::ColorEdit3("Color", glm::value_ptr(light.color));
+      ImGui::DragFloat("Intensity", &light.intensity, 0.1f, 0.0f, 100.0f);
+      ImGui::TextWrapped("Tip: Direction is controlled by Transform rotation");
+    }
+  }
+  
+  // Point Light component
+  if (entity.hasComponent<ecs::PointLight>()) {
+    if (ImGui::CollapsingHeader("Point Light", ImGuiTreeNodeFlags_DefaultOpen)) {
+      auto &light = entity.getComponent<ecs::PointLight>();
+      
+      ImGui::ColorEdit3("Color", glm::value_ptr(light.color));
+      ImGui::DragFloat("Intensity", &light.intensity, 0.1f, 0.0f, 100.0f);
+      ImGui::DragFloat("Range", &light.range, 0.1f, 0.0f, 1000.0f);
+      if (ImGui::IsItemHovered()) {
+        ImGui::SetTooltip("0 = infinite range");
       }
+      ImGui::TextWrapped("Tip: Position is controlled by Transform translation");
+    }
+  }
+  
+  // Spot Light component
+  if (entity.hasComponent<ecs::SpotLight>()) {
+    if (ImGui::CollapsingHeader("Spot Light", ImGuiTreeNodeFlags_DefaultOpen)) {
+      auto &light = entity.getComponent<ecs::SpotLight>();
+      
+      ImGui::ColorEdit3("Color", glm::value_ptr(light.color));
+      ImGui::DragFloat("Intensity", &light.intensity, 0.1f, 0.0f, 100.0f);
+      ImGui::DragFloat("Range", &light.range, 0.1f, 0.0f, 1000.0f);
+      if (ImGui::IsItemHovered()) {
+        ImGui::SetTooltip("0 = infinite range");
+      }
+      
+      ImGui::Separator();
+      
+      float innerDegrees = glm::degrees(light.innerConeAngle);
+      float outerDegrees = glm::degrees(light.outerConeAngle);
+      
+      if (ImGui::SliderFloat("Inner Cone Angle", &innerDegrees, 0.0f, 90.0f, "%.1f°")) {
+        light.innerConeAngle = glm::radians(innerDegrees);
+        // Ensure inner <= outer
+        if (light.innerConeAngle > light.outerConeAngle) {
+          light.outerConeAngle = light.innerConeAngle;
+        }
+      }
+      
+      if (ImGui::SliderFloat("Outer Cone Angle", &outerDegrees, 0.0f, 90.0f, "%.1f°")) {
+        light.outerConeAngle = glm::radians(outerDegrees);
+        // Ensure outer >= inner
+        if (light.outerConeAngle < light.innerConeAngle) {
+          light.innerConeAngle = light.outerConeAngle;
+        }
+      }
+      
+      ImGui::TextWrapped("Tip: Position and direction are controlled by Transform");
     }
   }
 }
@@ -500,10 +467,24 @@ void ScenePanel::drawAddComponentButton(ecs::Entity entity) {
       }
     }
     
-    if (!entity.hasComponent<ecs::PunctualLight>()) {
-      if (ImGui::MenuItem("Light")) {
-        entity.addComponent<ecs::PunctualLight>();
+    // Light submenu
+    if (ImGui::BeginMenu("Light")) {
+      if (!entity.hasComponent<ecs::DirectionalLight>()) {
+        if (ImGui::MenuItem("Directional Light")) {
+          entity.addComponent<ecs::DirectionalLight>();
+        }
       }
+      if (!entity.hasComponent<ecs::PointLight>()) {
+        if (ImGui::MenuItem("Point Light")) {
+          entity.addComponent<ecs::PointLight>();
+        }
+      }
+      if (!entity.hasComponent<ecs::SpotLight>()) {
+        if (ImGui::MenuItem("Spot Light")) {
+          entity.addComponent<ecs::SpotLight>();
+        }
+      }
+      ImGui::EndMenu();
     }
     
     ImGui::EndPopup();

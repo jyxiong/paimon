@@ -520,7 +520,27 @@ void GltfLoader::parseNode(const tinygltf::Node &node, ecs::Entity parent, ecs::
 
   // Light Component (from KHR_lights_punctual extension)
   if (node.light >= 0) {
-    nodeEntity.addComponent<ecs::PunctualLight>(m_lights[node.light]);
+    const auto& sg_light = m_lights[node.light];
+    auto lightType = sg_light->getType();
+    
+    if (lightType == sg::PunctualLight::Type::Directional) {
+      auto& lightComp = nodeEntity.addComponent<ecs::DirectionalLight>();
+      lightComp.color = sg_light->color;
+      lightComp.intensity = sg_light->intensity;
+    } else if (lightType == sg::PunctualLight::Type::Point) {
+      auto& lightComp = nodeEntity.addComponent<ecs::PointLight>();
+      lightComp.color = sg_light->color;
+      lightComp.intensity = sg_light->intensity;
+      lightComp.range = sg_light->range;
+    } else if (lightType == sg::PunctualLight::Type::Spot) {
+      auto spotLight = std::dynamic_pointer_cast<sg::SpotLight>(sg_light);
+      auto& lightComp = nodeEntity.addComponent<ecs::SpotLight>();
+      lightComp.color = sg_light->color;
+      lightComp.intensity = sg_light->intensity;
+      lightComp.range = sg_light->range;
+      lightComp.innerConeAngle = spotLight->innerConeAngle;
+      lightComp.outerConeAngle = spotLight->outerConeAngle;
+    }
   }
 
   if (node.camera >= 0) {

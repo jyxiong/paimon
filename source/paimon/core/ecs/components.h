@@ -7,6 +7,7 @@
 #include <memory>
 
 #include "paimon/core/ecs/entity.h"
+#include "paimon/core/ecs/scene.h"
 #include "paimon/core/sg/camera.h"
 #include "paimon/core/sg/light.h"
 #include "paimon/core/sg/material.h"
@@ -70,8 +71,25 @@ struct Camera {
 };
 
 /// Directional light component
-struct PunctualLight {
-  std::shared_ptr<sg::PunctualLight> light;
+struct DirectionalLight {
+  glm::vec3 color = glm::vec3(1.0f);
+  float intensity = 1.0f;
+};
+
+/// Point light component
+struct PointLight {
+  glm::vec3 color = glm::vec3(1.0f);
+  float intensity = 1.0f;
+  float range = 0.0f; // 0.0 = infinite
+};
+
+/// Spot light component
+struct SpotLight {
+  glm::vec3 color = glm::vec3(1.0f);
+  float intensity = 1.0f;
+  float range = 0.0f; // 0.0 = infinite
+  float innerConeAngle = 0.0f;
+  float outerConeAngle = glm::radians(45.0f);
 };
 
 /// Renderable component - marks entities that should be rendered
