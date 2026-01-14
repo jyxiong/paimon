@@ -51,3 +51,44 @@ float calculateSpotEffect(vec3 L, vec3 spotDirection, float innerConeAngle, floa
   
   return spotEffect;
 }
+
+
+// Calculate light direction vector L for a given light
+vec3 calculateLightDirection(PunctualLight light, vec3 fragPosition)
+{
+  if (light.type == LIGHT_TYPE_DIRECTIONAL)
+  {
+    return normalize(-light.direction);
+  }
+  else // LIGHT_TYPE_POINT or LIGHT_TYPE_SPOT
+  {
+    return normalize(light.position - fragPosition);
+  }
+}
+
+// Calculate incoming radiance for a given light
+vec3 calculateRadiance(PunctualLight light, vec3 fragPosition, vec3 L)
+{
+  vec3 radiance = light.color * light.intensity;
+
+  if (light.type == LIGHT_TYPE_DIRECTIONAL)
+  {
+    // No attenuation for directional lights
+    return radiance;
+  }
+  else if (light.type == LIGHT_TYPE_POINT)
+  {
+    float distance = length(light.position - fragPosition);
+    float attenuation = calculateAttenuation(distance, light.range);
+    return radiance * attenuation;
+  }
+  else if (light.type == LIGHT_TYPE_SPOT)
+  {
+    float distance = length(light.position - fragPosition);
+    float attenuation = calculateAttenuation(distance, light.range);
+    float spotEffect = calculateSpotEffect(L, light.direction, light.innerConeAngle, light.outerConeAngle);
+    return radiance * attenuation * spotEffect;
+  }
+  
+  return vec3(0.0); // Unknown light type
+}
