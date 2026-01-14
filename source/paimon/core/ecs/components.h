@@ -9,7 +9,6 @@
 #include "paimon/core/ecs/entity.h"
 #include "paimon/core/ecs/scene.h"
 #include "paimon/core/sg/camera.h"
-#include "paimon/core/sg/light.h"
 #include "paimon/core/sg/material.h"
 #include "paimon/core/sg/mesh.h"
 
