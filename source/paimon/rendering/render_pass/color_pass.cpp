@@ -68,19 +68,11 @@ ColorPass::ColorPass(RenderContext &renderContext)
   m_transform_ubo.set_storage(sizeof(TransformUBO), nullptr,
                               GL_DYNAMIC_STORAGE_BIT);
   m_camera_ubo.set_storage(sizeof(CameraUBO), nullptr, GL_DYNAMIC_STORAGE_BIT);
-  // Lighting SSBO - will be reallocated dynamically based on actual light count
-  // For now, allocate for 1 main directional light
-  m_lighting_ssbo.set_storage(sizeof(PunctualLightData) * 1, nullptr,
-                              GL_DYNAMIC_STORAGE_BIT);
   m_material_ubo.set_storage(sizeof(MaterialUBO), nullptr,
                              GL_DYNAMIC_STORAGE_BIT);
-
-  // Bind UBOs and SSBOs once for all meshes
-  m_transform_ubo.bind_base(GL_UNIFORM_BUFFER, 0);
-  m_camera_ubo.bind_base(GL_UNIFORM_BUFFER, 1);
-  m_material_ubo.bind_base(GL_UNIFORM_BUFFER, 2);
-  // SSBO uses separate binding point namespace
-  m_lighting_ssbo.bind_base(GL_SHADER_STORAGE_BUFFER, 0);
+  // Allocate space for lighting UBO with fixed maximum lights
+  m_lighting_ubo.set_storage(sizeof(LightingUBO), nullptr,
+                             GL_DYNAMIC_STORAGE_BIT);
 }
 
 void ColorPass::draw(RenderContext &ctx, const glm::ivec2 &resolution,
@@ -123,27 +115,84 @@ void ColorPass::draw(RenderContext &ctx, const glm::ivec2 &resolution,
   }
 
   {
-    // Build lighting SSBO with all lights
-    // For now, only main directional light
-    auto entity = scene.getDirectionalLight();
-    auto &transform = entity.getComponent<ecs::GlobalTransform>();
-    auto &light = entity.getComponent<ecs::PunctualLight>().light;
+    // Build lighting UBO with all lights
+    // Collect lights from three different component types and merge them
+    LightingUBO lightingData;
+    lightingData.lightCount = 0;
+    
+    // Process directional lights
+    auto dirLightView = scene.view<ecs::DirectionalLight, ecs::GlobalTransform>();
+    for (auto [entity, light, transform] : dirLightView.each()) {
+      if (lightingData.lightCount >= MAX_LIGHTS) {
+        LOG_WARN("Maximum light count ({}) reached, skipping additional lights", MAX_LIGHTS);
+        break;
+      }
+      
+      PunctualLightData lightData;
+      lightData.position =
+          glm::vec3(transform.matrix * glm::vec4(World::Origin, 1.0f));
+      lightData.type = 0; // Directional
+      lightData.direction = glm::normalize(
+          glm::vec3(transform.matrix * glm::vec4(World::Forward, 0.0f)));
+      lightData.range = 0.f;
+      lightData.color = light.color;
+      lightData.intensity = light.intensity;
+      lightData.innerConeAngle = 0.0f;
+      lightData.outerConeAngle = 0.0f;
+      lightData._padding = glm::vec2(0.0f);
+      
+      lightingData.lights[lightingData.lightCount++] = lightData;
+    }
+    
+    // Process point lights
+    auto pointLightView = scene.view<ecs::PointLight, ecs::GlobalTransform>();
+    for (auto [entity, light, transform] : pointLightView.each()) {
+      if (lightingData.lightCount >= MAX_LIGHTS) {
+        LOG_WARN("Maximum light count ({}) reached, skipping additional lights", MAX_LIGHTS);
+        break;
+      }
+      
+      PunctualLightData lightData;
+      lightData.position =
+          glm::vec3(transform.matrix * glm::vec4(World::Origin, 1.0f));
+      lightData.type = 1; // Point
+      lightData.direction = glm::vec3(0.0f); // Not used for point lights
+      lightData.range = light.range;
+      lightData.color = light.color;
+      lightData.intensity = light.intensity;
+      lightData.innerConeAngle = 0.0f;
+      lightData.outerConeAngle = 0.0f;
+      lightData._padding = glm::vec2(0.0f);
+      
+      lightingData.lights[lightingData.lightCount++] = lightData;
+    }
+    
+    // Process spot lights
+    auto spotLightView = scene.view<ecs::SpotLight, ecs::GlobalTransform>();
+    for (auto [entity, light, transform] : spotLightView.each()) {
+      if (lightingData.lightCount >= MAX_LIGHTS) {
+        LOG_WARN("Maximum light count ({}) reached, skipping additional lights", MAX_LIGHTS);
+        break;
+      }
+      
+      PunctualLightData lightData;
+      lightData.position =
+          glm::vec3(transform.matrix * glm::vec4(World::Origin, 1.0f));
+      lightData.type = 2; // Spot
+      lightData.direction = glm::normalize(
+          glm::vec3(transform.matrix * glm::vec4(World::Forward, 0.0f)));
+      lightData.range = light.range;
+      lightData.color = light.color;
+      lightData.intensity = light.intensity;
+      lightData.innerConeAngle = light.innerConeAngle;
+      lightData.outerConeAngle = light.outerConeAngle;
+      lightData._padding = glm::vec2(0.0f);
+      
+      lightingData.lights[lightingData.lightCount++] = lightData;
+    }
 
-    PunctualLightData lightData;
-    lightData.position =
-        glm::vec3(transform.matrix * glm::vec4(World::Origin, 1.0f));
-    lightData.type = 0; // LIGHT_TYPE_DIRECTIONAL
-    lightData.direction = glm::normalize(
-        glm::vec3(transform.matrix * glm::vec4(World::Forward, 0.0f)));
-    lightData.range = light->range;
-    lightData.color = light->color;
-    lightData.intensity = light->intensity;
-    lightData.innerConeAngle = 0.0f;
-    lightData.outerConeAngle = 0.0f;
-    lightData._padding = glm::vec2(0.0f);
-
-    // Upload lighting data to SSBO (just the light array, no count)
-    m_lighting_ssbo.set_sub_data(0, sizeof(PunctualLightData), &lightData);
+    // Upload lighting data to UBO
+    m_lighting_ubo.set_sub_data(0, sizeof(LightingUBO), &lightingData);
   }
 
   m_color_texture->set_storage_2d(1, GL_RGBA8, resolution.x, resolution.y);
@@ -242,7 +291,7 @@ void ColorPass::draw(RenderContext &ctx, const glm::ivec2 &resolution,
       ctx.bindUniformBuffer(0, m_transform_ubo);
       ctx.bindUniformBuffer(1, m_camera_ubo);
       ctx.bindUniformBuffer(2, m_material_ubo);
-      ctx.bindStorageBuffer(0, m_lighting_ssbo);
+      ctx.bindUniformBuffer(3, m_lighting_ubo);
 
       // Draw the primitive
       if (primitive.hasIndices()) {

@@ -34,10 +34,12 @@ layout(std140, binding = 2) uniform MaterialUBO
   float _padding[3]; // alignment
 } u_material;
 
-// SSBO for all lighting
-layout(std430, binding = 0) buffer LightingSSBO
+// UBO for all lighting (fixed maximum size)
+layout(std140, binding = 3) uniform LightingUBO
 {
-  PunctualLight lights[]; // lights[0] is main directional light
+  int lightCount;
+  int _padding[3];
+  PunctualLight lights[32]; // Maximum 32 lights
 } u_lighting;
 
 void main()
@@ -58,41 +60,11 @@ void main()
   vec3 Lo = vec3(0.0);
 
   // Calculate lighting contribution from all lights
-  // lights[0] is always the main directional light
-  for (int i = 0; i < u_lighting.lights.length(); ++i)
+  for (int i = 0; i < u_lighting.lightCount; ++i)
   {
     PunctualLight light = u_lighting.lights[i];
-    vec3 L;
-    vec3 radiance;
-
-    if (light.type == LIGHT_TYPE_DIRECTIONAL)
-    {
-      // Directional light
-      L = normalize(-light.direction);
-      radiance = light.color * light.intensity;
-    }
-    else if (light.type == LIGHT_TYPE_POINT)
-    {
-      // Point light
-      L = normalize(light.position - v_position);
-      float distance = length(light.position - v_position);
-      float attenuation = calculateAttenuation(distance, light.range);
-      radiance = light.color * light.intensity * attenuation;
-    }
-    else if (light.type == LIGHT_TYPE_SPOT)
-    {
-      // Spot light
-      L = normalize(light.position - v_position);
-      float distance = length(light.position - v_position);
-      float attenuation = calculateAttenuation(distance, light.range);
-      float spotEffect = calculateSpotEffect(L, light.direction, light.innerConeAngle, light.outerConeAngle);
-      radiance = light.color * light.intensity * attenuation * spotEffect;
-    }
-    else
-    {
-      continue; // Skip unknown light types
-    }
-
+    vec3 L = calculateLightDirection(light, v_position);
+    vec3 radiance = calculateRadiance(light, v_position, L);
     Lo += calculatePBRLighting(N, V, L, baseColor.rgb, metallic, roughness, radiance);
   }
 

@@ -22,7 +22,10 @@ struct CameraUBO {
   float _padding[1]; // alignment - vec3 needs to be aligned as vec4 in std140
 };
 
-// PunctualLight data matching shader struct (std430 layout)
+// Maximum number of lights supported
+constexpr size_t MAX_LIGHTS = 32;
+
+// PunctualLight data matching shader struct (std140 layout)
 struct PunctualLightData {
   glm::vec3 position;
   int type;
@@ -32,23 +35,14 @@ struct PunctualLightData {
   float intensity;
   float innerConeAngle;
   float outerConeAngle;
-  glm::vec2 _padding; // std430: struct size must be multiple of largest member alignment (vec3 = 16 bytes)
+  glm::vec2 _padding; // std140: alignment
 };
 
-// LightingSSBO only contains the array of lights
-// Size is allocated dynamically based on actual light count
-// No lightCount field needed - shader uses .length()
-
+// LightingUBO contains light count and fixed-size array of lights
 struct LightingUBO {
-  glm::vec3 color;
-  float intensity;
-  glm::vec3 direction;
-  float range;
-  glm::vec3 position;
-  float innerConeAngle;
-  float outerConeAngle;
-  int type;
-  float _padding[2]; // alignment
+  int lightCount;
+  int _padding[3]; // std140 alignment for array
+  PunctualLightData lights[MAX_LIGHTS];
 };
 
 struct MaterialUBO {
@@ -76,10 +70,10 @@ private:
   std::unique_ptr<Sampler> m_sampler;
   std::unique_ptr<GraphicsPipeline> m_pipeline;
 
-  // Uniform buffers and storage buffers
+  // Uniform buffers
   Buffer m_transform_ubo;
   Buffer m_camera_ubo;
-  Buffer m_lighting_ssbo; // SSBO for lighting
+  Buffer m_lighting_ubo; // UBO for lighting
   Buffer m_material_ubo;
 };
 

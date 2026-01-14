@@ -61,7 +61,7 @@ std::unique_ptr<Scene> Scene::create() {
   {
     // Initialize directional light entity
     auto directionalLight = scene->createEntity("DirectionalLight");
-    directionalLight.addComponent<PunctualLight>(std::make_shared<sg::DirectionalLight>());
+    directionalLight.addComponent<DirectionalLight>();
 
     auto &transform = directionalLight.getComponent<ecs::Transform>();
     transform.translation = glm::vec3(0.0f, 0.0f, 3.0f);

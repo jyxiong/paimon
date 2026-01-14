@@ -229,8 +229,6 @@ void GltfLoader::load(ecs::Scene &scene) {
   parseTextures();
   parseMaterials();
   parseMeshes();       // Step 4: mesh primitives reference accessor Buffers
-  parseLights();
-  parseCameras();
 
   int sceneIndex = m_model.defaultScene >= 0 ? m_model.defaultScene : 0;
   parseScene(m_model.scenes[sceneIndex], scene);
@@ -395,67 +393,6 @@ void GltfLoader::parseMeshes() {
   }
 }
 
-void GltfLoader::parseLights() {
-  for (const auto &light : m_model.lights) {
-   std::shared_ptr<sg::PunctualLight> sg_light;
-
-    if (light.type == "directional") {
-      sg_light = std::make_shared<sg::DirectionalLight>();
-    } else if (light.type == "point") {
-      sg_light = std::make_shared<sg::PointLight>();
-    } else if (light.type == "spot") {
-      sg_light = std::make_shared<sg::SpotLight>();
-    } else {
-      LOG_WARN("Unsupported light type: {}", light.type);
-      return;
-    }
-
-    sg_light->color = parseVec3(light.color);
-    sg_light->intensity = static_cast<float>(light.intensity);
-    sg_light->range = static_cast<float>(light.range);
-
-    if (light.type == "spot") {
-      auto spot_light = std::dynamic_pointer_cast<sg::SpotLight>(sg_light);
-      spot_light->innerConeAngle =
-          static_cast<float>(light.spot.innerConeAngle);
-      spot_light->outerConeAngle =
-          static_cast<float>(light.spot.outerConeAngle);
-    }
-
-    m_lights.push_back(std::move(sg_light));
-  }
-}
-
-void GltfLoader::parseCameras() {
-  for (const auto &camera : m_model.cameras) {
-    std::shared_ptr<sg::Camera> sg_camera;
-
-    if (camera.type == "perspective") {
-      auto perspective = std::make_shared<sg::PerspectiveCamera>();
-      perspective->yfov = static_cast<float>(camera.perspective.yfov);
-      perspective->znear = static_cast<float>(camera.perspective.znear);
-      perspective->zfar = static_cast<float>(camera.perspective.zfar);
-      if (camera.perspective.aspectRatio > 0.0) {
-        perspective->aspectRatio =
-            static_cast<float>(camera.perspective.aspectRatio);
-      }
-      sg_camera = perspective;
-    } else if (camera.type == "orthographic") {
-      auto orthographic = std::make_shared<sg::OrthographicCamera>();
-      orthographic->xmag = static_cast<float>(camera.orthographic.xmag);
-      orthographic->ymag = static_cast<float>(camera.orthographic.ymag);
-      orthographic->znear = static_cast<float>(camera.orthographic.znear);
-      orthographic->zfar = static_cast<float>(camera.orthographic.zfar);
-      sg_camera = orthographic;
-    } else {
-      LOG_WARN("Unsupported camera type: {}", camera.type);
-      continue;
-    }
-
-    m_cameras.push_back(std::move(sg_camera));
-  }
-}
-
 void GltfLoader::parseNode(const tinygltf::Node &node, ecs::Entity parent, ecs::Scene &scene) {
   // Create entity for this node
   auto nodeEntity = scene.createEntity(node.name);
@@ -516,16 +453,6 @@ void GltfLoader::parseNode(const tinygltf::Node &node, ecs::Entity parent, ecs::
         primitiveEntity.addComponent<ecs::Material>(m_materials[mesh.primitives[i].material]);
       }
     }
-  }
-
-  // Light Component (from KHR_lights_punctual extension)
-  if (node.light >= 0) {
-    nodeEntity.addComponent<ecs::PunctualLight>(m_lights[node.light]);
-  }
-
-  if (node.camera >= 0) {
-    // Camera Component can be handled here if needed
-    nodeEntity.addComponent<ecs::Camera>(m_cameras[node.camera]);
   }
 
   // Skin Component
