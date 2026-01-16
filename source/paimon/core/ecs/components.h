@@ -11,6 +11,7 @@
 #include "paimon/core/sg/camera.h"
 #include "paimon/core/sg/material.h"
 #include "paimon/core/sg/mesh.h"
+#include "paimon/opengl/texture.h"
 
 namespace paimon {
 
@@ -96,6 +97,20 @@ struct Renderable {
   bool visible = true;
   bool castShadow = true;
   bool receiveShadow = true;
+};
+
+/// Image based lighting component
+struct Environment {
+  float intensity = 1.0f;
+  glm::quat rotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
+
+  std::shared_ptr<Texture> irradianceMap;  // Diffuse IBL
+  std::shared_ptr<Texture> prefilteredMap; // Specular IBL
+  std::shared_ptr<Texture> brdfLUT;        // BRDF lookup texture
+
+  // std::array<glm::vec3, 9> irradianceCoefficients; // Spherical Harmonics coefficients
+  // std::shared_ptr<Texture> specularCubemap; // Specular environment map
+  // glm::ivec2 specularCubemapSize; // Width and height of the specular cubemap
 };
 
 } // namespace ecs

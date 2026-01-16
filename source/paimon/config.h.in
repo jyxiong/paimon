@@ -12,3 +12,4 @@
 #define PAIMON_ASSET_DIR "@PROJECT_SOURCE_DIR@/asset"
 #define PAIMON_SHADER_DIR "@PROJECT_SOURCE_DIR@/asset/shader"
 #define PAIMON_MODEL_DIR "@PROJECT_SOURCE_DIR@/asset/model"
+#define PAIMON_TEXTURE_DIR "@PROJECT_SOURCE_DIR@/asset/texture"
