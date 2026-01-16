@@ -29,6 +29,10 @@ struct Primitive {
   static std::vector<VertexInputState::Binding> bindings();
 
   static std::vector<VertexInputState::Attribute> attributes();
+
+  static std::unique_ptr<Primitive> createCube();
+
+  static std::unique_ptr<Primitive> createQuad();
 };
 
 struct Mesh {
