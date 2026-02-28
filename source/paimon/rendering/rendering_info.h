@@ -57,9 +57,28 @@ struct ClearValue {
 // Rendering attachment info (similar to VkRenderingAttachmentInfo)
 struct RenderingAttachmentInfo {
   Texture &texture;
+  uint32_t mipLevel = 0;        // Mip level to render to (for textures with mipmaps)
+  uint32_t arrayLayer = 0;      // Array layer to render to (for cubemaps/array textures)
   AttachmentLoadOp loadOp = AttachmentLoadOp::DontCare;
   AttachmentStoreOp storeOp = AttachmentStoreOp::Store;
   ClearValue clearValue;
+  
+  // Constructor for regular 2D textures
+  RenderingAttachmentInfo(Texture &tex, 
+                          AttachmentLoadOp load = AttachmentLoadOp::DontCare,
+                          AttachmentStoreOp store = AttachmentStoreOp::Store,
+                          ClearValue clear = ClearValue())
+      : texture(tex), loadOp(load), storeOp(store), clearValue(clear) {}
+  
+  // Constructor for cubemaps/array textures with mip level and layer
+  RenderingAttachmentInfo(Texture &tex,
+                          uint32_t mip,
+                          uint32_t layer,
+                          AttachmentLoadOp load = AttachmentLoadOp::DontCare,
+                          AttachmentStoreOp store = AttachmentStoreOp::Store,
+                          ClearValue clear = ClearValue())
+      : texture(tex), mipLevel(mip), arrayLayer(layer), 
+        loadOp(load), storeOp(store), clearValue(clear) {}
 };
 
 // Main rendering info structure (similar to VkRenderingInfo)

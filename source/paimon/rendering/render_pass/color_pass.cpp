@@ -109,7 +109,7 @@ void ColorPass::draw(RenderContext &ctx, const glm::ivec2 &resolution,
     CameraUBO cameraData;
     // Use view matrix calculated by OrbitCameraController
     cameraData.view = cameraComp.view;
-    cameraData.projection = cameraComp.camera->getProjection();
+    cameraData.projection = cameraComp.projection;
     cameraData.position = position;
     m_camera_ubo.set_sub_data(0, sizeof(CameraUBO), &cameraData);
   }

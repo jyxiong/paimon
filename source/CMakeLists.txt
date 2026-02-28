@@ -7,12 +7,13 @@ file(GLOB_RECURSE CORE_SOURCES paimon/core/*.cpp)
 file(GLOB_RECURSE OPENGL_SOURCES paimon/opengl/*.cpp)
 file(GLOB_RECURSE PLATFORM_SOURCES paimon/platform/*.cpp)
 file(GLOB_RECURSE RENDERING_SOURCES paimon/rendering/*.cpp)
+file(GLOB_RECURSE UTILITY_SOURCES paimon/utility/*.cpp)
 
 set(TARGET_NAME paimon)
 
 add_library(${TARGET_NAME})
 
-target_sources(${TARGET_NAME} PUBLIC ${APP_SOURCES} ${CORE_SOURCES} ${OPENGL_SOURCES} ${PLATFORM_SOURCES} ${RENDERING_SOURCES})
+target_sources(${TARGET_NAME} PUBLIC ${APP_SOURCES} ${CORE_SOURCES} ${OPENGL_SOURCES} ${PLATFORM_SOURCES} ${RENDERING_SOURCES} ${UTILITY_SOURCES})
 
 # Generate configuration header with absolute paths
 configure_file(

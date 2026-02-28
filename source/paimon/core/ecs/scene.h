@@ -39,6 +39,11 @@ public:
   Entity getDirectionalLight() { return m_directionalLight; }
   const Entity &getDirectionalLight() const { return m_directionalLight; }
 
+  void setEnvironment(Entity environment) { m_environment = environment; }
+
+  Entity getEnvironment() { return m_environment; }
+  const Entity &getEnvironment() const { return m_environment; }
+
   // View and iteration
   template <typename... Components>
   auto view() {
@@ -73,6 +78,7 @@ private:
 
   Entity m_mainCamera;
   Entity m_directionalLight;
+  Entity m_environment;
 };
 
 } // namespace ecs

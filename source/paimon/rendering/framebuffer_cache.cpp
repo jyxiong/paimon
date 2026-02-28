@@ -66,16 +66,24 @@ std::size_t FramebufferCache::createHash(const RenderingInfo& info) const {
   // Hash color attachments
   for (const auto& colorAttachment : info.colorAttachments) {
     hashCombine(hash, colorAttachment.texture.get_name());
+    hashCombine(hash, colorAttachment.mipLevel);
+    hashCombine(hash, colorAttachment.arrayLayer);
   }
 
   // Hash depth attachment
   if (info.depthAttachment.has_value()) {
-    hashCombine(hash, info.depthAttachment.value().texture.get_name());
+    const auto& att = info.depthAttachment.value();
+    hashCombine(hash, att.texture.get_name());
+    hashCombine(hash, att.mipLevel);
+    hashCombine(hash, att.arrayLayer);
   }
 
   // Hash stencil attachment
   if (info.stencilAttachment.has_value()) {
-    hashCombine(hash, info.stencilAttachment.value().texture.get_name());
+    const auto& att = info.stencilAttachment.value();
+    hashCombine(hash, att.texture.get_name());
+    hashCombine(hash, att.mipLevel);
+    hashCombine(hash, att.arrayLayer);
   }
 
   return hash;
@@ -92,7 +100,13 @@ std::unique_ptr<Framebuffer> FramebufferCache::createFramebuffer(
     const auto& attachment = info.colorAttachments[i];
     GLenum attachmentPoint = GL_COLOR_ATTACHMENT0 + static_cast<GLenum>(i);
     
-    framebuffer->attachTexture(attachmentPoint, &attachment.texture, 0);
+    // Use attachTextureLayer if arrayLayer is non-zero (for cubemaps/array textures)
+    if (attachment.arrayLayer > 0 || attachment.texture.get_target() == GL_TEXTURE_CUBE_MAP) {
+      framebuffer->attachTextureLayer(attachmentPoint, &attachment.texture, 
+                                     attachment.mipLevel, attachment.arrayLayer);
+    } else {
+      framebuffer->attachTexture(attachmentPoint, &attachment.texture, attachment.mipLevel);
+    }
     drawBuffers.push_back(attachmentPoint);
   }
 
@@ -110,13 +124,23 @@ std::unique_ptr<Framebuffer> FramebufferCache::createFramebuffer(
   // Attach depth texture
   if (info.depthAttachment.has_value()) {
     const auto& attachment = info.depthAttachment.value();
-      framebuffer->attachTexture(GL_DEPTH_ATTACHMENT, &attachment.texture, 0);
+    if (attachment.arrayLayer > 0 || attachment.texture.get_target() == GL_TEXTURE_CUBE_MAP) {
+      framebuffer->attachTextureLayer(GL_DEPTH_ATTACHMENT, &attachment.texture,
+                                     attachment.mipLevel, attachment.arrayLayer);
+    } else {
+      framebuffer->attachTexture(GL_DEPTH_ATTACHMENT, &attachment.texture, attachment.mipLevel);
+    }
   }
 
   // Attach stencil texture
   if (info.stencilAttachment.has_value()) {
     const auto& attachment = info.stencilAttachment.value();
-    framebuffer->attachTexture(GL_STENCIL_ATTACHMENT, &attachment.texture, 0);
+    if (attachment.arrayLayer > 0 || attachment.texture.get_target() == GL_TEXTURE_CUBE_MAP) {
+      framebuffer->attachTextureLayer(GL_STENCIL_ATTACHMENT, &attachment.texture,
+                                     attachment.mipLevel, attachment.arrayLayer);
+    } else {
+      framebuffer->attachTexture(GL_STENCIL_ATTACHMENT, &attachment.texture, attachment.mipLevel);
+    }
   }
 
   return framebuffer;
