@@ -39,8 +39,7 @@ EquirectangularToCubemapPass::EquirectangularToCubemapPass(RenderContext &render
   pipelineInfo.state.depthStencil.depthCompareOp = GL_LEQUAL;
   
   // Configure face culling
-  pipelineInfo.state.rasterization.cullMode = GL_BACK;
-  pipelineInfo.state.rasterization.frontFace = GL_CCW;
+  pipelineInfo.state.rasterization.cullMode = GL_NONE;
   
   // Configure vertex input
   pipelineInfo.state.vertexInput.bindings = sg::Primitive::bindings();

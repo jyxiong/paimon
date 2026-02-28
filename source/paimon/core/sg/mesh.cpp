@@ -98,6 +98,8 @@ std::unique_ptr<Primitive> Primitive::createCube() {
     primitive->positions = std::make_unique<Buffer>();
     primitive->positions->set_storage(sizeof(positions), positions, 0);
 
+    primitive->indexCount = sizeof(indices) / sizeof(indices[0]);
+    primitive->indexType = DataType::UInt;
     primitive->indices = std::make_unique<Buffer>();
     primitive->indices->set_storage(sizeof(indices), indices, 0);
     
@@ -136,6 +138,8 @@ std::unique_ptr<Primitive> Primitive::createQuad() {
     primitive->texcoords = std::make_unique<Buffer>();
     primitive->texcoords->set_storage(sizeof(texCoords), texCoords, 0);
 
+    primitive->indexCount = sizeof(indices) / sizeof(indices[0]);
+    primitive->indexType = DataType::UInt;
     primitive->indices = std::make_unique<Buffer>();
     primitive->indices->set_storage(sizeof(indices), indices, 0);
     

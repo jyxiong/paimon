@@ -24,6 +24,10 @@ public:
 
   void save();
 
+  std::shared_ptr<Texture> getIrradianceMap() const;
+  std::shared_ptr<Texture> getPrefilteredMap() const;
+  std::shared_ptr<Texture> getBRDFLUT() const;
+
 private:
   std::unique_ptr<RenderContext> m_renderContext;
 

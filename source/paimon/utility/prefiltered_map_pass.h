@@ -29,7 +29,7 @@ public:
   void execute(const Texture &envCubemap, uint32_t prefilteredSize,
                uint32_t mipLevels);
 
-  const Texture& getPrefilteredMap() const { return *m_prefilteredMap; }
+  std::shared_ptr<Texture> getPrefilteredMap() const { return m_prefilteredMap; }
 
 private:
   RenderContext &m_renderContext;
@@ -39,7 +39,7 @@ private:
 
   std::unique_ptr<Sampler> m_sampler;
 
-  std::unique_ptr<Texture> m_prefilteredMap;
+  std::shared_ptr<Texture> m_prefilteredMap;
   std::unique_ptr<Texture> m_depthTexture;
 
   std::unique_ptr<Buffer> m_ubo;

@@ -49,22 +49,34 @@ void IBLSampler::execute(const Texture &equirectangular) {
   m_brdfLUTPass->execute(defaultBRDFLUTSize);
 }
 
-void IBLSampler::save() {
+void IBLSampler::save() { 
   // Save cubemap faces
   saveCubemapToFiles(m_equirectToCubemapPass->getCubemap(),
-                     std::filesystem::path(PAIMON_TEXTURE_DIR) / "env_cubemap", defaultCubemapSize, 0);
-  saveCubemapToFiles(m_irradianceMapPass->getIrradianceMap(),
-                     std::filesystem::path(PAIMON_TEXTURE_DIR) / "irradiance_map", defaultIrradianceSize, 0);
+                     (std::filesystem::path(PAIMON_TEXTURE_DIR) / "env_cubemap").string(), defaultCubemapSize, 0);
+  saveCubemapToFiles(*m_irradianceMapPass->getIrradianceMap(),
+                     (std::filesystem::path(PAIMON_TEXTURE_DIR) / "irradiance_map").string(), defaultIrradianceSize, 0);
 
   for (uint32_t mip = 0; mip < defaultPrefilteredMipLevels; ++mip) {
     uint32_t mipSize = defaultPrefilteredSize >> mip;
-    saveCubemapToFiles(m_prefilteredMapPass->getPrefilteredMap(),
-                       std::filesystem::path(PAIMON_TEXTURE_DIR) / "prefiltered_map", mipSize, mip);
+    saveCubemapToFiles(*m_prefilteredMapPass->getPrefilteredMap(),
+                       (std::filesystem::path(PAIMON_TEXTURE_DIR) / "prefiltered_map").string(), mipSize, mip);
   }
 
   // Save BRDF LUT
-  save2DTextureToFile(m_brdfLUTPass->getBRDFLUT(), std::filesystem::path(PAIMON_TEXTURE_DIR) / "brdf_lut.hdr",
+  save2DTextureToFile(*m_brdfLUTPass->getBRDFLUT(), (std::filesystem::path(PAIMON_TEXTURE_DIR) / "brdf_lut.hdr").string(),
                       defaultBRDFLUTSize, defaultBRDFLUTSize);
+}
+
+std::shared_ptr<Texture> IBLSampler::getIrradianceMap() const {
+  return m_irradianceMapPass->getIrradianceMap();
+}
+
+std::shared_ptr<Texture> IBLSampler::getPrefilteredMap() const {
+  return m_prefilteredMapPass->getPrefilteredMap();
+}
+
+std::shared_ptr<Texture> IBLSampler::getBRDFLUT() const {
+  return m_brdfLUTPass->getBRDFLUT();
 }
 
 // Save cubemap faces to HDR files
@@ -77,8 +89,6 @@ void saveCubemapToFiles(const Texture &cubemap, const std::string &basePath,
   };
 
   std::vector<float> pixels(size * size * 3);
-
-  // Ensure all GPU operations are complete
 
   for (int face = 0; face < 6; ++face) {
     // For cubemap textures, glGetTextureSubImage treats them as an array of 6
@@ -104,6 +114,7 @@ void saveCubemapToFiles(const Texture &cubemap, const std::string &basePath,
     filename += faceNames[face];
     filename += ".hdr";
 
+    stbi_flip_vertically_on_write(1);
     if (!stbi_write_hdr(filename.c_str(), size, size, 3, pixels.data())) {
       LOG_ERROR("  Failed to save: {}", filename);
     }
@@ -141,6 +152,7 @@ void save2DTextureToFile(const Texture &texture, const std::string &filepath,
     maxG = std::max(maxG, pixels[i * 2 + 1]);
   }
 
+  stbi_flip_vertically_on_write(1);
   if (!stbi_write_hdr(filepath.c_str(), width, height, 3, pixelsRGB.data())) {
     LOG_ERROR("  Failed to save: {}", filepath);
   }

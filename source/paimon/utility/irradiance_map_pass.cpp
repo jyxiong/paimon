@@ -46,8 +46,7 @@ IrradianceMapPass::IrradianceMapPass(RenderContext &renderContext)
   pipelineInfo.state.depthStencil.depthCompareOp = GL_LEQUAL;
   
   // Configure face culling
-  pipelineInfo.state.rasterization.cullMode = GL_BACK;
-  pipelineInfo.state.rasterization.frontFace = GL_CCW;
+  pipelineInfo.state.rasterization.cullMode = GL_NONE;
   
   // Configure vertex input
   pipelineInfo.state.vertexInput.bindings = sg::Primitive::bindings();
@@ -66,7 +65,7 @@ IrradianceMapPass::IrradianceMapPass(RenderContext &renderContext)
   m_sampler->set(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   m_sampler->set(GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
-  m_irradianceMap = std::make_unique<Texture>(GL_TEXTURE_CUBE_MAP);
+  m_irradianceMap = std::make_shared<Texture>(GL_TEXTURE_CUBE_MAP);
   m_depthTexture = std::make_unique<Texture>(GL_TEXTURE_2D);
 }
 

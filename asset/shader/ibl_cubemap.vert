@@ -9,8 +9,10 @@ layout(location = 0) in vec3 a_position;
 
 layout(location = 0) out vec3 v_localPos;
 
-uniform mat4 u_projection;
-uniform mat4 u_view;
+layout(std140, binding = 0) uniform TransformUBO {
+    mat4 u_projection;
+    mat4 u_view;
+};
 
 void main() {
     v_localPos = a_position;

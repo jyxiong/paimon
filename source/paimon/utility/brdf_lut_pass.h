@@ -27,14 +27,14 @@ public:
 
   void execute(uint32_t lutSize);
 
-  const Texture& getBRDFLUT() const { return *m_brdfLUT; }
+  std::shared_ptr<Texture> getBRDFLUT() const { return m_brdfLUT; }
 
 private:
   RenderContext &m_renderContext;
   
   std::unique_ptr<sg::Primitive> m_primitive;
   std::unique_ptr<GraphicsPipeline> m_pipeline;
-  std::unique_ptr<Texture> m_brdfLUT;
+  std::shared_ptr<Texture> m_brdfLUT;
   std::unique_ptr<Texture> m_depthTexture;
 };
 

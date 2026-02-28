@@ -28,7 +28,7 @@ public:
 
   void execute(const Texture &envCubemap, uint32_t irradianceSize);
 
-  const Texture& getIrradianceMap() const { return *m_irradianceMap; }
+  std::shared_ptr<Texture> getIrradianceMap() const { return m_irradianceMap; }
 
 private:
   RenderContext &m_renderContext;
@@ -38,7 +38,7 @@ private:
 
   std::unique_ptr<Sampler> m_sampler;
 
-  std::unique_ptr<Texture> m_irradianceMap;
+  std::shared_ptr<Texture> m_irradianceMap;
   std::unique_ptr<Texture> m_depthTexture;
 
   std::unique_ptr<Buffer> m_ubo;

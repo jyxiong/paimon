@@ -38,6 +38,9 @@ BRDFLUTPass::BRDFLUTPass(RenderContext &renderContext)
   pipelineInfo.state.depthStencil.depthWriteEnable = true;
   pipelineInfo.state.depthStencil.depthCompareOp = GL_LEQUAL;
   
+  // Configure face culling
+  pipelineInfo.state.rasterization.cullMode = GL_NONE;
+
   // Configure vertex input
   pipelineInfo.state.vertexInput.bindings = sg::Primitive::bindings();
   pipelineInfo.state.vertexInput.attributes = sg::Primitive::attributes();
@@ -48,7 +51,7 @@ BRDFLUTPass::BRDFLUTPass(RenderContext &renderContext)
     LOG_ERROR("Failed to validate BRDF LUT pipeline");
   }
 
-  m_brdfLUT = std::make_unique<Texture>(GL_TEXTURE_2D);
+  m_brdfLUT = std::make_shared<Texture>(GL_TEXTURE_2D);
   m_depthTexture = std::make_unique<Texture>(GL_TEXTURE_2D);
 }
 

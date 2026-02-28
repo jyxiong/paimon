@@ -53,6 +53,7 @@ if (NOT TARGET nlohmann_json)
 endif()
 
 if (NOT TARGET nfd)
+    option(NFD_WAYLAND "" OFF)
     add_subdirectory(nativefiledialog)
     set_target_properties(nfd PROPERTIES FOLDER ${EXTERNAL_DIR}/nfd)
 endif()
