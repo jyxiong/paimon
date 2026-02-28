@@ -433,6 +433,20 @@ void ScenePanel::drawComponents(ecs::Entity entity) {
       ImGui::TextWrapped("Tip: Position and direction are controlled by Transform");
     }
   }
+
+  // Environment (IBL) component
+  if (entity.hasComponent<ecs::Environment>()) {
+    if (ImGui::CollapsingHeader("Environment (IBL)", ImGuiTreeNodeFlags_DefaultOpen)) {
+      auto &env = entity.getComponent<ecs::Environment>();
+
+      ImGui::DragFloat("Intensity", &env.intensity, 0.05f, 0.0f, 10.0f);
+
+      glm::vec3 rotDeg = glm::degrees(glm::eulerAngles(env.rotation));
+      if (ImGui::DragFloat3("Rotation##IBL", glm::value_ptr(rotDeg), 1.0f)) {
+        env.rotation = glm::quat(glm::radians(rotDeg));
+      }
+    }
+  }
 }
 
 void ScenePanel::drawAddComponentButton(ecs::Entity entity) {
@@ -467,6 +481,12 @@ void ScenePanel::drawAddComponentButton(ecs::Entity entity) {
       }
     }
     
+    if (!entity.hasComponent<ecs::Environment>()) {
+      if (ImGui::MenuItem("Environment")) {
+        entity.addComponent<ecs::Environment>();
+      }
+    }
+
     // Light submenu
     if (ImGui::BeginMenu("Light")) {
       if (!entity.hasComponent<ecs::DirectionalLight>()) {

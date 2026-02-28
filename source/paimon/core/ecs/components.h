@@ -102,10 +102,13 @@ struct Renderable {
 /// Image based lighting component
 struct Environment {
   float intensity = 1.0f;
+  
   glm::quat rotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
 
   std::shared_ptr<Texture> irradianceMap;  // Diffuse IBL
+
   std::shared_ptr<Texture> prefilteredMap; // Specular IBL
+
   std::shared_ptr<Texture> brdfLUT;        // BRDF lookup texture
 
   // std::array<glm::vec3, 9> irradianceCoefficients; // Spherical Harmonics coefficients
