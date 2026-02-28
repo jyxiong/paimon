@@ -23,11 +23,11 @@ const int WIDTH = 800;
 const int HEIGHT = 600;
 
 // Load HDR texture from file
-std::unique_ptr<Texture> loadHDRTexture(const std::string &path) {
+std::unique_ptr<Texture> loadHDRTexture(const std::filesystem::path &path) {
   stbi_set_flip_vertically_on_load(true);
 
   int width, height, nrComponents;
-  float *data = stbi_loadf(path.c_str(), &width, &height, &nrComponents, 0);
+  float *data = stbi_loadf(path.string().c_str(), &width, &height, &nrComponents, 0);
 
   if (!data) {
     std::cerr << "Failed to load HDR image: " << path << std::endl;
