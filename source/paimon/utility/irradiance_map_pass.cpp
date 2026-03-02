@@ -25,8 +25,8 @@ IrradianceMapPass::IrradianceMapPass(RenderContext &renderContext)
   
   // Get shader programs
   auto &shaderManager = Application::getInstance().getShaderManager();
-  auto *vertex_program = shaderManager.createShaderProgram("ibl_cubemap.vert");
-  auto *fragment_program = shaderManager.createShaderProgram("ibl_irradiance.frag");
+  auto *vertex_program = shaderManager.createShaderProgram("cubemap.vert");
+  auto *fragment_program = shaderManager.createShaderProgram("irradiance.frag");
   
   if (!vertex_program || !fragment_program) {
     LOG_ERROR("Failed to load irradiance map shader programs");

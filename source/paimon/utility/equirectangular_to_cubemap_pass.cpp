@@ -18,8 +18,8 @@ EquirectangularToCubemapPass::EquirectangularToCubemapPass(RenderContext &render
   
   // Get shader programs
   auto &shaderManager = Application::getInstance().getShaderManager();
-  auto *vertex_program = shaderManager.createShaderProgram("ibl_cubemap.vert");
-  auto *fragment_program = shaderManager.createShaderProgram("ibl_equirect_to_cubemap.frag");
+  auto *vertex_program = shaderManager.createShaderProgram("cubemap.vert");
+  auto *fragment_program = shaderManager.createShaderProgram("equirect_to_cubemap.frag");
   
   if (!vertex_program || !fragment_program) {
     LOG_ERROR("Failed to load equirectangular to cubemap shader programs");

@@ -30,9 +30,9 @@ PrefilteredMapPass::PrefilteredMapPass(RenderContext &renderContext)
 
   // Get shader programs
   auto &shaderManager = Application::getInstance().getShaderManager();
-  auto *vertex_program = shaderManager.createShaderProgram("ibl_cubemap.vert");
+  auto *vertex_program = shaderManager.createShaderProgram("cubemap.vert");
   auto *fragment_program =
-      shaderManager.createShaderProgram("ibl_prefilter.frag");
+      shaderManager.createShaderProgram("prefilter.frag");
 
   if (!vertex_program || !fragment_program) {
     LOG_ERROR("Failed to load prefiltered map shader programs");
