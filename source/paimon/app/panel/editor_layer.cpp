@@ -30,7 +30,6 @@ void EditorLayer::onImGuiRender() {
   m_menuPanel.onImGuiRender();
   m_viewportPanel.onImGuiRender();
   m_scenePanel.onImGuiRender();
-  m_iblPanel.onImGuiRender();
 }
 
 void EditorLayer::setupDockingLayout() {
@@ -50,13 +49,12 @@ void EditorLayer::setupDockingLayout() {
   ImGuiID dock_center, dock_bottom_right;
   ImGui::DockBuilderSplitNode(dock_right, ImGuiDir_Right, 0.25f, &dock_bottom_right, &dock_center);
 
-  // Split left into top (scene hierarchy) and bottom (IBL)
+  // Split left into top (scene hierarchy)
   ImGuiID dock_left_top, dock_left_bottom;
   ImGui::DockBuilderSplitNode(dock_left, ImGuiDir_Down, 0.45f, &dock_left_bottom, &dock_left_top);
 
   // Dock windows to specific locations
   ImGui::DockBuilderDockWindow("Scene Hierarchy", dock_left_top);
-  ImGui::DockBuilderDockWindow("IBL",             dock_left_bottom);
   ImGui::DockBuilderDockWindow("Viewport",        dock_center);
   ImGui::DockBuilderDockWindow("Properties",      dock_bottom_right);
   

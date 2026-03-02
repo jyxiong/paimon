@@ -1,7 +1,6 @@
 #pragma once
 
 #include "paimon/app/layer.h"
-#include "paimon/app/panel/ibl_panel.h"
 #include "paimon/app/panel/menu_panel.h"
 #include "paimon/app/panel/scene_panel.h"
 #include "paimon/app/panel/viewport_panel.h"
@@ -25,7 +24,6 @@ private:
   MenuPanel m_menuPanel;
   ScenePanel m_scenePanel;
   ViewportPanel m_viewportPanel;
-  IBLPanel m_iblPanel;
   bool m_firstTime = true;
 };
 } // namespace paimon

@@ -105,6 +105,8 @@ struct Environment {
   
   glm::quat rotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
 
+  std::shared_ptr<Texture> equirectangularMap; // Source equirectangular HDR
+
   std::shared_ptr<Texture> irradianceMap;  // Diffuse IBL
 
   std::shared_ptr<Texture> prefilteredMap; // Specular IBL

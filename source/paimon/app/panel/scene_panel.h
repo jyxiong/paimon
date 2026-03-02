@@ -13,7 +13,6 @@ public:
 
 private:
   void drawEntityNode(ecs::Entity entity);
-  void drawEntityTransform(ecs::Entity entity);
   void drawComponents(ecs::Entity entity);
   void drawAddComponentButton(ecs::Entity entity);
 

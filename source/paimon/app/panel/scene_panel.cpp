@@ -445,6 +445,19 @@ void ScenePanel::drawComponents(ecs::Entity entity) {
       if (ImGui::DragFloat3("Rotation##IBL", glm::value_ptr(rotDeg), 1.0f)) {
         env.rotation = glm::quat(glm::radians(rotDeg));
       }
+
+      // Equirectangular map preview
+      if (env.equirectangularMap) {
+        ImGui::Spacing();
+        ImGui::TextUnformatted("Equirectangular Map");
+        float dispW = ImGui::GetContentRegionAvail().x;
+        float dispH = dispW * 0.5f; // 2:1 aspect ratio
+        ImGui::Image(
+          (ImTextureID)(uintptr_t)env.equirectangularMap->get_name(),
+          ImVec2(dispW, dispH),
+          ImVec2(0, 1), ImVec2(1, 0) // flip vertically
+        );
+      }
     }
   }
 }
@@ -510,35 +523,4 @@ void ScenePanel::drawAddComponentButton(ecs::Entity entity) {
     ImGui::EndPopup();
   }
 }
-
-void ScenePanel::drawEntityTransform(ecs::Entity entity) {
-  if (!entity.isValid()) {
-    return;
-  }
-
-  // Display entity name
-  auto &name = entity.getComponent<ecs::Name>();
-  ImGui::Text("Entity: %s", name.name.c_str());
-  ImGui::Separator();
-
-  // Display and edit transform
-  if (entity.hasComponent<ecs::Transform>()) {
-    auto &transform = entity.getComponent<ecs::Transform>();
-
-    ImGui::Text("Transform");
-    
-    // Translation
-    ImGui::DragFloat3("Translation", glm::value_ptr(transform.translation), 0.1f);
-    
-    // Rotation (as Euler angles in degrees)
-    glm::vec3 rotation = glm::degrees(glm::eulerAngles(transform.rotation));
-    if (ImGui::DragFloat3("Rotation", glm::value_ptr(rotation), 1.0f)) {
-      transform.rotation = glm::quat(glm::radians(rotation));
-    }
-    
-    // Scale
-    ImGui::DragFloat3("Scale", glm::value_ptr(transform.scale), 0.1f);
-  }
-}
-
 } // namespace paimon
