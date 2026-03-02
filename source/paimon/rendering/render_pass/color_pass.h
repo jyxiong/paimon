@@ -53,6 +53,11 @@ struct MaterialUBO {
   float _padding[3]; // alignment
 };
 
+struct EnvironmentUBO {
+  float iblIntensity; // scales IBL contribution (ecs::Environment::intensity)
+  float _padding[2];
+};
+
 class ColorPass {
 public:
   ColorPass(RenderContext &renderContext);
@@ -68,13 +73,15 @@ private:
   std::unique_ptr<Texture> m_depth_texture;
 
   std::unique_ptr<Sampler> m_sampler;
+  std::unique_ptr<Sampler> m_ibl_sampler; // Cubemap sampler for IBL textures
   std::unique_ptr<GraphicsPipeline> m_pipeline;
 
   // Uniform buffers
   Buffer m_transform_ubo;
   Buffer m_camera_ubo;
-  Buffer m_lighting_ubo; // UBO for lighting
+  Buffer m_lighting_ubo;
   Buffer m_material_ubo;
+  Buffer m_environment_ubo;
 };
 
 }

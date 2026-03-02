@@ -1,7 +1,8 @@
 #version 460 core
 
-#include <brdf.glsl>
-#include <punctual.glsl>
+#include <common/pbr.glsl>
+#include <common/ibl.glsl>
+#include <common/punctual.glsl>
 
 in vec3 v_position;
 in vec3 v_normal;
@@ -15,6 +16,11 @@ layout(binding = 1) uniform sampler2D u_metallicRoughnessTexture;
 layout(binding = 2) uniform sampler2D u_normalTexture;
 layout(binding = 3) uniform sampler2D u_emissiveTexture;
 layout(binding = 4) uniform sampler2D u_occlusionTexture;
+
+// IBL textures
+layout(binding = 5) uniform samplerCube u_irradianceMap;
+layout(binding = 6) uniform samplerCube u_prefilteredMap;
+layout(binding = 7) uniform sampler2D   u_brdfLUT;
 
 // UBO for camera
 layout(std140, binding = 1) uniform CameraUBO
@@ -42,6 +48,13 @@ layout(std140, binding = 3) uniform LightingUBO
   PunctualLight lights[32]; // Maximum 32 lights
 } u_lighting;
 
+// IBL / tone-mapping parameters
+layout(std140, binding = 4) uniform EnvironmentUBO
+{
+  float u_iblIntensity; // scales IBL contribution
+  float _padding[2];
+} u_env;
+
 void main()
 {
   // Sample textures
@@ -68,10 +81,13 @@ void main()
     Lo += calculatePBRLighting(N, V, L, baseColor.rgb, metallic, roughness, radiance);
   }
 
-  // Ambient lighting (simplified)
-  vec3 ambient = vec3(0.03) * baseColor.rgb * ao;
+  // IBL ambient
+  vec3 ambient = calculateIBLLighting(N, V, baseColor.rgb, metallic, roughness, ao,
+                                      u_irradianceMap, u_prefilteredMap, u_brdfLUT)
+                 * u_env.u_iblIntensity;
 
-  vec3 color = ambient + Lo + emissive;
+  // vec3 color = ambient + Lo + emissive;
+  vec3 color = Lo; // For debugging, just show direct lighting
 
   // Tone mapping (simple Reinhard)
   color = color / (color + vec3(1.0));

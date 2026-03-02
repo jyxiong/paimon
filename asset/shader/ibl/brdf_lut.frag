@@ -6,26 +6,6 @@
 layout(location = 0) in vec2 v_texcoord;
 layout(location = 0) out vec2 FragColor;
 
-// IBL-specific geometry term: k = roughness^2 / 2 (vs. (r+1)^2/8 for direct lighting)
-float GeometrySchlickGGX(float NdotV, float roughness) {
-    float a = roughness;
-    float k = (a * a) / 2.0;
-    
-    float nom = NdotV;
-    float denom = NdotV * (1.0 - k) + k;
-    
-    return nom / denom;
-}
-
-float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness) {
-    float NdotV = max(dot(N, V), 0.0);
-    float NdotL = max(dot(N, L), 0.0);
-    float ggx2 = GeometrySchlickGGX(NdotV, roughness);
-    float ggx1 = GeometrySchlickGGX(NdotL, roughness);
-    
-    return ggx1 * ggx2;
-}
-
 vec2 IntegrateBRDF(float NdotV, float roughness) {
     vec3 V;
     V.x = sqrt(1.0 - NdotV*NdotV);
@@ -48,8 +28,8 @@ vec2 IntegrateBRDF(float NdotV, float roughness) {
         float VdotH = max(dot(V, H), 0.0);
         
         if(NdotL > 0.0) {
-            float G = GeometrySmith(N, V, L, roughness);
-            float G_Vis = (G * VdotH) / (NdotH * NdotV);
+            float V = V_SmithGGXCorrelated(NdotV, NdotL, roughness);
+            float G_Vis = V * 4.0 * NdotL * VdotH / NdotH;
             float Fc = pow(1.0 - VdotH, 5.0);
             
             A += (1.0 - Fc) * G_Vis;

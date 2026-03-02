@@ -3,10 +3,17 @@
 
 const float PI = 3.14159265359;
 
-// Fresnel-Schlick approximation
+// Fresnel-Schlick (general form, roughness clamps the max reflectance for IBL)
+vec3 fresnelSchlick(float cosTheta, vec3 F0, float roughness)
+{
+  vec3 Fmax = max(vec3(1.0 - roughness), F0);
+  return F0 + (Fmax - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+}
+
+// Convenience overload for direct lighting (roughness = 0)
 vec3 fresnelSchlick(float cosTheta, vec3 F0)
 {
-  return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+  return fresnelSchlick(cosTheta, F0, 0.0);
 }
 
 // GGX/Trowbridge-Reitz normal distribution function
@@ -24,62 +31,12 @@ float DistributionGGX(vec3 N, vec3 H, float roughness)
   return nom / max(denom, 0.0001);
 }
 
-// Schlick-GGX geometry function (single direction)
-float GeometrySchlickGGX(float NdotV, float roughness)
+// Height-Correlated Smith GGX visibility term (Heitz 2014, used by Filament/Unity HDRP)
+// Returns V = G / (4 * NdotV * NdotL) — denominator already incorporated
+float V_SmithGGXCorrelated(float NdotV, float NdotL, float roughness)
 {
-  float r = (roughness + 1.0);
-  float k = (r * r) / 8.0;
-
-  float nom = NdotV;
-  float denom = NdotV * (1.0 - k) + k;
-
-  return nom / max(denom, 0.0001);
-}
-
-// Smith's method for geometry obstruction
-float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
-{
-  float NdotV = max(dot(N, V), 0.0);
-  float NdotL = max(dot(N, L), 0.0);
-  float ggx2 = GeometrySchlickGGX(NdotV, roughness);
-  float ggx1 = GeometrySchlickGGX(NdotL, roughness);
-
-  return ggx1 * ggx2;
-}
-
-// Calculate PBR lighting for a single light source
-// Returns the contribution from this light
-vec3 calculatePBRLighting(
-  vec3 N,           // Normal
-  vec3 V,           // View direction
-  vec3 L,           // Light direction
-  vec3 albedo,      // Base color
-  float metallic,   // Metallic value
-  float roughness,  // Roughness value
-  vec3 radiance     // Light color/intensity
-)
-{
-  vec3 H = normalize(V + L);
-
-  // Calculate reflectance at normal incidence
-  vec3 F0 = vec3(0.04);
-  F0 = mix(F0, albedo, metallic);
-
-  // Cook-Torrance BRDF
-  float NDF = DistributionGGX(N, H, roughness);
-  float G = GeometrySmith(N, V, L, roughness);
-  vec3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);
-
-  vec3 numerator = NDF * G * F;
-  float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
-  vec3 specular = numerator / denominator;
-
-  // Energy conservation: kS + kD = 1.0
-  vec3 kS = F;
-  vec3 kD = vec3(1.0) - kS;
-  kD *= 1.0 - metallic; // Metallic surfaces don't have diffuse
-
-  float NdotL = max(dot(N, L), 0.0);
-
-  return (kD * albedo / PI + specular) * radiance * NdotL;
+  float a2 = roughness * roughness * roughness * roughness;
+  float GGXV = NdotL * sqrt(NdotV * NdotV * (1.0 - a2) + a2);
+  float GGXL = NdotV * sqrt(NdotL * NdotL * (1.0 - a2) + a2);
+  return 0.5 / max(GGXV + GGXL, 0.0001);
 }
