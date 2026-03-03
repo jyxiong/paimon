@@ -1,6 +1,5 @@
 #version 460 core
 
-#include <common/pbr.glsl>
 #include <common/ibl.glsl>
 #include <common/punctual.glsl>
 
@@ -37,22 +36,20 @@ layout(std140, binding = 2) uniform MaterialUBO
   vec3 emissiveFactor;
   float metallicFactor;
   float roughnessFactor;
-  float _padding[3]; // alignment
 } u_material;
 
 // UBO for all lighting (fixed maximum size)
 layout(std140, binding = 3) uniform LightingUBO
 {
   int lightCount;
-  int _padding[3];
   PunctualLight lights[32]; // Maximum 32 lights
 } u_lighting;
 
 // IBL / tone-mapping parameters
 layout(std140, binding = 4) uniform EnvironmentUBO
 {
-  float u_iblIntensity; // scales IBL contribution
-  float _padding[2];
+  mat4 rotation; // for rotating the environment map
+  float intensity; // scales IBL contribution
 } u_env;
 
 void main()
@@ -82,12 +79,12 @@ void main()
   }
 
   // IBL ambient
+  N = (u_env.rotation * vec4(N, 0.0)).xyz; // Rotate normal for IBL
   vec3 ambient = calculateIBLLighting(N, V, baseColor.rgb, metallic, roughness, ao,
                                       u_irradianceMap, u_prefilteredMap, u_brdfLUT)
-                 * u_env.u_iblIntensity;
+                 * u_env.intensity;
 
-  // vec3 color = ambient + Lo + emissive;
-  vec3 color = Lo; // For debugging, just show direct lighting
+  vec3 color = ambient + Lo + emissive;
 
   // Tone mapping (simple Reinhard)
   color = color / (color + vec3(1.0));

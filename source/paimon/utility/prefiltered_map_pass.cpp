@@ -81,7 +81,7 @@ void PrefilteredMapPass::execute(const Texture &envCubemap,
                                  uint32_t prefilteredSize, uint32_t mipLevels) {
 
   // Create output prefiltered cubemap with mipmaps
-  m_prefilteredMap->set_storage_2d(mipLevels, GL_RGB16F, prefilteredSize,
+  m_prefilteredMap->set_storage_2d(mipLevels, GL_RGB32F, prefilteredSize,
                                    prefilteredSize);
 
   // Prepare view matrices for 6 faces

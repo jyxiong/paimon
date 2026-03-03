@@ -18,7 +18,6 @@ struct PunctualLight
   float intensity;
   float innerConeAngle;
   float outerConeAngle;
-  vec2 _padding;
 };
 
 // Calculate attenuation for point lights and spot lights

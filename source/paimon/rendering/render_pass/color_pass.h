@@ -54,8 +54,9 @@ struct MaterialUBO {
 };
 
 struct EnvironmentUBO {
-  float iblIntensity; // scales IBL contribution (ecs::Environment::intensity)
-  float _padding[2];
+  glm::mat4 rotation; // Rotation of the environment map, applied to IBL sampling
+  float intensity; // scales IBL contribution (ecs::Environment::intensity)
+  float _padding[3]; // alignment
 };
 
 class ColorPass {

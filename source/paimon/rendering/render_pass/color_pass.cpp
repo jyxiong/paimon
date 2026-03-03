@@ -302,7 +302,8 @@ void ColorPass::draw(RenderContext &ctx, const glm::ivec2 &resolution,
       auto envView = scene.view<ecs::Environment>();
       for (auto [envEntity, env] : envView.each()) {
         EnvironmentUBO envData;
-        envData.iblIntensity = env.intensity;
+        envData.intensity = env.intensity;
+        envData.rotation = glm::mat4_cast(env.rotation);
         m_environment_ubo.set_sub_data(0, sizeof(EnvironmentUBO), &envData);
 
         if (env.irradianceMap) {

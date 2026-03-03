@@ -32,7 +32,7 @@ vec3 calculateIBLLighting(
 
     // Specular IBL (split-sum)
     vec3  R                = reflect(-V, N);
-    const float MAX_LOD    = 4.0; // must match prefilter mip count
+    const float MAX_LOD    = 5.0; // must match prefilter mip count
     vec3  prefilteredColor = textureLod(prefilteredMap, R, roughness * MAX_LOD).rgb;
     vec2  brdf             = texture(brdfLUT, vec2(NdotV, roughness)).rg;
     vec3  specular         = prefilteredColor * (F * brdf.x + brdf.y);

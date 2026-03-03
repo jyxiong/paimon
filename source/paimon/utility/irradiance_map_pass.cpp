@@ -75,7 +75,7 @@ void IrradianceMapPass::execute(
     const Texture &envCubemap,
     uint32_t irradianceSize) {
   
-  m_irradianceMap->set_storage_2d(1, GL_RGB16F, irradianceSize, irradianceSize);
+  m_irradianceMap->set_storage_2d(1, GL_RGB32F, irradianceSize, irradianceSize);
   m_depthTexture->set_storage_2d(1, GL_DEPTH_COMPONENT24, irradianceSize, irradianceSize);
   
   // Prepare view matrices for 6 faces

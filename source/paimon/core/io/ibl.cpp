@@ -2,6 +2,7 @@
 
 #include <glad/gl.h>
 #include <stb_image.h>
+#include <stb_image_write.h>
 
 #include "paimon/core/ecs/components.h"
 #include "paimon/core/log_system.h"
@@ -62,11 +63,32 @@ void IBLLoader::load(ecs::Scene &scene) {
 
   LOG_INFO("IBLLoader: environment textures loaded from '{}'",
            m_filepath.string());
+
+#ifdef PAIMON_DEBUG
+  // save((std::filesystem::path(PAIMON_TEXTURE_DIR) / "ibl_output"));
+#endif
+}
+
+void IBLLoader::save(const std::filesystem::path &directory) {
+  // Ensure output directory exists
+  std::filesystem::create_directories(directory);
+
+  // Save cubemap faces
+  saveCubemap(m_equirectToCubemapPass->getCubemap(),
+                     directory / "env_cubemap", defaultCubemapSize, 0);
+  saveCubemap(*m_irradianceMapPass->getIrradianceMap(),
+                     directory / "irradiance_map", defaultIrradianceSize, 0);
+  for (uint32_t mip = 0; mip < defaultPrefilteredMipLevels; ++mip) {
+    uint32_t mipSize = defaultPrefilteredSize >> mip;
+    saveCubemap(*m_prefilteredMapPass->getPrefilteredMap(),
+                       directory / "prefiltered_map", mipSize, mip);
+  } 
+  // Save BRDF LUT
+  save2DTexture(*m_brdfLUTPass->getBRDFLUT(), directory / "brdf_lut.hdr",
+                      defaultBRDFLUTSize, defaultBRDFLUTSize);
 }
 
 void IBLLoader::loadHDRTexture() {
-  stbi_set_flip_vertically_on_load(true);
-
   int width = 0, height = 0, nrChannels = 0;
   float *data = stbi_loadf(m_filepath.string().c_str(), &width, &height,
                             &nrChannels, 0);
@@ -104,4 +126,81 @@ void IBLLoader::processIBL() {
                                  defaultPrefilteredSize,
                                  defaultPrefilteredMipLevels);
   m_brdfLUTPass->execute(defaultBRDFLUTSize);
+}
+
+void IBLLoader::saveCubemap(const Texture &cubemap, const std::filesystem::path &basePath,
+                             int size, int mipLevel) {
+ const char *faceNames[6] = {
+      "px", "nx", // +X, -X
+      "py", "ny", // +Y, -Y
+      "pz", "nz"  // +Z, -Z
+  };
+
+  std::vector<float> pixels(size * size * 3);
+
+  for (int face = 0; face < 6; ++face) {
+    // For cubemap textures, glGetTextureSubImage treats them as an array of 6
+    // slices zoffset is the face index (0-5), depth is the number of faces to
+    // access (1)
+    glGetTextureSubImage(cubemap.get_name(),
+                         mipLevel, // level
+                         0, 0,
+                         face, // xoffset, yoffset, zoffset (face index: 0-5)
+                         size, size, 1, // width, height, depth (1 face)
+                         GL_RGB,        // format
+                         GL_FLOAT,      // type
+                         pixels.size() * sizeof(float), // bufSize
+                         pixels.data()                  // pixels
+    );
+
+    // Save to HDR file (no tone mapping, preserve full HDR range)
+    std::string filename = basePath.string();
+    if (mipLevel > 0) {
+      filename += "_mip" + std::to_string(mipLevel);
+    }
+    filename += "_";
+    filename += faceNames[face];
+    filename += ".hdr";
+
+    stbi_flip_vertically_on_write(1);
+    if (!stbi_write_hdr(filename.c_str(), size, size, 3, pixels.data())) {
+      LOG_ERROR("  Failed to save: {}", filename);
+    }
+  }
+}
+
+void IBLLoader::save2DTexture(const Texture &texture, const std::filesystem::path &filepath,
+                               int width, int height) {
+  std::vector<float> pixels(width * height * 2); // RG format
+
+  // Read texture data
+  glGetTextureSubImage(texture.get_name(),
+                       0,                // level
+                       0, 0, 0,          // xoffset, yoffset, zoffset
+                       width, height, 1, // width, height, depth
+                       GL_RG,            // format (BRDF LUT is RG16F)
+                       GL_FLOAT,         // type
+                       pixels.size() * sizeof(float), // bufSize
+                       pixels.data()                  // pixels
+  );
+
+   // Convert RG to RGB for HDR file (add blue channel = 0)
+  std::vector<float> pixelsRGB(width * height * 3);
+  for (int i = 0; i < width * height; ++i) {
+    pixelsRGB[i * 3 + 0] = pixels[i * 2 + 0]; // R
+    pixelsRGB[i * 3 + 1] = pixels[i * 2 + 1]; // G
+    pixelsRGB[i * 3 + 2] = 0.0f;              // B = 0
+  }
+
+  // Check data range
+  float maxR = 0.0f, maxG = 0.0f;
+  for (int i = 0; i < width * height; ++i) {
+    maxR = std::max(maxR, pixels[i * 2 + 0]);
+    maxG = std::max(maxG, pixels[i * 2 + 1]);
+  }
+
+  stbi_flip_vertically_on_write(1);
+  if (!stbi_write_hdr(filepath.string().c_str(), width, height, 3, pixelsRGB.data())) {
+    LOG_ERROR("  Failed to save: {}", filepath.string());
+  }
 }
