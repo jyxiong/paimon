@@ -69,6 +69,14 @@ std::unique_ptr<Scene> Scene::create() {
     scene->setDirectionalLight(directionalLight);
   }
 
+  {
+    // Initialize environment entity
+    auto environment = scene->createEntity("Environment");
+    environment.addComponent<Environment>();
+
+    scene->setEnvironment(environment);
+  }
+
   return scene;
 }
 

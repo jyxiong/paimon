@@ -18,8 +18,8 @@ BRDFLUTPass::BRDFLUTPass(RenderContext &renderContext)
   
   // Get shader programs
   auto &shaderManager = Application::getInstance().getShaderManager();
-  auto *vertex_program = shaderManager.createShaderProgram("ibl_brdf_lut.vert");
-  auto *fragment_program = shaderManager.createShaderProgram("ibl_brdf_lut.frag");
+  auto *vertex_program = shaderManager.createShaderProgram("brdf_lut.vert");
+  auto *fragment_program = shaderManager.createShaderProgram("brdf_lut.frag");
   
   if (!vertex_program || !fragment_program) {
     LOG_ERROR("Failed to load BRDF LUT shader programs");

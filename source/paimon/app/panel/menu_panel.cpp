@@ -6,6 +6,7 @@
 #include "paimon/app/application.h"
 #include "paimon/app/event/application_event.h"
 #include "paimon/core/ecs/scene.h"
+#include "paimon/core/io/ibl.h"
 #include "paimon/core/log_system.h"
 
 namespace paimon {
@@ -48,6 +49,22 @@ void MenuPanel::showFileMenu() {
         auto& scene = Application::getInstance().getScene();
         LOG_INFO("Loading model: {}", outPath);
         scene.load(outPath);
+        NFD_FreePathU8(outPath);
+      } else if (result == NFD_ERROR) {
+        LOG_ERROR("Error opening file dialog: {}", NFD_GetError());
+      }
+    }
+
+    if (ImGui::MenuItem("Load Sky Box...")) {
+      nfdu8char_t* outPath = nullptr;
+      nfdu8filteritem_t filters[1] = {{"HDR Image", "hdr"}};
+      nfdresult_t result = NFD_OpenDialogU8(&outPath, filters, 1, nullptr);
+
+      if (result == NFD_OKAY) {
+        auto& scene = Application::getInstance().getScene();
+        LOG_INFO("Loading sky box: {}", outPath);
+        IBLLoader loader(outPath);
+        loader.load(scene);
         NFD_FreePathU8(outPath);
       } else if (result == NFD_ERROR) {
         LOG_ERROR("Error opening file dialog: {}", NFD_GetError());

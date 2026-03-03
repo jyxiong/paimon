@@ -23,6 +23,14 @@ ColorPass::ColorPass(RenderContext &renderContext)
   m_sampler->set(GL_TEXTURE_WRAP_S, GL_REPEAT);
   m_sampler->set(GL_TEXTURE_WRAP_T, GL_REPEAT);
 
+  // Setup sampler for IBL cubemaps
+  m_ibl_sampler = std::make_unique<Sampler>();
+  m_ibl_sampler->set(GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+  m_ibl_sampler->set(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  m_ibl_sampler->set(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  m_ibl_sampler->set(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  m_ibl_sampler->set(GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
   // Get shader programs for main rendering (separable programs for pipeline)
   auto &shaderManager = Application::getInstance().getShaderManager();
 
@@ -73,6 +81,8 @@ ColorPass::ColorPass(RenderContext &renderContext)
   // Allocate space for lighting UBO with fixed maximum lights
   m_lighting_ubo.set_storage(sizeof(LightingUBO), nullptr,
                              GL_DYNAMIC_STORAGE_BIT);
+  m_environment_ubo.set_storage(sizeof(EnvironmentUBO), nullptr,
+                                GL_DYNAMIC_STORAGE_BIT);
 }
 
 void ColorPass::draw(RenderContext &ctx, const glm::ivec2 &resolution,
@@ -288,10 +298,31 @@ void ColorPass::draw(RenderContext &ctx, const glm::ivec2 &resolution,
         }
       }
 
+      // Bind IBL textures (bindings 5/6/7 match shader layout)
+      auto envView = scene.view<ecs::Environment>();
+      for (auto [envEntity, env] : envView.each()) {
+        EnvironmentUBO envData;
+        envData.intensity = env.intensity;
+        envData.rotation = glm::mat4_cast(env.rotation);
+        m_environment_ubo.set_sub_data(0, sizeof(EnvironmentUBO), &envData);
+
+        if (env.irradianceMap) {
+          ctx.bindTexture(5, *env.irradianceMap, *m_ibl_sampler);
+        }
+        if (env.prefilteredMap) {
+          ctx.bindTexture(6, *env.prefilteredMap, *m_ibl_sampler);
+        }
+        if (env.brdfLUT) {
+          ctx.bindTexture(7, *env.brdfLUT, *m_sampler);
+        }
+        break; // Only one environment
+      }
+
       ctx.bindUniformBuffer(0, m_transform_ubo);
       ctx.bindUniformBuffer(1, m_camera_ubo);
       ctx.bindUniformBuffer(2, m_material_ubo);
       ctx.bindUniformBuffer(3, m_lighting_ubo);
+      ctx.bindUniformBuffer(4, m_environment_ubo);
 
       // Draw the primitive
       if (primitive.hasIndices()) {

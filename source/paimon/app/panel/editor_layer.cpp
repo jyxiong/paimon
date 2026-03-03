@@ -44,15 +44,19 @@ void EditorLayer::setupDockingLayout() {
   // Split the dockspace into left and right
   ImGuiID dock_left, dock_right;
   ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Left, 0.2f, &dock_left, &dock_right);
-  
-  // Split right into center and bottom-right
+
+  // Split right into center and properties
   ImGuiID dock_center, dock_bottom_right;
   ImGui::DockBuilderSplitNode(dock_right, ImGuiDir_Right, 0.25f, &dock_bottom_right, &dock_center);
-  
+
+  // Split left into top (scene hierarchy)
+  ImGuiID dock_left_top, dock_left_bottom;
+  ImGui::DockBuilderSplitNode(dock_left, ImGuiDir_Down, 0.45f, &dock_left_bottom, &dock_left_top);
+
   // Dock windows to specific locations
-  ImGui::DockBuilderDockWindow("Scene Hierarchy", dock_left);
-  ImGui::DockBuilderDockWindow("Viewport", dock_center);
-  ImGui::DockBuilderDockWindow("Properties", dock_bottom_right);
+  ImGui::DockBuilderDockWindow("Scene Hierarchy", dock_left_top);
+  ImGui::DockBuilderDockWindow("Viewport",        dock_center);
+  ImGui::DockBuilderDockWindow("Properties",      dock_bottom_right);
   
   // Finish building
   ImGui::DockBuilderFinish(dockspace_id);

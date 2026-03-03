@@ -1,5 +1,7 @@
 // Punctual lights support (point lights and spot lights)
 
+#include <common/brdf.glsl>
+
 // Light types
 const int LIGHT_TYPE_DIRECTIONAL = 0;
 const int LIGHT_TYPE_POINT = 1;
@@ -16,7 +18,6 @@ struct PunctualLight
   float intensity;
   float innerConeAngle;
   float outerConeAngle;
-  vec2 _padding;
 };
 
 // Calculate attenuation for point lights and spot lights
@@ -92,3 +93,41 @@ vec3 calculateRadiance(PunctualLight light, vec3 fragPosition, vec3 L)
   
   return vec3(0.0); // Unknown light type
 }
+
+// Calculate PBR lighting for a single light source
+// Returns the contribution from this light
+vec3 calculatePBRLighting(
+  vec3 N,           // Normal
+  vec3 V,           // View direction
+  vec3 L,           // Light direction
+  vec3 albedo,      // Base color
+  float metallic,   // Metallic value
+  float roughness,  // Roughness value
+  vec3 radiance     // Light color/intensity
+)
+{
+  vec3 H = normalize(V + L);
+
+  // Calculate reflectance at normal incidence
+  vec3 F0 = vec3(0.04);
+  F0 = mix(F0, albedo, metallic);
+
+  float NdotV = max(dot(N, V), 0.0);
+  float NdotL = max(dot(N, L), 0.0);
+
+  // Cook-Torrance BRDF
+  // V_SmithGGXCorrelated already includes the 4*NdotV*NdotL denominator
+  float NDF = DistributionGGX(N, H, roughness);
+  float Vis = V_SmithGGXCorrelated(NdotV, NdotL, roughness);
+  vec3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);
+
+  vec3 specular = NDF * Vis * F;
+
+  // Energy conservation: kS + kD = 1.0
+  vec3 kS = F;
+  vec3 kD = vec3(1.0) - kS;
+  kD *= 1.0 - metallic; // Metallic surfaces don't have diffuse
+
+  return (kD * albedo / PI + specular) * radiance * NdotL;
+}
+

@@ -30,9 +30,9 @@ PrefilteredMapPass::PrefilteredMapPass(RenderContext &renderContext)
 
   // Get shader programs
   auto &shaderManager = Application::getInstance().getShaderManager();
-  auto *vertex_program = shaderManager.createShaderProgram("ibl_cubemap.vert");
+  auto *vertex_program = shaderManager.createShaderProgram("cubemap.vert");
   auto *fragment_program =
-      shaderManager.createShaderProgram("ibl_prefilter.frag");
+      shaderManager.createShaderProgram("prefilter.frag");
 
   if (!vertex_program || !fragment_program) {
     LOG_ERROR("Failed to load prefiltered map shader programs");
@@ -81,7 +81,7 @@ void PrefilteredMapPass::execute(const Texture &envCubemap,
                                  uint32_t prefilteredSize, uint32_t mipLevels) {
 
   // Create output prefiltered cubemap with mipmaps
-  m_prefilteredMap->set_storage_2d(mipLevels, GL_RGB16F, prefilteredSize,
+  m_prefilteredMap->set_storage_2d(mipLevels, GL_RGB32F, prefilteredSize,
                                    prefilteredSize);
 
   // Prepare view matrices for 6 faces
