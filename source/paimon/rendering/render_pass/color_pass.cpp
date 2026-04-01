@@ -72,6 +72,13 @@ ColorPass::ColorPass(RenderContext &renderContext)
   m_color_texture = std::make_unique<Texture>(GL_TEXTURE_2D);
   m_depth_texture = std::make_unique<Texture>(GL_TEXTURE_2D);
 
+  // 1x1 white fallback texture: ensures ao=1.0 when occlusion texture is absent,
+  // and correct defaults for other missing material textures.
+  m_default_white_texture = std::make_unique<Texture>(GL_TEXTURE_2D);
+  m_default_white_texture->set_storage_2d(1, GL_RGBA8, 1, 1);
+  const uint8_t white[4] = {255, 255, 255, 255};
+  m_default_white_texture->set_sub_image_2d(0, 0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, white);
+
   // Create uniform buffers and storage buffers
   m_transform_ubo.set_storage(sizeof(TransformUBO), nullptr,
                               GL_DYNAMIC_STORAGE_BIT);
@@ -278,24 +285,21 @@ void ColorPass::draw(RenderContext &ctx, const glm::ivec2 &resolution,
         materialData.roughnessFactor = pbr.roughnessFactor;
         m_material_ubo.set_sub_data(0, sizeof(MaterialUBO), &materialData);
 
-        // Bind textures with sampler
-        if (pbr.baseColorTexture && pbr.baseColorTexture->image) {
-          ctx.bindTexture(0, *pbr.baseColorTexture->image, *m_sampler);
-        }
-        if (pbr.metallicRoughnessTexture &&
-            pbr.metallicRoughnessTexture->image) {
-          ctx.bindTexture(1, *pbr.metallicRoughnessTexture->image,
-                          *m_sampler);
-        }
-        if (mat->normalTexture && mat->normalTexture->image) {
-          ctx.bindTexture(2, *mat->normalTexture->image, *m_sampler);
-        }
-        if (mat->emissiveTexture && mat->emissiveTexture->image) {
-          ctx.bindTexture(3, *mat->emissiveTexture->image, *m_sampler);
-        }
-        if (mat->occlusionTexture && mat->occlusionTexture->image) {
-          ctx.bindTexture(4, *mat->occlusionTexture->image, *m_sampler);
-        }
+        // Bind textures with sampler; fall back to white 1x1 so that
+        // missing textures don't leave stale bindings from previous draws.
+        // Critically: occlusion (slot 4) must default to white (ao=1.0),
+        // otherwise the entire IBL contribution is zeroed out.
+        auto& white = *m_default_white_texture;
+        ctx.bindTexture(0, (pbr.baseColorTexture && pbr.baseColorTexture->image)
+                               ? *pbr.baseColorTexture->image : white, *m_sampler);
+        ctx.bindTexture(1, (pbr.metallicRoughnessTexture && pbr.metallicRoughnessTexture->image)
+                               ? *pbr.metallicRoughnessTexture->image : white, *m_sampler);
+        ctx.bindTexture(2, (mat->normalTexture && mat->normalTexture->image)
+                               ? *mat->normalTexture->image : white, *m_sampler);
+        ctx.bindTexture(3, (mat->emissiveTexture && mat->emissiveTexture->image)
+                               ? *mat->emissiveTexture->image : white, *m_sampler);
+        ctx.bindTexture(4, (mat->occlusionTexture && mat->occlusionTexture->image)
+                               ? *mat->occlusionTexture->image : white, *m_sampler);
       }
 
       // Bind IBL textures (bindings 5/6/7 match shader layout)

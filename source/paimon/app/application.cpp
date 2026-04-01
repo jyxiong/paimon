@@ -15,9 +15,10 @@ Application::Application(const ApplicationConfig& config) {
   // Create window
   m_window = Window::create(config.windowConfig, config.contextFormat);
 
-  m_scene = ecs::Scene::create();
-
+  // Load shaders
   m_shaderManager.load(PAIMON_SHADER_DIR);
+
+  m_scene = ecs::Scene::create();
 
   m_imguiLayer = pushLayer(std::make_unique<ImGuiLayer>());
 

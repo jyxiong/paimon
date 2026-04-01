@@ -1,7 +1,12 @@
 #include "paimon/core/ecs/scene.h"
 
 #include "paimon/core/ecs/components.h"
+#include "paimon/core/ecs/entity.h"
 #include "paimon/core/io/gltf.h"
+#include "paimon/core/io/ibl.h"
+#include "paimon/config.h"
+#include <algorithm>
+#include <filesystem>
 
 namespace paimon {
 namespace ecs {
@@ -22,9 +27,44 @@ Entity Scene::createEntity(const std::string &name) {
 }
 
 void Scene::destroyEntity(Entity entity) {
-  if (entity.isValid() && entity.getScene() == this) {
-    m_registry.destroy(entity.getHandle());
+  if (!entity.isValid() || entity.getScene() != this) {
+    return;
   }
+
+  // Destroy all descendants first to avoid leaving orphan entities.
+  std::vector<Entity> childrenSnapshot;
+  if (entity.hasComponent<Children>()) {
+    childrenSnapshot = entity.getComponent<Children>().children;
+  }
+
+  for (auto child : childrenSnapshot) {
+    if (child.isValid() && child.getScene() == this && child != entity) {
+      destroyEntity(child);
+    }
+  }
+
+  // Remove this entity from its parent's children list.
+  if (entity.hasComponent<Parent>()) {
+    auto parent = entity.getComponent<Parent>().parent;
+    if (parent.isValid() && parent.getScene() == this &&
+        parent.hasComponent<Children>()) {
+      auto &siblings = parent.getComponent<Children>().children;
+      siblings.erase(std::remove(siblings.begin(), siblings.end(), entity),
+                     siblings.end());
+    }
+  }
+
+  if (m_mainCamera == entity) {
+    m_mainCamera = Entity{};
+  }
+  if (m_directionalLight == entity) {
+    m_directionalLight = Entity{};
+  }
+  if (m_environment == entity) {
+    m_environment = Entity{};
+  }
+
+  m_registry.destroy(entity.getHandle());
 }
 
 entt::registry &Scene::getRegistry() { return m_registry; }
@@ -37,10 +77,14 @@ bool Scene::valid(entt::entity entity) const {
   return m_registry.valid(entity);
 }
 
-Entity Scene::load(const std::filesystem::path &filepath) {
+void Scene::loadModel(const std::filesystem::path &filepath) {
   GltfLoader loader(filepath);
   loader.load(*this);
-  return loader.getRootEntity();
+}
+
+void Scene::loadEnvironment(const std::filesystem::path &filepath) {
+  IBLLoader loader(filepath);
+  loader.load(*this);
 }
 
 std::unique_ptr<Scene> Scene::create() {
@@ -70,11 +114,11 @@ std::unique_ptr<Scene> Scene::create() {
   }
 
   {
-    // Initialize environment entity
-    auto environment = scene->createEntity("Environment");
-    environment.addComponent<Environment>();
+    auto envEntity = scene->createEntity("Environment");
+    envEntity.addComponent<ecs::Environment>();
+    scene->setEnvironment(envEntity);
 
-    scene->setEnvironment(environment);
+    scene->loadEnvironment(std::filesystem::path(PAIMON_TEXTURE_DIR) / "belfast_sunset_puresky_2k.hdr");
   }
 
   return scene;
