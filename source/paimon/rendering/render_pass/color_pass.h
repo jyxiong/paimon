@@ -72,6 +72,7 @@ private:
 
   std::unique_ptr<Texture> m_color_texture;
   std::unique_ptr<Texture> m_depth_texture;
+  std::unique_ptr<Texture> m_default_white_texture; // fallback for missing material textures (ao=1)
 
   std::unique_ptr<Sampler> m_sampler;
   std::unique_ptr<Sampler> m_ibl_sampler; // Cubemap sampler for IBL textures

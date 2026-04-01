@@ -200,6 +200,8 @@ glm::mat4 parseMat4(const std::vector<double> data) {
 
 GltfLoader::GltfLoader(const std::filesystem::path &filepath) {
 
+  m_filepath = filepath;
+
   tinygltf::TinyGLTF loader;
   std::string errorMessage;
   std::string warningMessage;
@@ -230,8 +232,14 @@ void GltfLoader::load(ecs::Scene &scene) {
   parseMaterials();
   parseMeshes();       // Step 4: mesh primitives reference accessor Buffers
 
+  auto entityName = m_filepath.stem().string();
+  auto rootEntity = scene.createEntity(entityName);
+
   int sceneIndex = m_model.defaultScene >= 0 ? m_model.defaultScene : 0;
-  parseScene(m_model.scenes[sceneIndex], scene);
+  for (const auto nodeIndex : m_model.scenes[sceneIndex].nodes) {
+    const auto &node = m_model.nodes[nodeIndex];
+    parseNode(node, rootEntity, scene);
+  }
 }
 
 // ============================================================================
@@ -466,14 +474,5 @@ void GltfLoader::parseNode(const tinygltf::Node &node, ecs::Entity parent, ecs::
   for (int childIndex : node.children) {
     const auto &childNode = m_model.nodes[childIndex];
     parseNode(childNode, nodeEntity, scene);
-  }
-}
-
-void GltfLoader::parseScene(const tinygltf::Scene &scene, ecs::Scene &ecs_scene) {
-  // Implementation for parsing a glTF scene into an ECS scene
-  m_rootEntity = ecs_scene.createEntity("RootNode");
-  for (const auto nodeIndex : scene.nodes) {
-    const auto &node = m_model.nodes[nodeIndex];
-    parseNode(node, m_rootEntity, ecs_scene);
   }
 }
