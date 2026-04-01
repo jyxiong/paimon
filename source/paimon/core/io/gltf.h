@@ -31,10 +31,6 @@ public:
 
   void load(ecs::Scene &scene);
 
-  const ecs::Entity &getRootEntity() const { return m_rootEntity; }
-
-  ecs::Entity getRootEntity() { return m_rootEntity; }
-
 private:
   void parseBuffers();
   void parseBufferViews();
@@ -44,12 +40,11 @@ private:
   void parseMeshes();
 
   void parseNode(const tinygltf::Node &node, ecs::Entity parent, ecs::Scene &scene);
-  void parseScene(const tinygltf::Scene &scene, ecs::Scene &ecs_scene);
 
 private:
-  tinygltf::Model m_model;
+  std::filesystem::path m_filepath;
 
-  ecs::Entity m_rootEntity;
+  tinygltf::Model m_model;
 
   std::vector<std::shared_ptr<Sampler>> m_samplers;
   std::vector<std::shared_ptr<Texture>> m_images;

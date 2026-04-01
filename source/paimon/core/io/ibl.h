@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <memory>
 
+#include "paimon/core/ecs/entity.h"
 #include "paimon/core/ecs/scene.h"
 #include "paimon/opengl/texture.h"
 
@@ -31,7 +32,6 @@ public:
   IBLLoader &operator=(const IBLLoader &) = delete;
 
   void load(ecs::Scene &scene);
-  void save(const std::filesystem::path &directory);
 
 private:
   void loadHDRTexture();
@@ -40,6 +40,8 @@ private:
                    int size, int mipLevel = 0);
   void save2DTexture(const Texture &texture, const std::filesystem::path &filepath,
                      int width, int height);
+
+  void save(const std::filesystem::path &directory);
 
 private:
   std::filesystem::path m_filepath;

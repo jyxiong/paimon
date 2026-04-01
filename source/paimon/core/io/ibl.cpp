@@ -5,6 +5,7 @@
 #include <stb_image_write.h>
 
 #include "paimon/core/ecs/components.h"
+#include "paimon/core/ecs/entity.h"
 #include "paimon/core/log_system.h"
 #include "paimon/rendering/render_context.h"
 #include "paimon/utility/brdf_lut_pass.h"
@@ -48,14 +49,9 @@ void IBLLoader::load(ecs::Scene &scene) {
 
   // Get the existing Environment entity, or create a new one.
   auto envEntity = scene.getEnvironment();
-  if (!envEntity) {
-    envEntity = scene.createEntity("Environment");
-    envEntity.addComponent<ecs::Environment>();
-    scene.setEnvironment(envEntity);
-    LOG_INFO("IBLLoader: created new Environment entity");
-  }
+  envEntity.removeComponent<ecs::Environment>();
 
-  auto &envComp = envEntity.getOrAddComponent<ecs::Environment>();
+  auto &envComp = envEntity.addComponent<ecs::Environment>();
   envComp.equirectangularMap = m_equirectangularTexture;
   envComp.irradianceMap      = m_irradianceMapPass->getIrradianceMap();
   envComp.prefilteredMap     = m_prefilteredMapPass->getPrefilteredMap();
@@ -65,7 +61,7 @@ void IBLLoader::load(ecs::Scene &scene) {
            m_filepath.string());
 
 #ifdef PAIMON_DEBUG
-  // save((std::filesystem::path(PAIMON_TEXTURE_DIR) / "ibl_output"));
+  save((std::filesystem::path(PAIMON_TEXTURE_DIR) / "ibl_output"));
 #endif
 }
 

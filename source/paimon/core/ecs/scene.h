@@ -67,7 +67,9 @@ public:
   // Check if entity is valid
   bool valid(entt::entity entity) const;
 
-  Entity load(const std::filesystem::path &filepath);
+  void loadModel(const std::filesystem::path &filepath);
+
+  void loadEnvironment(const std::filesystem::path &filepath);
 
   static std::unique_ptr<Scene> create();
 

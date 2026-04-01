@@ -48,7 +48,7 @@ void MenuPanel::showFileMenu() {
       if (result == NFD_OKAY) {
         auto& scene = Application::getInstance().getScene();
         LOG_INFO("Loading model: {}", outPath);
-        scene.load(outPath);
+        scene.loadModel(outPath);
         NFD_FreePathU8(outPath);
       } else if (result == NFD_ERROR) {
         LOG_ERROR("Error opening file dialog: {}", NFD_GetError());
