@@ -322,6 +322,26 @@ void ColorPass::draw(RenderContext &ctx, const glm::ivec2 &resolution,
         break; // Only one environment
       }
 
+      // Bind IBL textures (bindings 5/6/7 match shader layout)
+      auto envView = scene.view<ecs::Environment>();
+      for (auto [envEntity, env] : envView.each()) {
+        EnvironmentUBO envData;
+        envData.intensity = env.intensity;
+        envData.rotation = glm::mat4_cast(env.rotation);
+        m_environment_ubo.set_sub_data(0, sizeof(EnvironmentUBO), &envData);
+
+        if (env.irradianceMap) {
+          ctx.bindTexture(5, *env.irradianceMap, *m_ibl_sampler);
+        }
+        if (env.prefilteredMap) {
+          ctx.bindTexture(6, *env.prefilteredMap, *m_ibl_sampler);
+        }
+        if (env.brdfLUT) {
+          ctx.bindTexture(7, *env.brdfLUT, *m_sampler);
+        }
+        break; // Only one environment
+      }
+
       ctx.bindUniformBuffer(0, m_transform_ubo);
       ctx.bindUniformBuffer(1, m_camera_ubo);
       ctx.bindUniformBuffer(2, m_material_ubo);

@@ -70,6 +70,22 @@ void MenuPanel::showFileMenu() {
         LOG_ERROR("Error opening file dialog: {}", NFD_GetError());
       }
     }
+
+    if (ImGui::MenuItem("Load Sky Box...")) {
+      nfdu8char_t* outPath = nullptr;
+      nfdu8filteritem_t filters[1] = {{"HDR Image", "hdr"}};
+      nfdresult_t result = NFD_OpenDialogU8(&outPath, filters, 1, nullptr);
+
+      if (result == NFD_OKAY) {
+        auto& scene = Application::getInstance().getScene();
+        LOG_INFO("Loading sky box: {}", outPath);
+        IBLLoader loader(outPath);
+        loader.load(scene);
+        NFD_FreePathU8(outPath);
+      } else if (result == NFD_ERROR) {
+        LOG_ERROR("Error opening file dialog: {}", NFD_GetError());
+      }
+    }
     
     ImGui::Separator();
     
